@@ -120,7 +120,10 @@
                                 Project
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Status / Type
+                                Status
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Type
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Assigned To
@@ -164,8 +167,12 @@
                                                 No Status
                                             </span>
                                         @endif
+                                 
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="space-y-1">
                                         @if($project->typeRecord)
-                                            <br>
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $project->getTypeColor() }}-100 text-{{ $project->getTypeColor() }}-800">
                                                 {{ $project->type }}
                                             </span>
