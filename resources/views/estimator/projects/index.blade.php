@@ -237,7 +237,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if($project->statusRecord)
-                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-{{ $project->getStatusColor() }}-100 text-{{ $project->getStatusColor() }}-800">
+                                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full " style="background-color: {{ $project->statusRecord->color }}20; color: {{ $project->statusRecord->color }};">
                                                     {{ $project->status }}
                                                 </span>
                                             @else
@@ -248,7 +248,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             @if($project->typeRecord)
-                                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
+                                                <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full " style="background-color: {{ $project->typeRecord->color }}20; color: {{ $project->typeRecord->color }};">
                                                     {{ $project->type }}
                                                 </span>
                                             @else

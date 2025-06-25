@@ -266,7 +266,7 @@
                                     </div>
                                     <div class="flex items-center space-x-2 mt-1">
                                         @if($project->statusRecord)
-                                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-{{ $project->getStatusColor() }}-100 text-{{ $project->getStatusColor() }}-800">
+                                            <span class="px-2 py-1 text-xs font-semibold rounded-full " style="background-color: {{ $project->statusRecord->color }}20; color: {{ $project->statusRecord->color }};">
                                                 {{ $project->status }}
                                             </span>
                                         @endif

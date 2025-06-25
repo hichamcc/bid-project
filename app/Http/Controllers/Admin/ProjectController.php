@@ -28,9 +28,10 @@ class ProjectController extends Controller
 
         // Filter by status
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $statuses = is_array($request->status) ? $request->status : [$request->status];
+            $query->whereIn('status', $statuses);
         }
-
+        
         // Filter by type
         if ($request->filled('type')) {
             $query->where('type', $request->type);

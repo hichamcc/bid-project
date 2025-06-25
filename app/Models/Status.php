@@ -50,9 +50,12 @@ class Status extends Model
     /**
      * Get the Tailwind CSS color class based on hex color
      */
+
+     //correct the color class to handle all colors range from 000000 to ffffff
+
     public function getTailwindColorClass(): string
     {
-        return match($this->color) {
+        return match($this->color) {        
             '#ef4444' => 'red',
             '#f97316' => 'orange', 
             '#eab308' => 'yellow',
@@ -63,5 +66,10 @@ class Status extends Model
             '#6b7280' => 'gray',
             default => 'gray'
         };
+    }
+
+    public function getStatusColor()
+    {
+        return $this->getTailwindColorClass();
     }
 }

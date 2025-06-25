@@ -64,4 +64,9 @@ class Type extends Model
             default => 'gray'
         };
     }
+
+    public function getTypeColor()
+    {
+        return $this->getTailwindColorClass();
+    }
 }

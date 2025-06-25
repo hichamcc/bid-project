@@ -31,17 +31,49 @@
                 </div>
  
                 <!-- Status Filter -->
-                <div>
-                    <select name="status" 
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">All Statuses</option>
-                        @foreach($statuses as $status)
-                            <option value="{{ $status->name }}" {{ request('status') === $status->name ? 'selected' : '' }}>
-                                {{ $status->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                <div class="">
+                    <div class="multi-select-dropdown">
+                        <button type="button" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-left flex items-center justify-between"
+                                onclick="toggleDropdown()">
+                            <span id="display-text">All Statuses</span>
+                            <svg id="dropdown-arrow" class="w-5 h-5 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                
+                        <div id="dropdown-menu" class="hidden absolute z-50 w-56 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                            <!-- Select All Option -->
+                            <div class="p-2 border-b border-gray-200">
+                                <label class="flex items-center hover:bg-gray-50 p-1 rounded cursor-pointer">
+                                    <input type="checkbox" 
+                                           id="select-all"
+                                           onchange="toggleAll()"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm font-medium text-gray-700">Select All</span>
+                                </label>
+                            </div>
+                
+                            <!-- Status Options -->
+                            @foreach($statuses as $status)
+                                <label class="flex items-center hover:bg-gray-50 p-2 cursor-pointer">
+                                    <input type="checkbox" 
+                                           name="status[]" 
+                                           value="{{ $status->name }}"
+                                           {{ in_array($status->name, request('status', [])) ? 'checked' : '' }}
+                                           onchange="updateDisplayText()"
+                                           class="status-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    <span class="ml-2 text-sm text-gray-700">{{ $status->name }}</span>
+                                    @if(isset($status->count))
+                                        <span class="ml-auto text-xs text-gray-500">({{ $status->count }})</span>
+                                    @endif
+                                </label>
+                            @endforeach
+            
+                        </div>
+                    </div>
                 </div>
+
  
                 <!-- Type Filter -->
                 <div>
@@ -159,7 +191,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="space-y-1">
                                         @if($project->statusRecord)
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $project->getStatusColor() }}-100 text-{{ $project->getStatusColor() }}-800">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" style="background-color: {{ $project->statusRecord->color }}20; color: {{ $project->statusRecord->color }};">
                                                 {{ $project->status }}
                                             </span>
                                         @else
@@ -173,7 +205,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="space-y-1">
                                         @if($project->typeRecord)
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $project->getTypeColor() }}-100 text-{{ $project->getTypeColor() }}-800">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" style="background-color: {{ $project->typeRecord->color }}20; color: {{ $project->typeRecord->color }};">
                                                 {{ $project->type }}
                                             </span>
                                         @endif
@@ -251,4 +283,102 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Initialize the display text when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        updateDisplayText();
+        updateSelectAllState();
+    });
+    
+    function toggleDropdown() {
+        const menu = document.getElementById('dropdown-menu');
+        const arrow = document.getElementById('dropdown-arrow');
+        
+        menu.classList.toggle('hidden');
+        arrow.classList.toggle('rotate-180');
+    }
+    
+    function updateDisplayText() {
+        const checkboxes = document.querySelectorAll('input[name="status[]"]:checked');
+        const displayText = document.getElementById('display-text');
+        const totalCheckboxes = document.querySelectorAll('input[name="status[]"]').length;
+        
+        if (checkboxes.length === 0) {
+            displayText.textContent = 'All Statuses';
+            displayText.className = 'text-gray-500';
+        } else if (checkboxes.length === 1) {
+            displayText.textContent = checkboxes[0].value;
+            displayText.className = 'text-gray-900 font-medium';
+        } else if (checkboxes.length === totalCheckboxes) {
+            displayText.textContent = 'All Statuses Selected';
+            displayText.className = 'text-gray-900 font-medium';
+        } else {
+            displayText.textContent = `${checkboxes.length} Statuses Selected`;
+            displayText.className = 'text-gray-900 font-medium';
+        }
+        
+        // Update select all checkbox state
+        updateSelectAllState();
+    }
+    
+    function updateSelectAllState() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const statusCheckboxes = document.querySelectorAll('.status-checkbox');
+        const checkedStatusCheckboxes = document.querySelectorAll('.status-checkbox:checked');
+        
+        if (checkedStatusCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (checkedStatusCheckboxes.length === statusCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+    
+    function toggleAll() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const statusCheckboxes = document.querySelectorAll('.status-checkbox');
+        
+        statusCheckboxes.forEach(function(checkbox) {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        
+        updateDisplayText();
+    }
+    
+    function clearAll() {
+        const checkboxes = document.querySelectorAll('input[name="status[]"]');
+        const selectAllCheckbox = document.getElementById('select-all');
+        
+        checkboxes.forEach(function(checkbox) {
+            checkbox.checked = false;
+        });
+        
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+        
+        updateDisplayText();
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.querySelector('.multi-select-dropdown');
+        if (!dropdown.contains(event.target)) {
+            const menu = document.getElementById('dropdown-menu');
+            const arrow = document.getElementById('dropdown-arrow');
+            
+            menu.classList.add('hidden');
+            arrow.classList.remove('rotate-180');
+        }
+    });
+    
+    // Prevent dropdown from closing when clicking inside
+    document.getElementById('dropdown-menu').addEventListener('click', function(event) {
+        event.stopPropagation();
+    });
+    </script>
 @endsection
