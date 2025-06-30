@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\GC;
+use App\Models\Gc as GC;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Project;
