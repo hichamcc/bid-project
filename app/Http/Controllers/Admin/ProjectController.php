@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Status;
 use App\Models\Type;
 use App\Models\User;
+use App\Models\Gc;
 use Illuminate\Http\Request;
 
 
@@ -22,6 +23,9 @@ class ProjectController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('gc', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('otherGCs', function ($query) use ($request) {
+                    $query->where('name', 'like', '%' . $request->search . '%');
+                  })
                   ->orWhere('rfi', 'like', '%' . $request->search . '%');
             });
         }
@@ -63,8 +67,8 @@ class ProjectController extends Controller
         $statuses = Status::active()->ordered()->get();
         $types = Type::active()->ordered()->get();
         $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
-
-        return view('admin.projects.index', compact('projects', 'statuses', 'types', 'estimators'));
+        $gcs = Gc::active()->ordered()->get();
+        return view('admin.projects.index', compact('projects', 'statuses', 'types', 'estimators', 'gcs'));
     }
 
     public function create()
@@ -72,8 +76,8 @@ class ProjectController extends Controller
         $statuses = Status::active()->ordered()->get();
         $types = Type::active()->ordered()->get();
         $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
-        
-        return view('admin.projects.create', compact('statuses', 'types', 'estimators'));
+        $gcs = Gc::active()->ordered()->get();
+        return view('admin.projects.create', compact('statuses', 'types', 'estimators', 'gcs'));
     }
 
     public function store(Request $request)
@@ -81,6 +85,8 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'gc' => 'nullable|string|max:255',
+            'other_gc' => 'nullable|array',
+            'other_gc.*' => 'string|max:255|distinct',
             'scope' => 'nullable|string',
             'assigned_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:assigned_date',
@@ -110,8 +116,8 @@ class ProjectController extends Controller
         $statuses = Status::active()->ordered()->get();
         $types = Type::active()->ordered()->get();
         $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
-        
-        return view('admin.projects.edit', compact('project', 'statuses', 'types', 'estimators'));
+        $gcs = Gc::active()->ordered()->get();
+        return view('admin.projects.edit', compact('project', 'statuses', 'types', 'estimators', 'gcs'));
     }
 
     public function update(Request $request, Project $project)
@@ -119,6 +125,8 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'gc' => 'nullable|string|max:255',
+            'other_gc' => 'nullable|array',
+            'other_gc.*' => 'string|max:255|distinct',
             'scope' => 'nullable|string',
             'assigned_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:assigned_date',

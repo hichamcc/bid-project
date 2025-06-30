@@ -5,9 +5,11 @@ use App\Http\Controllers\Admin\StatusController;
 use App\Http\Controllers\Admin\TypeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Estimator\ProjectController as EstimatorProjectController;  
+use App\Http\Controllers\Estimator\ProjectController as EstimatorProjectController; 
+use App\Http\Controllers\Admin\GcController;
 use App\Http\Controllers\Settings;
 use Illuminate\Support\Facades\Route;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -52,6 +54,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('types', TypeController::class);
     Route::post('types/update-order', [TypeController::class, 'updateOrder'])->name('types.update-order');
 });
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('gcs', GcController::class);
+});
+
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/chart-data', [DashboardController::class, 'getChartData'])->name('dashboard.chart-data');

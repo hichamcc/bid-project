@@ -54,6 +54,39 @@
                             @enderror
                         </div>
 
+                        <!-- Other GC  / select from gcs table use select2 multiple-->
+                        <div>
+                            <label for="other_gc" class="block text-sm font-medium text-gray-700 mb-2">
+                                Other GC
+                            </label>
+                            <select id="other_gc" 
+                                    name="other_gc[]" 
+                                    multiple
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('other_gc') border-red-500 @enderror">
+                                <option value="">Select a GC</option>
+                                @foreach($gcs as $gc)
+                                    <option value="{{ $gc->name }}" {{ old('other_gc') == $gc->name ? 'selected' : '' }}>
+                                        {{ $gc->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                              <!-- jquery -->
+                              <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                            <!-- select2 script --> 
+                            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+                            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+                          
+                            <!-- select2 script --> 
+                            <script>
+                                $(document).ready(function() {
+                                    $('#other_gc').select2();
+                                });
+                            </script>
+                            @error('other_gc')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror 
+                        </div>
+
                         <!-- RFI -->
                         <div>
                             <label for="rfi" class="block text-sm font-medium text-gray-700 mb-2">

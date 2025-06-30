@@ -37,6 +37,9 @@
                     <x-navlist.item before="phosphor-bookmark-simple" href="{{ route('admin.types.index') }}" :current="request()->routeIs('admin.types.index')">
                         {{ __('Type') }}
                     </x-navlist.item>
+                    <x-navlist.item before="phosphor-bookmark-simple" href="{{ route('admin.gcs.index') }}" :current="request()->routeIs('admin.gcs.index')">
+                        {{ __('GC') }}
+                    </x-navlist.item>
                 </x-navlist.group>
 
             @endif

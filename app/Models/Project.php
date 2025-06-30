@@ -14,6 +14,7 @@ class Project extends Model
     protected $fillable = [
         'name',
         'gc',
+        "other_gc",
         'scope',
         'assigned_date',
         'due_date',
@@ -26,6 +27,7 @@ class Project extends Model
     ];
 
     protected $casts = [
+        'other_gc' => 'array',
         'assigned_date' => 'date',
         'due_date' => 'date',
     ];
@@ -150,7 +152,7 @@ class Project extends Model
         return $query->whereDate('due_date', '<', now())
                     ->whereHas('statusRecord', function($q) {
                         // Assuming you have status names like these
-                        $q->whereNotIn('name', ['completed', 'cancelled']);
+                        $q->whereNotIn('name', ['completed', 'cancelled' , 'DECLINED' , 'CANCELLED','SUBMITTED']);
                     });
     }
 
@@ -163,7 +165,136 @@ class Project extends Model
                     ->whereDate('due_date', '<=', now()->addDays(7))
                     ->whereHas('statusRecord', function($q) {
                         // Assuming you have status names like these
-                        $q->whereNotIn('name', ['completed', 'cancelled']);
+                        $q->whereNotIn('name', ['completed', 'cancelled', 'DECLINED' , 'CANCELLED','SUBMITTED']);
                     });
+    }
+
+    public function gcRecord(): BelongsTo
+    {
+        return $this->belongsTo(Gc::class, 'gc', 'name');
+    }
+ /**
+     * Get the primary GC for this project
+     */
+    public function primaryGC(): BelongsTo
+    {
+        return $this->belongsTo(GC::class, 'gc', 'name');
+    }
+
+    /**
+     * Get all other GCs (excluding primary) as a collection
+     */
+    public function getOtherGCsAttribute()
+    {
+        if (empty($this->other_gc)) {
+            return collect();
+        }
+
+        return GC::whereIn('name', $this->other_gc)->get();
+    }
+
+    /**
+     * Get all GCs (primary + others) as a collection
+     */
+    public function getAllGCs()
+    {
+        $allGCs = collect();
+        
+        // Add primary GC
+        if ($this->primaryGC) {
+            $allGCs->push($this->primaryGC);
+        }
+        
+        // Add other GCs
+        $allGCs = $allGCs->merge($this->otherGCs);
+        
+        return $allGCs->unique('id');
+    }
+
+    /**
+     * Add a GC to the other_gc list
+     */
+    public function addOtherGC(string $gcName): void
+    {
+        $otherGCs = $this->other_gc ?? [];
+        
+        if (!in_array($gcName, $otherGCs) && $gcName !== $this->gc) {
+            $otherGCs[] = $gcName;
+            $this->other_gc = $otherGCs;
+            $this->save();
+        }
+    }
+
+    /**
+     * Remove a GC from the other_gc list
+     */
+    public function removeOtherGC(string $gcName): void
+    {
+        $otherGCs = $this->other_gc ?? [];
+        $otherGCs = array_filter($otherGCs, fn($gc) => $gc !== $gcName);
+        $this->other_gc = array_values($otherGCs); // Re-index array
+        $this->save();
+    }
+
+    /**
+     * Set multiple other GCs at once
+     */
+    public function setOtherGCs(array $gcNames): void
+    {
+        // Filter out the primary GC to avoid duplication
+        $filtered = array_filter($gcNames, fn($name) => $name !== $this->gc);
+        $this->other_gc = array_values(array_unique($filtered));
+        $this->save();
+    }
+
+    /**
+     * Check if a GC is associated with this project (primary or other)
+     */
+    public function hasGC(string $gcName): bool
+    {
+        if ($this->gc === $gcName) {
+            return true;
+        }
+
+        return in_array($gcName, $this->other_gc ?? []);
+    }
+
+    /**
+     * Get count of all associated GCs
+     */
+    public function getTotalGCsCountAttribute(): int
+    {
+        $count = $this->gc ? 1 : 0; // Primary GC
+        $count += count($this->other_gc ?? []); // Other GCs
+        return $count;
+    }
+
+    /**
+     * Scope to filter projects by any associated GC (primary or other)
+     */
+    public function scopeForGC($query, string $gcName)
+    {
+        return $query->where('gc', $gcName)
+                    ->orWhere('other_gc', 'LIKE', '%"' . $gcName . '"%');
+    }
+
+    /**
+     * Get formatted list of all GC names
+     */
+    public function getFormattedGCsAttribute(): string
+    {
+        $gcs = [];
+        
+        if ($this->gc) {
+            $gcs[] = $this->gc . ' (Primary)';
+        }
+        
+        if (!empty($this->other_gc)) {
+            foreach ($this->other_gc as $gc) {
+                $gcs[] = $gc;
+            }
+        }
+        
+        return implode(', ', $gcs);
     }
 }
