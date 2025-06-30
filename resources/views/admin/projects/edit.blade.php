@@ -40,16 +40,23 @@
                             @enderror
                         </div>
 
-                        <!-- General Contractor -->
+                        <!-- General Contractor  select from gcs table-->
+                        
                         <div>
                             <label for="gc" class="block text-sm font-medium text-gray-700 mb-2">
                                 General Contractor
                             </label>
-                            <input type="text" 
-                                   id="gc" 
-                                   name="gc" 
-                                   value="{{ old('gc', $project->gc) }}" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('gc') border-red-500 @enderror">
+                            <select id="gc" 
+                                    name="gc" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('gc') border-red-500 @enderror">
+                                <option value="">Select a GC</option>
+                                @foreach($gcs as $gcOption)
+                                    <option value="{{ $gcOption->name }}" 
+                                            {{ old('gc', isset($project) ? $project->gc : '') == $gcOption->name ? 'selected' : '' }}>
+                                        {{ $gcOption->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('gc')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
