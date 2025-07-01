@@ -109,7 +109,7 @@ class Project extends Model
     }
 
     /**
-     * Get days until due date
+     * Get days until due date 
      */
     public function daysUntilDue(): ?int
     {
@@ -117,7 +117,8 @@ class Project extends Model
             return null;
         }
 
-        return now()->diffInDays($this->due_date, false);
+        
+        return now()->diffInDays($this->due_date, false)+1    ;
     }
 
     /**

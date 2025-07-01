@@ -255,8 +255,10 @@
                                             </span>
                                             @if($project->isOverdue())
                                                 <span class="text-red-500 text-xs">Overdue</span>
-                                            @elseif($project->daysUntilDue() !== null && $project->daysUntilDue() <= 7 && $project->daysUntilDue() >= 0)
+                                            @elseif($project->daysUntilDue() !== null  && $project->daysUntilDue() >= 3)
                                                 <span class="text-yellow-600 text-xs">Due in {{ $project->daysUntilDue() }} days</span>
+                                            @elseif($project->daysUntilDue() !== null  && $project->daysUntilDue() > 0)
+                                                <span class="text-red-500 text-xs font-bold">Due in {{ $project->daysUntilDue() }} days</span>
                                             @endif
                                         </div>
                                     @else
