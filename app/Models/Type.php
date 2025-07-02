@@ -31,6 +31,20 @@ class Type extends Model
         return $this->hasMany(Project::class, 'type', 'name');
     }
 
+    // update the projects with the new name only for type
+    protected static function booted()
+    {
+        static::updating(function ($type) {
+            if ($type->isDirty('name')) {
+                $oldName = $type->getOriginal('name');
+                $newName = $type->name;
+                
+                // Update all projects where this type is the primary type
+                Project::where('type', $oldName)->update(['type' => $newName]);
+            }
+        });
+    }
+
     /**
      * Scope for active types only
      */

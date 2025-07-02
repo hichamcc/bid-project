@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class GC extends Model
 {
@@ -26,13 +27,51 @@ class GC extends Model
         'is_active' => 'boolean',
     ];
 
+
+
+    // update the projects with the new name
+/**
+     * The "booted" method of the model.
+     */
+    protected static function booted()
+    {
+        // Listen for the 'updating' event
+        static::updating(function ($gc) {
+            // Check if the name is being changed
+            if ($gc->isDirty('name')) {
+                $oldName = $gc->getOriginal('name');
+                $newName = $gc->name;
+                
+                // Update all projects where this GC is the primary GC
+                Project::where('gc', $oldName)->update(['gc' => $newName]);
+                
+                // Update all projects where this GC appears in other_gc array
+                $projectsWithOtherGC = Project::where('other_gc', 'LIKE', '%"' . $oldName . '"%')->get();
+                
+                foreach ($projectsWithOtherGC as $project) {
+                    if ($project->other_gc && is_array($project->other_gc)) {
+                        // Replace old name with new name in the array
+                        $otherGCs = $project->other_gc;
+                        $key = array_search($oldName, $otherGCs);
+                        
+                        if ($key !== false) {
+                            $otherGCs[$key] = $newName;
+                            $project->other_gc = $otherGCs;
+                            $project->save();
+                        }
+                    }
+                }
+            }
+        });
+    }
+
 /**
  * Get all projects associated with this GC (as primary or other GC)
  */
 public function projects()
 {
-    return Project::where('gc', $this->name)
-                  ->orWhere('other_gc', 'LIKE', '%"' . $this->name . '"%');
+    return $this->hasMany(Project::class, 'gc', 'name')
+                ->orWhere('other_gc', 'LIKE', '%"' . $this->name . '"%');
 }
 
 /**
@@ -48,8 +87,12 @@ public function primaryProjects(): HasMany
  */
 public function otherProjects()
 {
-    return Project::where('other_gc', 'LIKE', '%"' . $this->name . '"%');
+    // user contains instead of where and like keep hasMany
+    return $this->hasMany(Project::class, 'other_gc', 'name')
+                ->where('other_gc', 'LIKE', '%"' . $this->name . '"%');
+   
 }
+
 
 /**
  * Get all projects count (primary + other)

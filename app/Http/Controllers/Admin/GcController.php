@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\Project;
 
-
 class GCController extends Controller
 {
     /**
@@ -120,6 +119,8 @@ class GCController extends Controller
      */
     public function update(Request $request, GC $gc)
     {
+
+    
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('gcs')->ignore($gc->id)],
             'company' => 'nullable|string|max:255',
@@ -134,6 +135,8 @@ class GCController extends Controller
         $validated['is_active'] = $request->has('is_active');
 
         $gc->update($validated);
+
+
 
         return redirect()->route('admin.gcs.index')
             ->with('success', 'GC updated successfully.');

@@ -23,6 +23,21 @@ class Status extends Model
         'sort_order' => 'integer',
     ];
 
+
+    // update the projects with the new name only for status
+    protected static function booted()
+    {
+        static::updating(function ($status) {
+            if ($status->isDirty('name')) {
+                $oldName = $status->getOriginal('name');
+                $newName = $status->name;   
+
+                // Update all projects where this status is the primary status
+                Project::where('status', $oldName)->update(['status' => $newName]);
+            }
+        });
+    }
+
     /**
      * Get all projects with this status
      */

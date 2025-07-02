@@ -81,6 +81,7 @@ class TypeController extends Controller
 
         $type->update($validated);
 
+
         return redirect()->route('admin.types.index')
             ->with('success', 'Type updated successfully.');
     }

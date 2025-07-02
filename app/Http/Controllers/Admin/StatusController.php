@@ -71,6 +71,7 @@ class StatusController extends Controller
 
     public function update(Request $request, Status $status)
     {
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', Rule::unique('statuses')->ignore($status->id)],
             'color' => 'required|string|regex:/^#[0-9A-Fa-f]{6}$/',
