@@ -18,6 +18,8 @@ class Project extends Model
         'scope',
         'assigned_date',
         'due_date',
+        'rfi_due_date',
+        'rfi_request_date',
         'status',
         'type',
         'rfi',
@@ -30,6 +32,8 @@ class Project extends Model
         'other_gc' => 'array',
         'assigned_date' => 'date',
         'due_date' => 'date',
+        'rfi_due_date' => 'date',
+        'rfi_request_date' => 'date',
     ];
 
     /**
@@ -297,5 +301,29 @@ class Project extends Model
         }
         
         return implode(', ', $gcs);
+    }
+
+    /**
+     * Get days until RFI due date
+     */
+    public function daysUntilRFI(): ?int
+    {
+        if (!$this->rfi_due_date) {
+            return null;
+        }
+
+        return now()->diffInDays($this->rfi_due_date, false)+1;
+    }
+
+    /**
+     * Get days until RFI request date
+     */
+    public function daysUntilRFIRequest(): ?int
+    {
+        if (!$this->rfi_request_date) {
+            return null;
+        }
+
+        return now()->diffInDays($this->rfi_request_date, false)+1;
     }
 }

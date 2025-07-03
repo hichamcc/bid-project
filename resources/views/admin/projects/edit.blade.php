@@ -159,6 +159,55 @@
                             @enderror
                         </div>
 
+                        <script>    
+                            $(document).ready(function() {
+                                // initial value
+                                if ($('#status').val() === 'RFI REQUESTED') {
+                                    $('#rfi_due_date').show();
+                                    $('#rfi_request_date').show();
+                                } else {
+                                    $('#rfi_due_date').hide();
+                                    $('#rfi_request_date').hide();
+                                }
+                                $('#status').change(function() {
+                                    if ($(this).val() === 'RFI REQUESTED') {
+                                        $('#rfi_due_date').show();
+                                        $('#rfi_request_date').show();
+                                    } else {
+                                        $('#rfi_due_date').hide();
+                                        $('#rfi_request_date').hide();
+                                    }
+                                });
+                            });
+                        </script>
+                        <div id="rfi_due_date" style="display: none;">
+                            <label for="rfi_due_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                RFI Due Date
+                            </label>
+                            <input type="date" 
+                                   id="rfi_due_date" 
+                                   name="rfi_due_date" 
+                                   value="{{ old('rfi_due_date', $project->rfi_due_date?->format('Y-m-d')) }}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('rfi_due_date') border-red-500 @enderror">
+                            @error('rfi_due_date')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div id="rfi_request_date" style="display: none;">
+                            <label for="rfi_request_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                RFI Request Date
+                            </label>
+                            <input type="date" 
+                                   id="rfi_request_date" 
+                                   name="rfi_request_date" 
+                                   value="{{ old('rfi_request_date', $project->rfi_request_date?->format('Y-m-d')) }}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('rfi_request_date') border-red-500 @enderror">
+                            @error('rfi_request_date')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>  
+
+
                         <!-- Type -->
                         <div>
                             <label for="type" class="block text-sm font-medium text-gray-700 mb-2">

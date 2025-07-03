@@ -217,6 +217,28 @@
                                                 No Status
                                             </span>
                                         @endif
+
+                                        @if($project->status === 'RFI REQUESTED')
+                                          <div class="flex flex-col">
+                                            <span class="text-gray-500 text-sm">
+                                                 Request : {{ $project->rfi_request_date->format('M d, Y') }} 
+                                           
+                                            </span>
+                                            <span class=" text-gray-500 text-sm">
+                                                 Due : {{ $project->rfi_due_date->format('M d, Y') }} (
+                                                @if($project->daysUntilRFI() > 2)
+                                                    <span class="text-yellow-600 text-xs">Due in {{ $project->daysUntilRFI() }} days</span>
+                                                @elseif($project->daysUntilRFI() > 0 && $project->daysUntilRFI() <= 2)
+                                                    <span class="text-red-500 font-bold text-xs">Due in {{ $project->daysUntilRFI() }} days</span>
+                                                @elseif($project->daysUntilRFI() === 0) 
+                                                    <span class="text-red-500 font-bold text-xs">Due today</span>
+                                                @else
+                                                    <span class="text-red-500 font-bold text-xs">Overdue</span>
+                                                @endif
+                                                    )
+                                            </span>
+                                        </div>
+                                        @endif
                                  
                                     </div>
                                 </td>

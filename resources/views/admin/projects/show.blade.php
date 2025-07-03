@@ -63,6 +63,14 @@
                                     <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-{{ $project->getStatusColor() }}-100 text-{{ $project->getStatusColor() }}-800">
                                         {{ $project->status }}
                                     </span>
+                                    @if($project->status === 'RFI REQUESTED')
+                                        <span class="text-gray-500 text-sm">
+                                            Request date : {{ $project->rfi_request_date->format('M d, Y') }} 
+                                        </span>
+                                        <span class="text-gray-500 text-sm">
+                                            Due date : {{ $project->rfi_due_date->format('M d, Y') }} 
+                                        </span>
+                                    @endif
                                 @else
                                     <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                         No Status
