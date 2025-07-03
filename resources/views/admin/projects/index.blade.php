@@ -218,12 +218,14 @@
                                             </span>
                                         @endif
 
-                                        @if($project->status === 'RFI REQUESTED' && $project->rfi_request_date && $project->rfi_due_date)
+                                        @if($project->status === 'RFI REQUESTED' )
                                           <div class="flex flex-col">
+                                            @if($project->rfi_request_date)
                                             <span class="text-gray-500 text-sm">
                                                  Request : {{ $project->rfi_request_date->format('M d, Y') }} 
-                                           
                                             </span>
+                                            @endif      
+                                            @if($project->rfi_due_date)
                                             <span class=" text-gray-500 text-sm">
                                                  Due : {{ $project->rfi_due_date->format('M d, Y') }} (
                                                 @if($project->daysUntilRFI() > 2)
@@ -237,6 +239,7 @@
                                                 @endif
                                                     )
                                             </span>
+                                            @endif
                                         </div>
                                         @endif
                                  
