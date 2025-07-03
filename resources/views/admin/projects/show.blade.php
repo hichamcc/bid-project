@@ -64,12 +64,17 @@
                                         {{ $project->status }}
                                     </span>
                                     @if($project->status === 'RFI REQUESTED')
+                                        @if($project->rfi_request_date)
+                                    
                                         <span class="text-gray-500 text-sm">
                                             Request date : {{ $project->rfi_request_date->format('M d, Y') }} 
                                         </span>
+                                        @endif
+                                        @if($project->rfi_due_date)
                                         <span class="text-gray-500 text-sm">
                                             Due date : {{ $project->rfi_due_date->format('M d, Y') }} 
                                         </span>
+                                        @endif
                                     @endif
                                 @else
                                     <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
