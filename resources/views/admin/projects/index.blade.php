@@ -218,7 +218,7 @@
                                             </span>
                                         @endif
 
-                                        @if($project->status === 'RFI REQUESTED')
+                                        @if($project->status === 'RFI REQUESTED' && $project->rfi_request_date && $project->rfi_due_date)
                                           <div class="flex flex-col">
                                             <span class="text-gray-500 text-sm">
                                                  Request : {{ $project->rfi_request_date->format('M d, Y') }} 
