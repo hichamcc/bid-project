@@ -36,21 +36,54 @@ class ProjectController extends Controller
             $query->where('type', $request->type);
         }
 
-        if ($request->filled('due_filter')) {
-            switch ($request->due_filter) {
-                case 'overdue':
-                    $query->overdue();
-                    break;
-                case 'due_soon':
-                    $query->dueSoon();
-                    break;
-                case 'no_due_date':
-                    $query->whereNull('due_date');
-                    break;
-            }
+        // Filter by due date with new default logic
+        $dueFilter = $request->get('due_filter', 'current'); // Default to current projects
+        
+        switch ($dueFilter) {
+            case 'current':
+                // Current projects: due date today or in the future, or no due date
+                $query->where(function($q) {
+                    $q->whereDate('due_date', '>=', now())
+                      ->orWhereNull('due_date');
+                });
+                break;
+            case 'all':
+                // All projects - no filter applied
+                break;
+            case 'past':
+                // Past projects: due date in the past
+                $query->whereDate('due_date', '<', now());
+                break;
+            case 'overdue':
+                // Keep the existing overdue logic for backward compatibility
+                $query->overdue();
+                break;
+            case 'due_soon':
+                // Keep the existing due soon logic for backward compatibility
+                $query->dueSoon();
+                break;
         }
 
-        $projects = $query->orderBy('created_at', 'desc')->paginate(10);
+        // Handle sorting
+        $sortBy = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        
+        // Define sortable columns
+        $sortableColumns = [
+            'name' => 'name',
+            'status' => 'status',
+            'type' => 'type',
+            'due_date' => 'due_date',
+            'created_at' => 'created_at'
+        ];
+        
+        if (array_key_exists($sortBy, $sortableColumns)) {
+            $query->orderBy($sortableColumns[$sortBy], $sortDirection);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $projects = $query->paginate(10);
 
         // Get filter options
         $statuses = Status::all();
