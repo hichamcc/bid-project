@@ -52,10 +52,11 @@ class ProjectController extends Controller
         switch ($dueFilter) {
             case 'current':
                 // Current projects: due date today or in the future, or no due date
+                // Exclude SUBMITTED and DECLINED projects
                 $query->where(function($q) {
                     $q->whereDate('due_date', '>=', now())
                       ->orWhereNull('due_date');
-                });
+                })->whereNotIn('status', ['SUBMITTED', 'DECLINED']);
                 break;
             case 'all':
                 // All projects - no filter applied
