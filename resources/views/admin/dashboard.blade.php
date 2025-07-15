@@ -160,7 +160,7 @@
                                                     </a>
                                                 </p>
                                                 <div class="mt-2 text-sm text-gray-700">
-                                                    "{{ Str::limit($activity->remark, 100) }}"
+                                                    {{ Str::substr($activity->remark, 0, 200) }}{{ strlen($activity->remark) > 200 ? '...' : '' }}
                                                 </div>
                                             </div>
                                             <div class="text-right text-sm whitespace-nowrap text-gray-500">
