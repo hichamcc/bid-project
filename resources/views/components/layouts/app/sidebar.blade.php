@@ -9,7 +9,7 @@
                 <x-phosphor-x aria-hidden="true" width="20" height="20" />
             </x-sidebar.toggle>
 
-            @if (auth()->user()->isAdmin() || auth()->user()->isHeadEstimator())
+            @if (auth()->user()->isAdmin() || auth()->user()->isHeadEstimator() || auth()->user()->isBidCoordinator())
             <a href="{{ route('admin.dashboard') }}" class="mr-5 flex items-center space-x-2">
                 <x-app-logo />
             </a>

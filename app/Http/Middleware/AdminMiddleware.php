@@ -10,7 +10,7 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || !auth()->user()->role === 'admin' || !auth()->user()->role === 'head_estimator') {
+        if (!auth()->check() || !auth()->user()->role === 'admin' || !auth()->user()->role === 'head_estimator' || !auth()->user()->role === 'bid_coordinator') {
             abort(403);
         }
 

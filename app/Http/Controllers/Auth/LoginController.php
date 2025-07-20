@@ -40,7 +40,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        if (auth()->user()->isAdmin() || auth()->user()->isHeadEstimator()) {
+        if (auth()->user()->isAdmin() || auth()->user()->isHeadEstimator() || auth()->user()->isBidCoordinator()) {
             return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 

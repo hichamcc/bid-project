@@ -34,6 +34,8 @@
                             <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="head_estimator" {{ request('role') === 'head_estimator' ? 'selected' : '' }}>Head Estimator</option>
                             <option value="estimator" {{ request('role') === 'estimator' ? 'selected' : '' }}>Estimator</option>
+                            <option value="bid_coordinator" {{ request('role') === 'bid_coordinator' ? 'selected' : '' }}>Bid Coordinator</option>
+
                         </select>
                     </div>
                     <button type="submit" 
@@ -107,6 +109,7 @@
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                         @if($user->isAdmin()) bg-red-100 text-red-800
                                         @elseif($user->isHeadEstimator()) bg-purple-100 text-purple-800
+                                        @elseif($user->isBidCoordinator()) bg-blue-100 text-blue-800
                                         @else bg-green-100 text-green-800 @endif">
                                         {{ ucfirst(str_replace('_', ' ', $user->role)) }}
                                     </span>

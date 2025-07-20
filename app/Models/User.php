@@ -76,6 +76,12 @@ class User extends Authenticatable
         return $this->role === 'head_estimator';
     }
 
+    public function isBidCoordinator(): bool 
+    {
+        return $this->role === 'bid_coordinator';
+    }
+    
+
         /**
      * Get projects assigned to this user
      */

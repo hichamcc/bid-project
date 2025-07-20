@@ -68,6 +68,7 @@
                             <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="head_estimator" {{ old('role', $user->role) === 'head_estimator' ? 'selected' : '' }}>Head Estimator</option>
                             <option value="estimator" {{ old('role', $user->role) === 'estimator' ? 'selected' : '' }}>Estimator</option>
+                            <option value="bid_coordinator" {{ old('role') === 'bid_coordinator' ? 'selected' : '' }}>Bid Coordinator</option>
                         </select>
                         @error('role')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

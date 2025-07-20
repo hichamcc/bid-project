@@ -42,7 +42,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'role' => 'required|in:admin,estimator,head_estimator',
+            'role' => 'required|in:admin,estimator,head_estimator,bid_coordinator',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -72,7 +72,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => 'required|in:admin,estimator,head_estimator',
+            'role' => 'required|in:admin,estimator,head_estimator,bid_coordinator',
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
