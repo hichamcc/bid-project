@@ -46,7 +46,7 @@ class ProjectController extends Controller
                 $query->where(function($q) {
                     $q->whereDate('due_date', '>=', now())
                       ->orWhereNull('due_date');
-                })->whereNotIn('status', ['SUBMITTED', 'DECLINED']);
+                })->whereNotIn('status', ['SUBMITTED', 'DECLINED','GC NONRESPONSIVE!!']);
                 break;
             case 'all':
                 // All projects - no filter applied
@@ -209,10 +209,10 @@ class ProjectController extends Controller
         $overdueProjects = Project::where('assigned_to', $userId)->overdue()->count();
         $dueSoonProjects = Project::where('assigned_to', $userId)->dueSoon()->count();
         $completedProjects = Project::where('assigned_to', $userId)
-                                   ->where('status', 'completed')
+                                   ->where('status', 'COMPLETED')
                                    ->count();
         $inProgressProjects = Project::where('assigned_to', $userId)
-                                    ->where('status', 'in_progress')
+                                    ->where('status', 'IN PROGRESS')
                                     ->count();
 
         // Recent projects

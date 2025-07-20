@@ -56,7 +56,7 @@ class ProjectController extends Controller
                 $query->where(function($q) {
                     $q->whereDate('due_date', '>=', now())
                       ->orWhereNull('due_date');
-                })->whereNotIn('status', ['SUBMITTED', 'DECLINED']);
+                })->whereNotIn('status', ['SUBMITTED', 'DECLINED','GC NONRESPONSIVE!!']);
                 break;
             case 'all':
                 // All projects - no filter applied

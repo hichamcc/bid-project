@@ -348,25 +348,21 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             @if($project->due_date)
-                                                <div class="flex flex-col">
-                                                    <span class="{{ $project->due_date->isPast() ? 'text-red-600 font-medium' : ($project->due_date->diffInDays() <= 3 ? 'text-yellow-600 font-medium' : '') }}">
-                                                        {{ $project->due_date->format('M d, Y') }}
-                                                    </span>
-                                                    @if($project->due_date->isPast())
-                                                        <span class="text-xs text-red-500">
-                                                            {{ $project->due_date->diffInDays() }} days overdue
-                                                        </span>
-                                                    @elseif($project->due_date->isToday())
-                                                        <span class="text-xs text-yellow-500">Due today</span>
-                                                    @elseif($project->due_date->diffInDays() <= 3)
-                                                        <span class="text-xs text-yellow-500">
-                                                            {{ $project->due_date->diffInDays() }} days left
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            @else
-                                                <span class="text-gray-400">No due date</span>
-                                            @endif
+                                            <div class="flex flex-col">
+                                                <span class="{{ $project->isOverdue() ? 'text-red-600 font-semibold' : '' }}">
+                                                    {{ $project->due_date->format('M d, Y') }}
+                                                </span>
+                                                @if($project->isOverdue())
+                                                    <span class="text-red-500 text-xs">Overdue</span>
+                                                @elseif($project->daysUntilDue() !== null  && $project->daysUntilDue() >= 3)
+                                                    <span class="text-yellow-600 text-xs">Due in {{ $project->daysUntilDue() }} days</span>
+                                                @elseif($project->daysUntilDue() !== null  && $project->daysUntilDue() > 0)
+                                                    <span class="text-red-500 text-xs font-bold">Due in {{ $project->daysUntilDue() }} days</span>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <span class="text-gray-400">No due date</span>
+                                        @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             @if($project->budget)

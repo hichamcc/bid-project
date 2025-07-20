@@ -25,57 +25,9 @@
             </div>
         </div>
 
-        <!-- Priority Alerts -->
-        @if($overdueProjects > 0 || $dueSoonProjects > 0)
-            <div class="mb-8">
-                @if($overdueProjects > 0)
-                    <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4 rounded-r-lg">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-red-700">
-                                    <strong>{{ $overdueProjects }} {{ Str::plural('project', $overdueProjects) }} overdue!</strong> 
-                                    These require immediate attention.
-                                    <a href="{{ route('estimator.projects.index', ['due_filter' => 'overdue']) }}" 
-                                       class="font-medium underline hover:text-red-800 ml-2">
-                                        View overdue projects →
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
-                @if($dueSoonProjects > 0)
-                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-yellow-700">
-                                    <strong>{{ $dueSoonProjects }} {{ Str::plural('project', $dueSoonProjects) }} due soon.</strong> 
-                                    Plan your work accordingly.
-                                    <a href="{{ route('estimator.projects.index', ['due_filter' => 'due_soon']) }}" 
-                                       class="font-medium underline hover:text-yellow-800 ml-2">
-                                        View due soon →
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            </div>
-        @endif
 
         <!-- Performance Stats Grid -->
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <!-- Total Projects -->
             <div class="bg-white overflow-hidden shadow-lg rounded-xl">
                 <div class="p-6">
@@ -114,78 +66,7 @@
                 </div>
             </div>
 
-            <!-- Overdue -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-xl">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-2xl font-bold text-gray-900">{{ number_format($overdueProjects) }}</p>
-                            <p class="text-sm font-medium text-gray-500">Overdue</p>
-                        </div>
-                    </div>
-                    @if($overdueProjects > 0)
-                        <div class="mt-3">
-                            <a href="{{ route('estimator.projects.index', ['due_filter' => 'overdue']) }}" 
-                               class="text-xs text-red-600 hover:text-red-800 font-medium">
-                                Review now →
-                            </a>
-                        </div>
-                    @endif
-                </div>
-            </div>
 
-            <!-- Due Soon -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-xl">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-2xl font-bold text-gray-900">{{ number_format($dueSoonProjects) }}</p>
-                            <p class="text-sm font-medium text-gray-500">Due Soon</p>
-                        </div>
-                    </div>
-                    @if($dueSoonProjects > 0)
-                        <div class="mt-3">
-                            <a href="{{ route('estimator.projects.index', ['due_filter' => 'due_soon']) }}" 
-                               class="text-xs text-yellow-600 hover:text-yellow-800 font-medium">
-                                Plan ahead →
-                            </a>
-                        </div>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Completed -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-xl">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-2xl font-bold text-gray-900">{{ number_format($completedProjects) }}</p>
-                            <p class="text-sm font-medium text-gray-500">Completed</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Main Content Grid -->
@@ -236,16 +117,11 @@
                                         @endif
                                         
                                         @if($project->due_date)
-                                            <span class="flex items-center {{ $project->due_date->isPast() ? 'text-red-600' : (intval($project->due_date->diffForHumans() ) <= 3 ? 'text-yellow-600' : '') }}">
+                                            <span class="flex items-center">
                                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                 </svg>
-                                                Due {{ $project->due_date->format('M d') }}
-                                                @if($project->due_date->isPast())
-                                                    ({{ intval($project->due_date->diffForHumans() ) }} days overdue)
-                                                @elseif($project->due_date->diffInDays() <= 3)
-                                                    ({{ intval($project->due_date->diffForHumans() ) }} days left)
-                                                @endif
+                                                Due {{ $project->due_date->format('M d, Y') }}
                                             </span>
                                         @endif
 
@@ -362,25 +238,6 @@
                             View All Projects
                         </a>
                         
-                        @if($overdueProjects > 0)
-                            <a href="{{ route('estimator.projects.index', ['due_filter' => 'overdue']) }}" 
-                               class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg text-sm font-medium transition duration-150 flex items-center justify-center">
-                                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-                                </svg>
-                                Review Overdue ({{ $overdueProjects }})
-                            </a>
-                        @endif
-                        
-                        @if($dueSoonProjects > 0)
-                            <a href="{{ route('estimator.projects.index', ['due_filter' => 'due_soon']) }}" 
-                               class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-3 rounded-lg text-sm font-medium transition duration-150 flex items-center justify-center">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Due Soon ({{ $dueSoonProjects }})
-                            </a>
-                        @endif
 
                         @if($inProgressProjects > 0)
                             <a href="{{ route('estimator.projects.index', ['status' => 'in_progress']) }}" 
