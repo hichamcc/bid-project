@@ -24,6 +24,11 @@
                 <x-navlist.item before="phosphor-list-checks" href="{{ route('admin.projects.index') }}" :current="request()->routeIs('admin.projects.index')">
                     {{ __('Projects') }}
                 </x-navlist.item>
+                @if (auth()->user()->isAdmin() || auth()->user()->isBidCoordinator())
+                <x-navlist.item before="phosphor-file-text" href="{{ route('admin.proposals.index') }}" :current="request()->routeIs('admin.proposals.*')">
+                    {{ __('Proposals') }}
+                </x-navlist.item>
+                @endif
             </x-navlist.group>
             @endif
             @if (auth()->user()->isAdmin())

@@ -57,11 +57,19 @@ class Project extends Model
     }
 
     /**
-     * Get the user assigned to this project
+     * Get the remarks for this project
      */
     public function remarks(): HasMany
     {
         return $this->hasMany(ProjectRemark::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Get the proposals for this project
+     */
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(Proposal::class)->orderBy('created_at', 'desc');
     }
 
     /**

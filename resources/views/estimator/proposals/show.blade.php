@@ -1,0 +1,1 @@
+{{-- This view has been removed as proposals are now only managed by admin and bid_coordinator roles --}}

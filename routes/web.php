@@ -1,11 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\ProposalController as AdminProposalController;
 use App\Http\Controllers\Admin\StatusController;    
 use App\Http\Controllers\Admin\TypeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Estimator\ProjectController as EstimatorProjectController; 
+use App\Http\Controllers\Estimator\ProjectController as EstimatorProjectController;
 use App\Http\Controllers\Admin\GcController;
 use App\Http\Controllers\Settings;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('projects', ProjectController::class);
     Route::post('projects/{project}/remarks', [ProjectController::class, 'addRemark'])->name('projects.remarks.store');
+});
+
+Route::middleware(['auth', 'role:admin,bid_coordinator'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('proposals', AdminProposalController::class);
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
