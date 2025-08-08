@@ -138,12 +138,7 @@
                         <p class="text-2xl font-bold text-green-900">
                             {{ $proposal->price_ve ? '$' . number_format($proposal->price_ve, 2) : 'Not set' }}
                         </p>
-                        @if($proposal->getVESavings())
-                            <p class="text-sm text-green-600 mt-1">
-                                Savings: ${{ number_format($proposal->getVESavings(), 2) }}
-                                ({{ number_format($proposal->getVESavingsPercentage(), 1) }}%)
-                            </p>
-                        @endif
+                     
                     </div>
 
                     <div class="bg-purple-50 p-4 rounded-lg">
@@ -154,43 +149,7 @@
                     </div>
                 </div>
 
-                <!-- Price Comparison -->
-                @if($proposal->price_ve && $proposal->gc_price)
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <h4 class="text-md font-semibold text-gray-900 mb-2">Price Comparison</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-600">Difference (Our VE vs GC)</label>
-                                @php
-                                    $difference = $proposal->price_ve - $proposal->gc_price;
-                                    $isLower = $difference < 0;
-                                @endphp
-                                <p class="text-lg font-semibold {{ $isLower ? 'text-green-600' : 'text-red-600' }}">
-                                    {{ $isLower ? '-' : '+' }}${{ number_format(abs($difference), 2) }}
-                                    <span class="text-sm">
-                                        ({{ $isLower ? 'Lower' : 'Higher' }} than GC)
-                                    </span>
-                                </p>
-                            </div>
-                            
-                            @if($proposal->price_original)
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-600">Difference (Original vs GC)</label>
-                                    @php
-                                        $originalDiff = $proposal->price_original - $proposal->gc_price;
-                                        $originalLower = $originalDiff < 0;
-                                    @endphp
-                                    <p class="text-lg font-semibold {{ $originalLower ? 'text-green-600' : 'text-red-600' }}">
-                                        {{ $originalLower ? '-' : '+' }}${{ number_format(abs($originalDiff), 2) }}
-                                        <span class="text-sm">
-                                            ({{ $originalLower ? 'Lower' : 'Higher' }} than GC)
-                                        </span>
-                                    </p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                @endif
+             
             </div>
         </div>
     </div>
