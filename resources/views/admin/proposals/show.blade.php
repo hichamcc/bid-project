@@ -83,6 +83,11 @@
                     
                     <div class="space-y-4">
                         <div>
+                            <label class="block text-sm font-medium text-gray-600">Job Number</label>
+                            <p class="text-sm text-gray-900">{{ $proposal->job_number ?? '-' }}</p>
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-600">Submission Date</label>
                             <p class="text-sm text-gray-900">
                                 {{ $proposal->submission_date?->format('M d, Y') ?? 'Not set' }}
@@ -90,12 +95,44 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-600">Result</label>
-                            @if($proposal->result === 'win')
+                            <label class="block text-sm font-medium text-gray-600">Responded</label>
+                            @if($proposal->responded === 'yes')
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                    Yes
+                                </span>
+                            @elseif($proposal->responded === 'no')
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                    No
+                                </span>
+                            @else
+                                <span class="text-gray-400">Not set</span>
+                            @endif
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">Result GC</label>
+                            @if($proposal->result_gc === 'win')
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                     Win
                                 </span>
-                            @elseif($proposal->result === 'loss')
+                            @elseif($proposal->result_gc === 'loss')
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    Loss
+                                </span>
+                            @else
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Pending
+                                </span>
+                            @endif
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600">Result ART</label>
+                            @if($proposal->result_art === 'win')
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    Win
+                                </span>
+                            @elseif($proposal->result_art === 'loss')
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                     Loss
                                 </span>
@@ -127,14 +164,14 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-blue-50 p-4 rounded-lg">
-                        <label class="block text-sm font-medium text-blue-600 mb-1">Price Original</label>
+                        <label class="block text-sm font-medium text-blue-600 mb-1">ARTELYE Price</label>
                         <p class="text-2xl font-bold text-blue-900">
                             {{ $proposal->price_original ? '$' . number_format($proposal->price_original, 2) : 'Not set' }}
                         </p>
                     </div>
 
                     <div class="bg-green-50 p-4 rounded-lg">
-                        <label class="block text-sm font-medium text-green-600 mb-1">Price VE</label>
+                        <label class="block text-sm font-medium text-green-600 mb-1">ARTELYE VE Price</label>
                         <p class="text-2xl font-bold text-green-900">
                             {{ $proposal->price_ve ? '$' . number_format($proposal->price_ve, 2) : 'Not set' }}
                         </p>
@@ -149,7 +186,96 @@
                     </div>
                 </div>
 
-             
+            </div>
+        </div>
+
+        <!-- Follow-up Information -->
+        <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Follow-up Tracking</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- First Follow-up -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="text-md font-medium text-gray-900 mb-3">First Follow-up</h4>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Date</label>
+                                <p class="text-sm text-gray-900">
+                                    {{ $proposal->first_follow_up_date ? $proposal->first_follow_up_date->format('M d, Y') : '-' }}
+                                </p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Response</label>
+                                @if($proposal->first_follow_up_respond === 'yes')
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        Yes
+                                    </span>
+                                @elseif($proposal->first_follow_up_respond === 'no')
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        No
+                                    </span>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Second Follow-up -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="text-md font-medium text-gray-900 mb-3">Second Follow-up</h4>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Date</label>
+                                <p class="text-sm text-gray-900">
+                                    {{ $proposal->second_follow_up_date ? $proposal->second_follow_up_date->format('M d, Y') : '-' }}
+                                </p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Response</label>
+                                @if($proposal->second_follow_up_respond === 'yes')
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        Yes
+                                    </span>
+                                @elseif($proposal->second_follow_up_respond === 'no')
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        No
+                                    </span>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Third Follow-up -->
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="text-md font-medium text-gray-900 mb-3">Third Follow-up</h4>
+                        <div class="space-y-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Date</label>
+                                <p class="text-sm text-gray-900">
+                                    {{ $proposal->third_follow_up_date ? $proposal->third_follow_up_date->format('M d, Y') : '-' }}
+                                </p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Response</label>
+                                @if($proposal->third_follow_up_respond === 'yes')
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        Yes
+                                    </span>
+                                @elseif($proposal->third_follow_up_respond === 'no')
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                                        No
+                                    </span>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

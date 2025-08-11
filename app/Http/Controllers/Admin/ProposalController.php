@@ -18,18 +18,38 @@ class ProposalController extends Controller
 
         // Search functionality
         if ($request->filled('search')) {
-            $query->whereHas('project', function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('gc', 'like', '%' . $request->search . '%');
+            $query->where(function($q) use ($request) {
+                $q->whereHas('project', function($subQ) use ($request) {
+                    $subQ->where('name', 'like', '%' . $request->search . '%')
+                         ->orWhere('gc', 'like', '%' . $request->search . '%');
+                })->orWhere('job_number', 'like', '%' . $request->search . '%');
             });
         }
 
-        // Filter by result
-        if ($request->filled('result')) {
-            if ($request->result === 'pending') {
-                $query->whereNull('result');
+        // Filter by responded status
+        if ($request->filled('responded')) {
+            $query->where('responded', $request->responded);
+        }
+
+        // Filter by result_gc
+        if ($request->filled('result_gc')) {
+            if ($request->result_gc === 'pending') {
+                $query->where(function($q) {
+                    $q->whereNull('result_gc')->orWhere('result_gc', 'pending');
+                });
             } else {
-                $query->where('result', $request->result);
+                $query->where('result_gc', $request->result_gc);
+            }
+        }
+
+        // Filter by result_art
+        if ($request->filled('result_art')) {
+            if ($request->result_art === 'pending') {
+                $query->where(function($q) {
+                    $q->whereNull('result_art')->orWhere('result_art', 'pending');
+                });
+            } else {
+                $query->where('result_art', $request->result_art);
             }
         }
 
@@ -65,7 +85,20 @@ class ProposalController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDirection = $request->get('sort_direction', 'desc');
         
-        $allowedSorts = ['created_at', 'submission_date', 'price_original', 'price_ve', 'gc_price', 'result'];
+        $allowedSorts = [
+            'created_at', 
+            'submission_date', 
+            'job_number',
+            'responded',
+            'first_follow_up_date',
+            'second_follow_up_date',
+            'third_follow_up_date',
+            'price_original', 
+            'price_ve', 
+            'gc_price', 
+            'result_gc',
+            'result_art'
+        ];
         if (in_array($sortBy, $allowedSorts)) {
             $query->orderBy($sortBy, $sortDirection);
         } else {
@@ -99,10 +132,19 @@ class ProposalController extends Controller
     {
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
+            'job_number' => 'nullable|string|max:255',
             'submission_date' => 'nullable|date',
+            'responded' => 'nullable|in:yes,no',
+            'first_follow_up_date' => 'nullable|date',
+            'first_follow_up_respond' => 'nullable|in:yes,no',
+            'second_follow_up_date' => 'nullable|date',
+            'second_follow_up_respond' => 'nullable|in:yes,no',
+            'third_follow_up_date' => 'nullable|date',
+            'third_follow_up_respond' => 'nullable|in:yes,no',
             'price_original' => 'nullable|numeric|min:0',
             'price_ve' => 'nullable|numeric|min:0',
-            'result' => 'nullable|in:pending,win,loss',
+            'result_gc' => 'nullable|in:pending,win,loss',
+            'result_art' => 'nullable|in:pending,win,loss',
             'gc_price' => 'nullable|numeric|min:0',
         ]);
 
@@ -144,10 +186,19 @@ class ProposalController extends Controller
     {
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
+            'job_number' => 'nullable|string|max:255',
             'submission_date' => 'nullable|date',
+            'responded' => 'nullable|in:yes,no',
+            'first_follow_up_date' => 'nullable|date',
+            'first_follow_up_respond' => 'nullable|in:yes,no',
+            'second_follow_up_date' => 'nullable|date',
+            'second_follow_up_respond' => 'nullable|in:yes,no',
+            'third_follow_up_date' => 'nullable|date',
+            'third_follow_up_respond' => 'nullable|in:yes,no',
             'price_original' => 'nullable|numeric|min:0',
             'price_ve' => 'nullable|numeric|min:0',
-            'result' => 'nullable|in:pending,win,loss',
+            'result_gc' => 'nullable|in:pending,win,loss',
+            'result_art' => 'nullable|in:pending,win,loss',
             'gc_price' => 'nullable|numeric|min:0',
         ]);
 

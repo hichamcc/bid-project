@@ -38,7 +38,7 @@ class DashboardController extends Controller
         // Recent Activities (last 15 remarks)
         $recentActivities = ProjectRemark::with(['user', 'project'])
                                         ->orderBy('created_at', 'desc')
-                                        ->limit(15)
+                                        ->limit(10)
                                         ->get();
 
         // Projects by Status

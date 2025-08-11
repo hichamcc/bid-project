@@ -12,15 +12,27 @@ class Proposal extends Model
 
     protected $fillable = [
         'project_id',
+        'job_number',
         'submission_date',
+        'responded',
+        'first_follow_up_date',
+        'first_follow_up_respond',
+        'second_follow_up_date',
+        'second_follow_up_respond',
+        'third_follow_up_date',
+        'third_follow_up_respond',
         'price_original',
         'price_ve',
-        'result',
+        'result_gc',
+        'result_art',
         'gc_price',
     ];
 
     protected $casts = [
         'submission_date' => 'date',
+        'first_follow_up_date' => 'date',
+        'second_follow_up_date' => 'date',
+        'third_follow_up_date' => 'date',
         'price_original' => 'decimal:2',
         'price_ve' => 'decimal:2', 
         'gc_price' => 'decimal:2',
@@ -35,23 +47,43 @@ class Proposal extends Model
     }
 
     /**
-     * Get result badge color
+     * Get GC result badge color
      */
-    public function getResultColor(): string
+    public function getGcResultColor(): string
     {
-        return match($this->result) {
+        return match($this->result_gc) {
             'win' => 'green',
             'loss' => 'red',
-            default => 'gray'
+            default => 'yellow'
         };
     }
 
     /**
-     * Get formatted result
+     * Get ART result badge color  
      */
-    public function getFormattedResult(): string
+    public function getArtResultColor(): string
     {
-        return $this->result ? ucfirst($this->result) : 'Pending';
+        return match($this->result_art) {
+            'win' => 'green',
+            'loss' => 'red',
+            default => 'yellow'
+        };
+    }
+
+    /**
+     * Get formatted GC result
+     */
+    public function getFormattedGcResult(): string
+    {
+        return $this->result_gc ? ucfirst($this->result_gc) : 'Pending';
+    }
+
+    /**
+     * Get formatted ART result
+     */
+    public function getFormattedArtResult(): string
+    {
+        return $this->result_art ? ucfirst($this->result_art) : 'Pending';
     }
 
     /**
@@ -77,26 +109,58 @@ class Proposal extends Model
     }
 
     /**
-     * Scope for winning proposals
+     * Scope for GC winning proposals
      */
-    public function scopeWins($query)
+    public function scopeGcWins($query)
     {
-        return $query->where('result', 'win');
+        return $query->where('result_gc', 'win');
     }
 
     /**
-     * Scope for losing proposals
+     * Scope for GC losing proposals
      */
-    public function scopeLosses($query)
+    public function scopeGcLosses($query)
     {
-        return $query->where('result', 'loss');
+        return $query->where('result_gc', 'loss');
     }
 
     /**
-     * Scope for proposals with results
+     * Scope for ART winning proposals
      */
-    public function scopeWithResults($query)
+    public function scopeArtWins($query)
     {
-        return $query->whereNotNull('result');
+        return $query->where('result_art', 'win');
+    }
+
+    /**
+     * Scope for ART losing proposals
+     */
+    public function scopeArtLosses($query)
+    {
+        return $query->where('result_art', 'loss');
+    }
+
+    /**
+     * Scope for proposals with GC results
+     */
+    public function scopeWithGcResults($query)
+    {
+        return $query->whereNotNull('result_gc');
+    }
+
+    /**
+     * Scope for proposals with ART results
+     */
+    public function scopeWithArtResults($query)
+    {
+        return $query->whereNotNull('result_art');
+    }
+
+    /**
+     * Get formatted response status
+     */
+    public function getFormattedResponse(string $field): string
+    {
+        return $this->$field ? ucfirst($this->$field) : '-';
     }
 }

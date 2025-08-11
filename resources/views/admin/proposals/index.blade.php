@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="py-12">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="max-w-10xl mx-auto sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
             <div class="p-6 bg-white border-b border-gray-200">
@@ -27,26 +27,25 @@
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
             <div class="p-6">
                 <form method="GET" action="{{ route('admin.proposals.index') }}" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
                             <input type="text" 
                                    id="search" 
                                    name="search" 
                                    value="{{ request('search') }}"
-                                   placeholder="Search by project name or GC..."
+                                   placeholder="Search by project name, GC, or job number..."
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
                         
                         <div>
-                            <label for="result" class="block text-sm font-medium text-gray-700 mb-1">Result</label>
-                            <select id="result" 
-                                    name="result" 
+                            <label for="responded" class="block text-sm font-medium text-gray-700 mb-1">Responded</label>
+                            <select id="responded" 
+                                    name="responded" 
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">All Results</option>
-                                <option value="pending" {{ request('result') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="win" {{ request('result') == 'win' ? 'selected' : '' }}>Win</option>
-                                <option value="loss" {{ request('result') == 'loss' ? 'selected' : '' }}>Loss</option>
+                                <option value="">All Status</option>
+                                <option value="yes" {{ request('responded') == 'yes' ? 'selected' : '' }}>Responded</option>
+                                <option value="no" {{ request('responded') == 'no' ? 'selected' : '' }}>Not Responded</option>
                             </select>
                         </div>
 
@@ -61,6 +60,32 @@
                                         {{ $estimator->name }}
                                     </option>
                                 @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="result_gc" class="block text-sm font-medium text-gray-700 mb-1">Result GC</label>
+                            <select id="result_gc" 
+                                    name="result_gc" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">All GC Results</option>
+                                <option value="pending" {{ request('result_gc') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="win" {{ request('result_gc') == 'win' ? 'selected' : '' }}>Win</option>
+                                <option value="loss" {{ request('result_gc') == 'loss' ? 'selected' : '' }}>Loss</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="result_art" class="block text-sm font-medium text-gray-700 mb-1">Result ART</label>
+                            <select id="result_art" 
+                                    name="result_art" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">All ART Results</option>
+                                <option value="pending" {{ request('result_art') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="win" {{ request('result_art') == 'win' ? 'selected' : '' }}>Win</option>
+                                <option value="loss" {{ request('result_art') == 'loss' ? 'selected' : '' }}>Loss</option>
                             </select>
                         </div>
 
@@ -80,7 +105,7 @@
         </div>
 
         <!-- Results Summary -->
-        @if(request()->hasAny(['search', 'result', 'estimator_id']))
+        @if(request()->hasAny(['search', 'responded', 'result_gc', 'result_art', 'estimator_id']))
             <div class="bg-blue-50 border border-blue-200 px-4 py-3 rounded mb-6">
                 <p class="text-blue-800">
                     Showing {{ $proposals->total() }} filtered result(s)
@@ -118,9 +143,12 @@
                                 </a>
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Follow-ups
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'price_original', 'sort_direction' => request('sort_by') == 'price_original' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
                                    class="group inline-flex items-center hover:text-gray-700">
-                                    Price Original
+                                    ARTELYE Price
                                     @if(request('sort_by') == 'price_original')
                                         @if(request('sort_direction', 'desc') == 'asc')
                                             <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -137,7 +165,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'price_ve', 'sort_direction' => request('sort_by') == 'price_ve' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
                                    class="group inline-flex items-center hover:text-gray-700">
-                                    Price VE
+                                    ARTELYE VE Price
                                     @if(request('sort_by') == 'price_ve')
                                         @if(request('sort_direction', 'desc') == 'asc')
                                             <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
@@ -169,10 +197,27 @@
                                 </a>
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'result', 'sort_direction' => request('sort_by') == 'result' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'result_gc', 'sort_direction' => request('sort_by') == 'result_gc' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
                                    class="group inline-flex items-center hover:text-gray-700">
-                                    Result
-                                    @if(request('sort_by') == 'result')
+                                    Result GC
+                                    @if(request('sort_by') == 'result_gc')
+                                        @if(request('sort_direction', 'desc') == 'asc')
+                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
+                                            </svg>
+                                        @else
+                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
+                                            </svg>
+                                        @endif
+                                    @endif
+                                </a>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'result_art', 'sort_direction' => request('sort_by') == 'result_art' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
+                                   class="group inline-flex items-center hover:text-gray-700">
+                                    Result ART
+                                    @if(request('sort_by') == 'result_art')
                                         @if(request('sort_direction', 'desc') == 'asc')
                                             <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
@@ -197,9 +242,51 @@
                                     <div class="text-sm font-medium text-gray-900">
                                         {{ $proposal->project->name }}
                                     </div>
+                                    @if($proposal->job_number)
+                                        <div class="text-xs text-gray-500">
+                                            Job #{{ $proposal->job_number }}
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ $proposal->submission_date?->format('M d, Y') ?? '-' }}
+                                    @if($proposal->submission_date)
+                                        <span class="px-2 py-1 text-xs rounded {{ $proposal->responded == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                            {{ $proposal->submission_date->format('M d, Y') }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400">-</span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-900">
+                                    <div class="space-y-1">
+                                        @if($proposal->first_follow_up_date)
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-xs text-gray-500">1st:</span>
+                                                <span class="px-2 py-1 text-xs rounded {{ $proposal->first_follow_up_respond == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                    {{ $proposal->first_follow_up_date->format('M d') }}
+                                                </span>
+                                            </div>
+                                        @endif
+                                        @if($proposal->second_follow_up_date)
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-xs text-gray-500">2nd:</span>
+                                                <span class="px-2 py-1 text-xs rounded {{ $proposal->second_follow_up_respond == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                    {{ $proposal->second_follow_up_date->format('M d') }}
+                                                </span>
+                                            </div>
+                                        @endif
+                                        @if($proposal->third_follow_up_date)
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-xs text-gray-500">3rd:</span>
+                                                <span class="px-2 py-1 text-xs rounded {{ $proposal->third_follow_up_respond == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                    {{ $proposal->third_follow_up_date->format('M d') }}
+                                                </span>
+                                            </div>
+                                        @endif
+                                        @if(!$proposal->first_follow_up_date && !$proposal->second_follow_up_date && !$proposal->third_follow_up_date)
+                                            <span class="text-gray-400 text-xs">No follow-ups</span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     {{ $proposal->price_original ? '$' . number_format($proposal->price_original, 2) : '-' }}
@@ -211,11 +298,26 @@
                                     {{ $proposal->gc_price ? '$' . number_format($proposal->gc_price, 2) : '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($proposal->result === 'win')
+                                    @if($proposal->result_gc === 'win')
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                             Win
                                         </span>
-                                    @elseif($proposal->result === 'loss')
+                                    @elseif($proposal->result_gc === 'loss')
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                            Loss
+                                        </span>
+                                    @else
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                            Pending
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @if($proposal->result_art === 'win')
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            Win
+                                        </span>
+                                    @elseif($proposal->result_art === 'loss')
                                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                                             Loss
                                         </span>
@@ -245,7 +347,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                <td colspan="9" class="px-6 py-4 text-center text-gray-500">
                                     No proposals found.
                                 </td>
                             </tr>

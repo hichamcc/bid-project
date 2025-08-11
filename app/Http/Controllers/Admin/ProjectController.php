@@ -23,9 +23,7 @@ class ProjectController extends Controller
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
                   ->orWhere('gc', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('otherGCs', function ($query) use ($request) {
-                    $query->where('name', 'like', '%' . $request->search . '%');
-                  })
+                  ->orWhereJsonContains('other_gc', $request->search)
                   ->orWhere('rfi', 'like', '%' . $request->search . '%');
             });
         }
