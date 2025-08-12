@@ -29,6 +29,11 @@
                     {{ __('Proposals') }}
                 </x-navlist.item>
                 @endif
+                @if (auth()->user()->isAdmin() || auth()->user()->isBidCoordinator() || auth()->user()->isHeadEstimator())
+                <x-navlist.item before="phosphor-chart-bar" href="{{ route('admin.progress.index') }}" :current="request()->routeIs('admin.progress.*')">
+                    {{ __('Progress') }}
+                </x-navlist.item>
+                @endif
             </x-navlist.group>
             @endif
             @if (auth()->user()->isAdmin())
@@ -60,6 +65,9 @@
                 <x-navlist.group :heading="__('Estimator')">
                     <x-navlist.item before="phosphor-list-checks" href="{{ route('estimator.projects.index') }}" :current="request()->routeIs('estimator.projects.index')">
                         {{ __('Projects') }}
+                    </x-navlist.item>
+                    <x-navlist.item before="phosphor-chart-bar" href="{{ route('estimator.progress.index') }}" :current="request()->routeIs('estimator.progress.*')">
+                        {{ __('Progress') }}
                     </x-navlist.item>
                 </x-navlist.group>
             @endif  

@@ -73,6 +73,14 @@ class Project extends Model
     }
 
     /**
+     * Get the progress entries for this project
+     */
+    public function progress(): HasMany
+    {
+        return $this->hasMany(Progress::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
      * Check if project is overdue
      */
     public function isOverdue(): bool

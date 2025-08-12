@@ -50,6 +50,10 @@ Route::middleware(['auth', 'role:admin,bid_coordinator'])->prefix('admin')->name
     Route::resource('proposals', AdminProposalController::class);
 });
 
+Route::middleware(['auth', 'role:admin,bid_coordinator,head_estimator'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('progress', \App\Http\Controllers\Admin\ProgressController::class);
+});
+
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('statuses', StatusController::class);
     Route::post('statuses/update-order', [StatusController::class, 'updateOrder'])->name('statuses.update-order');
@@ -85,5 +89,14 @@ Route::middleware(['auth', 'role:estimator,head_estimator'])->prefix('estimator'
     // Remarks
     Route::post('/projects/{project}/remarks', [EstimatorProjectController::class, 'storeRemark'])->name('projects.remarks.store');
     Route::delete('/remarks/{remark}', [EstimatorProjectController::class, 'deleteRemark'])->name('projects.remarks.destroy');
+    
+    // Progress
+    Route::get('/progress', [\App\Http\Controllers\Estimator\ProgressController::class, 'index'])->name('progress.index');
+    Route::get('/progress/create', [\App\Http\Controllers\Estimator\ProgressController::class, 'create'])->name('progress.create');
+    Route::post('/progress', [\App\Http\Controllers\Estimator\ProgressController::class, 'store'])->name('progress.store');
+    Route::get('/progress/{progress}', [\App\Http\Controllers\Estimator\ProgressController::class, 'show'])->name('progress.show');
+    Route::get('/progress/{progress}/edit', [\App\Http\Controllers\Estimator\ProgressController::class, 'edit'])->name('progress.edit');
+    Route::put('/progress/{progress}', [\App\Http\Controllers\Estimator\ProgressController::class, 'update'])->name('progress.update');
+    Route::delete('/progress/{progress}', [\App\Http\Controllers\Estimator\ProgressController::class, 'destroy'])->name('progress.destroy');
 });
 require __DIR__.'/auth.php';
