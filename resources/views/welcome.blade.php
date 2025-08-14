@@ -29,10 +29,19 @@
                     @if (Route::has('login'))
                         <div class="flex items-center space-x-4">
                             @auth
-                                <a href="{{ url('/dashboard') }}" 
+                            @if (auth()->user()->isAdmin() || auth()->user()->isHeadEstimator() || auth()->user()->isBidCoordinator())
+
+                                <a href="{{ url('/admin/dashboard') }}" 
                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
                                     Dashboard
                                 </a>
+                                @endif
+                                @if (auth()->user()->isEstimator())
+                                <a href="{{ url('/estimator/dashboard') }}" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
+                                 Dashboard
+                                </a>
+                             @endif
                             @else
                                 <a href="{{ route('login') }}" 
                                    class="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">

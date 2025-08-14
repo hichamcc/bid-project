@@ -94,7 +94,7 @@ class ProjectController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        $projects = $query->paginate(15);
+        $projects = $query->paginate(100);
         
         // Get filter options
         $statuses = Status::active()->ordered()->get();

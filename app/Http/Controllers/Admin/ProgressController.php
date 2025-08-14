@@ -83,7 +83,7 @@ class ProgressController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        $progress = $query->paginate(15);
+        $progress = $query->paginate(100);
         
         // Get filter options
         $projects = Project::orderBy('name')->get();

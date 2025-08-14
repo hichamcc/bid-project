@@ -105,7 +105,7 @@ class ProposalController extends Controller
             $query->orderBy('created_at', 'desc');
         }
 
-        $proposals = $query->paginate(10);
+        $proposals = $query->paginate(100);
         
         // Get filter options
         $projects = Project::orderBy('name')->get();
