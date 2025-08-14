@@ -43,6 +43,46 @@
                     <div class="p-6">
                         <h3 class="text-lg font-medium text-gray-900 mb-4">Project Details</h3>
                         
+                        <!-- GC Information -->
+                        <div class="mb-6">
+                            <h4 class="text-md font-medium text-gray-800 mb-3">General Contractor Information</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @if($project->gc)
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Primary GC</label>
+                                        <p class="text-gray-900">{{ $project->gc }}</p>
+                                    </div>
+                                @endif
+                                
+                                @if($project->other_gc && count($project->other_gc) > 0)
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Other GCs</label>
+                                        <p class="text-gray-900">{{ implode(', ', $project->other_gc) }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Scope Information -->
+                        @if($project->scope)
+                            <div class="mb-6">
+                                <h4 class="text-md font-medium text-gray-800 mb-3">Project Scope</h4>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <p class="text-gray-900 whitespace-pre-wrap">{{ $project->scope }}</p>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Additional Project Information -->
+                        @if($project->project_information)
+                            <div class="mb-6">
+                                <h4 class="text-md font-medium text-gray-800 mb-3">Additional Project Information</h4>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <p class="text-gray-900 whitespace-pre-wrap">{{ $project->project_information }}</p>
+                                </div>
+                            </div>
+                        @endif
+                        
                         @if($project->description)
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -233,6 +273,20 @@
                                 <div class="flex items-center justify-between">
                                     <span class="text-sm text-gray-500">Type:</span>
                                     <span class="text-sm font-medium text-gray-900">{{ $project->type }}</span>
+                                </div>
+                            @endif
+
+                            @if($project->gc)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-500">Primary GC:</span>
+                                    <span class="text-sm font-medium text-gray-900">{{ $project->gc }}</span>
+                                </div>
+                            @endif
+                            
+                            @if($project->other_gc && count($project->other_gc) > 0)
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-500">Other GCs:</span>
+                                    <span class="text-sm font-medium text-gray-900">{{ count($project->other_gc) }} GCs</span>
                                 </div>
                             @endif
 

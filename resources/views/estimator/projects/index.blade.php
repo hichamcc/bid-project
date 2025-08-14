@@ -312,8 +312,16 @@
                                                             {{ $project->name }}
                                                         </a>
                                                     </div>
+                                                    <div class="text-xs text-gray-500 space-y-1">
+                                                        @if($project->gc)
+                                                            <div><span class="font-medium">GC:</span> {{ $project->gc }}</div>
+                                                        @endif
+                                                        @if($project->other_gc && count($project->other_gc) > 0)
+                                                            <div><span class="font-medium">Other GCs:</span> {{ implode(', ', $project->other_gc) }}</div>
+                                                        @endif
+                                                    </div>
                                                     @if($project->description)
-                                                        <div class="text-sm text-gray-500">
+                                                        <div class="text-sm text-gray-500 mt-1">
                                                             {{ Str::limit($project->description, 50) }}
                                                         </div>
                                                     @endif
