@@ -219,6 +219,19 @@
                                     <span class="text-gray-400">-</span>
                                 @endif
                             </div>
+                            @if($proposal->first_follow_up_attachment)
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">Email Attachment</label>
+                                    <a href="{{ Storage::url($proposal->first_follow_up_attachment) }}" 
+                                       target="_blank" 
+                                       class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100 hover:text-blue-800 transition-colors">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                        </svg>
+                                        1st Follow-up Email
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -246,6 +259,19 @@
                                     <span class="text-gray-400">-</span>
                                 @endif
                             </div>
+                            @if($proposal->second_follow_up_attachment)
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">Email Attachment</label>
+                                    <a href="{{ Storage::url($proposal->second_follow_up_attachment) }}" 
+                                       target="_blank" 
+                                       class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100 hover:text-blue-800 transition-colors">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                        </svg>
+                                        2nd Follow-up Email
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
@@ -273,6 +299,19 @@
                                     <span class="text-gray-400">-</span>
                                 @endif
                             </div>
+                            @if($proposal->third_follow_up_attachment)
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600">Email Attachment</label>
+                                    <a href="{{ Storage::url($proposal->third_follow_up_attachment) }}" 
+                                       target="_blank" 
+                                       class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100 hover:text-blue-800 transition-colors">
+                                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                        </svg>
+                                        3rd Follow-up Email
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>

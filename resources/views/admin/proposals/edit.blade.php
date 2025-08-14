@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="py-12">
-    <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
             <div class="p-6 bg-white border-b border-gray-200">
@@ -19,7 +19,7 @@
         <!-- Edit Form -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6">
-                <form method="POST" action="{{ route('admin.proposals.update', $proposal) }}" id="proposalForm">
+                <form method="POST" action="{{ route('admin.proposals.update', $proposal) }}" enctype="multipart/form-data" id="proposalForm">
                     @csrf
                     @method('PUT')
 
@@ -116,7 +116,7 @@
                         <h3 class="text-lg font-semibold text-gray-900 mb-6">Follow-up Tracking</h3>
                         
                         <!-- First Follow-up -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                             <div>
                                 <label for="first_follow_up_date" class="block text-sm font-medium text-gray-700 mb-2">
                                     First Follow-up Date
@@ -130,7 +130,7 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div class="flex items-end">
+                            <div class="flex items-center">
                                 <label class="flex items-center">
                                     <input type="hidden" name="first_follow_up_respond" value="no">
                                     <input type="checkbox" 
@@ -145,10 +145,33 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
+                            <div>
+                                <label for="first_follow_up_attachment" class="block text-sm font-medium text-gray-700 mb-2">
+                                    1st Follow-up Attachment
+                                </label>
+                                <input type="file" 
+                                       id="first_follow_up_attachment" 
+                                       name="first_follow_up_attachment" 
+                                       accept=".eml,.msg,.pdf,.png,.jpg,.jpeg"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('first_follow_up_attachment') border-red-500 @enderror">
+                                @if($proposal->first_follow_up_attachment)
+                                    <div class="mt-2">
+                                        <a href="{{ Storage::url($proposal->first_follow_up_attachment) }}" 
+                                           target="_blank" 
+                                           class="text-blue-600 hover:text-blue-800 text-sm">
+                                            Current: 1st Follow-up Email
+                                        </a>
+                                    </div>
+                                @endif
+                                <p class="mt-1 text-xs text-gray-500">Supported formats: .eml, .msg, .pdf, .png, .jpg, .jpeg</p>
+                                @error('first_follow_up_attachment')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
 
                         <!-- Second Follow-up -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                             <div>
                                 <label for="second_follow_up_date" class="block text-sm font-medium text-gray-700 mb-2">
                                     Second Follow-up Date
@@ -162,7 +185,7 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div class="flex items-end">
+                            <div class="flex items-center">
                                 <label class="flex items-center">
                                     <input type="hidden" name="second_follow_up_respond" value="no">
                                     <input type="checkbox" 
@@ -177,10 +200,33 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
+                            <div>
+                                <label for="second_follow_up_attachment" class="block text-sm font-medium text-gray-700 mb-2">
+                                    2nd Follow-up Attachment
+                                </label>
+                                <input type="file" 
+                                       id="second_follow_up_attachment" 
+                                       name="second_follow_up_attachment" 
+                                       accept=".eml,.msg,.pdf,.png,.jpg,.jpeg"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('second_follow_up_attachment') border-red-500 @enderror">
+                                @if($proposal->second_follow_up_attachment)
+                                    <div class="mt-2">
+                                        <a href="{{ Storage::url($proposal->second_follow_up_attachment) }}" 
+                                           target="_blank" 
+                                           class="text-blue-600 hover:text-blue-800 text-sm">
+                                            Current: 2nd Follow-up Email
+                                        </a>
+                                    </div>
+                                @endif
+                                <p class="mt-1 text-xs text-gray-500">Supported formats: .eml, .msg, .pdf, .png, .jpg, .jpeg</p>
+                                @error('second_follow_up_attachment')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
 
                         <!-- Third Follow-up -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
                                 <label for="third_follow_up_date" class="block text-sm font-medium text-gray-700 mb-2">
                                     Third Follow-up Date
@@ -194,7 +240,7 @@
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div class="flex items-end">
+                            <div class="flex items-center">
                                 <label class="flex items-center">
                                     <input type="hidden" name="third_follow_up_respond" value="no">
                                     <input type="checkbox" 
@@ -206,6 +252,29 @@
                                     <span class="ml-3 text-sm font-medium text-gray-700">Third Follow-up Response</span>
                                 </label>
                                 @error('third_follow_up_respond')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="third_follow_up_attachment" class="block text-sm font-medium text-gray-700 mb-2">
+                                    3rd Follow-up Attachment
+                                </label>
+                                <input type="file" 
+                                       id="third_follow_up_attachment" 
+                                       name="third_follow_up_attachment" 
+                                       accept=".eml,.msg,.pdf,.png,.jpg,.jpeg"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('third_follow_up_attachment') border-red-500 @enderror">
+                                @if($proposal->third_follow_up_attachment)
+                                    <div class="mt-2">
+                                        <a href="{{ Storage::url($proposal->third_follow_up_attachment) }}" 
+                                           target="_blank" 
+                                           class="text-blue-600 hover:text-blue-800 text-sm">
+                                            Current: 3rd Follow-up Email
+                                        </a>
+                                    </div>
+                                @endif
+                                <p class="mt-1 text-xs text-gray-500">Supported formats: .eml, .msg, .pdf, .png, .jpg, .jpeg</p>
+                                @error('third_follow_up_attachment')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>

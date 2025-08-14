@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Proposal;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class ProposalController extends Controller
 {
@@ -137,10 +138,13 @@ class ProposalController extends Controller
             'responded' => 'nullable|in:yes,no',
             'first_follow_up_date' => 'nullable|date',
             'first_follow_up_respond' => 'nullable|in:yes,no',
+            'first_follow_up_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
             'second_follow_up_date' => 'nullable|date',
             'second_follow_up_respond' => 'nullable|in:yes,no',
+            'second_follow_up_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
             'third_follow_up_date' => 'nullable|date',
             'third_follow_up_respond' => 'nullable|in:yes,no',
+            'third_follow_up_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
             'price_original' => 'nullable|numeric|min:0',
             'price_ve' => 'nullable|numeric|min:0',
             'result_gc' => 'nullable|in:pending,win,loss',
@@ -153,6 +157,22 @@ class ProposalController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'This project already has a proposal. Only one proposal per project is allowed.');
+        }
+
+        // Handle file uploads
+        $attachmentPaths = [];
+        $attachmentFields = [
+            'first_follow_up_attachment',
+            'second_follow_up_attachment',
+            'third_follow_up_attachment'
+        ];
+        
+        foreach ($attachmentFields as $field) {
+            if ($request->hasFile($field)) {
+                $file = $request->file($field);
+                $path = $file->store('proposal-attachments', 'public');
+                $validated[$field] = $path;
+            }
         }
 
         Proposal::create($validated);
@@ -191,10 +211,13 @@ class ProposalController extends Controller
             'responded' => 'nullable|in:yes,no',
             'first_follow_up_date' => 'nullable|date',
             'first_follow_up_respond' => 'nullable|in:yes,no',
+            'first_follow_up_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
             'second_follow_up_date' => 'nullable|date',
             'second_follow_up_respond' => 'nullable|in:yes,no',
+            'second_follow_up_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
             'third_follow_up_date' => 'nullable|date',
             'third_follow_up_respond' => 'nullable|in:yes,no',
+            'third_follow_up_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
             'price_original' => 'nullable|numeric|min:0',
             'price_ve' => 'nullable|numeric|min:0',
             'result_gc' => 'nullable|in:pending,win,loss',
@@ -208,6 +231,26 @@ class ProposalController extends Controller
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'The selected project already has a proposal. Only one proposal per project is allowed.');
+            }
+        }
+
+        // Handle file uploads
+        $attachmentFields = [
+            'first_follow_up_attachment',
+            'second_follow_up_attachment',
+            'third_follow_up_attachment'
+        ];
+        
+        foreach ($attachmentFields as $field) {
+            if ($request->hasFile($field)) {
+                // Delete old file if exists
+                if ($proposal->$field && \Storage::disk('public')->exists($proposal->$field)) {
+                    \Storage::disk('public')->delete($proposal->$field);
+                }
+                // Store new file
+                $file = $request->file($field);
+                $path = $file->store('proposal-attachments', 'public');
+                $validated[$field] = $path;
             }
         }
 
