@@ -170,7 +170,7 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @forelse($progress as $entry)
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 whitespace-nowrap">
+                                <td class="px-6 py-4 ">
                                     <div class="text-sm font-medium text-gray-900">
                                         {{ $entry->project->name }}
                                     </div>
