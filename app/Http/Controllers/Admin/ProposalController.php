@@ -98,10 +98,19 @@ class ProposalController extends Controller
             'price_ve', 
             'gc_price', 
             'result_gc',
-            'result_art'
+            'result_art',
+            'gc'
         ];
+        
         if (in_array($sortBy, $allowedSorts)) {
-            $query->orderBy($sortBy, $sortDirection);
+            if ($sortBy === 'gc') {
+                // Sort by project GC field - need to join with projects table
+                $query->join('projects', 'proposals.project_id', '=', 'projects.id')
+                      ->orderBy('projects.gc', $sortDirection)
+                      ->select('proposals.*'); // Make sure we only select proposal fields
+            } else {
+                $query->orderBy($sortBy, $sortDirection);
+            }
         } else {
             $query->orderBy('created_at', 'desc');
         }

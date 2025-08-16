@@ -126,7 +126,21 @@
                                 Project
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                GCs
+                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'gc', 'sort_direction' => request('sort_by') == 'gc' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
+                                   class="group inline-flex items-center hover:text-gray-700">
+                                    GCs
+                                    @if(request('sort_by') == 'gc')
+                                        @if(request('sort_direction', 'desc') == 'asc')
+                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
+                                            </svg>
+                                        @else
+                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
+                                            </svg>
+                                        @endif
+                                    @endif
+                                </a>
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'submission_date', 'sort_direction' => request('sort_by') == 'submission_date' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
