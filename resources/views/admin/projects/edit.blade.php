@@ -19,7 +19,7 @@
         <!-- Edit Form -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6">
-                <form method="POST" action="{{ route('admin.projects.update', $project) }}">
+                <form method="POST" action="{{ route('admin.projects.update', $project) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -163,48 +163,168 @@
                             $(document).ready(function() {
                                 // initial value
                                 if ($('#status').val() === 'RFI REQUESTED') {
-                                    $('#rfi_due_date').show();
-                                    $('#rfi_request_date').show();
+                                    $('#rfi_section').show();
                                 } else {
-                                    $('#rfi_due_date').hide();
-                                    $('#rfi_request_date').hide();
+                                    $('#rfi_section').hide();
                                 }
                                 $('#status').change(function() {
                                     if ($(this).val() === 'RFI REQUESTED') {
-                                        $('#rfi_due_date').show();
-                                        $('#rfi_request_date').show();
+                                        $('#rfi_section').show();
                                     } else {
-                                        $('#rfi_due_date').hide();
-                                        $('#rfi_request_date').hide();
+                                        $('#rfi_section').hide();
                                     }
                                 });
                             });
                         </script>
-                        <div id="rfi_due_date" style="display: none;">
-                            <label for="rfi_due_date" class="block text-sm font-medium text-gray-700 mb-2">
-                                RFI Due Date
-                            </label>
-                            <input type="date" 
-                                   id="rfi_due_date" 
-                                   name="rfi_due_date" 
-                                   value="{{ old('rfi_due_date', $project->rfi_due_date?->format('Y-m-d')) }}" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('rfi_due_date') border-red-500 @enderror">
-                            @error('rfi_due_date')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div id="rfi_request_date" style="display: none;">
-                            <label for="rfi_request_date" class="block text-sm font-medium text-gray-700 mb-2">
-                                RFI Request Date
-                            </label>
-                            <input type="date" 
-                                   id="rfi_request_date" 
-                                   name="rfi_request_date" 
-                                   value="{{ old('rfi_request_date', $project->rfi_request_date?->format('Y-m-d')) }}" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('rfi_request_date') border-red-500 @enderror">
-                            @error('rfi_request_date')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
+
+                        <!-- RFI Section -->
+                        <div class="md:col-span-2" id="rfi_section" style="display: none;">
+                            <h4 class="text-lg font-semibold text-gray-900 mb-4">RFI Details</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- First RFI Request Date -->
+                                <div>
+                                    <label for="rfi_request_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                        First RFI Request Date
+                                    </label>
+                                    <input type="date" 
+                                           id="rfi_request_date" 
+                                           name="rfi_request_date" 
+                                           value="{{ old('rfi_request_date', $project->rfi_request_date?->format('Y-m-d')) }}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('rfi_request_date') border-red-500 @enderror">
+                                    @error('rfi_request_date')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p> 
+                                    @enderror
+                                </div>
+
+                                <!-- First RFI Due Date -->
+                                <div>
+                                    <label for="rfi_due_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                        First RFI Due Date
+                                    </label>
+                                    <input type="date" 
+                                           id="rfi_due_date" 
+                                           name="rfi_due_date" 
+                                           value="{{ old('rfi_due_date', $project->rfi_due_date?->format('Y-m-d')) }}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('rfi_due_date') border-red-500 @enderror">
+                                    @error('rfi_due_date')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p> 
+                                    @enderror
+                                </div>
+
+                                <!-- First RFI Attachment -->
+                                <div>
+                                    <label for="first_rfi_attachment" class="block text-sm font-medium text-gray-700 mb-2">
+                                        1st RFI Attachment
+                                    </label>
+                                    <input type="file" 
+                                           id="first_rfi_attachment" 
+                                           name="first_rfi_attachment" 
+                                           accept=".eml,.msg,.pdf,.png,.jpg,.jpeg"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('first_rfi_attachment') border-red-500 @enderror">
+                                    @if($project->first_rfi_attachment)
+                                        <p class="mt-1 text-sm text-gray-600">Current: 1st RFI Attachment</p>
+                                    @endif
+                                    @error('first_rfi_attachment')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Second RFI Request Date -->
+                                <div>
+                                    <label for="second_rfi_request_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Second RFI Request Date
+                                    </label>
+                                    <input type="date" 
+                                           id="second_rfi_request_date" 
+                                           name="second_rfi_request_date" 
+                                           value="{{ old('second_rfi_request_date', $project->second_rfi_request_date?->format('Y-m-d')) }}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('second_rfi_request_date') border-red-500 @enderror">
+                                    @error('second_rfi_request_date')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p> 
+                                    @enderror
+                                </div>
+
+                                <!-- Second RFI Due Date -->
+                                <div>
+                                    <label for="second_rfi_due_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Second RFI Due Date
+                                    </label>
+                                    <input type="date" 
+                                           id="second_rfi_due_date" 
+                                           name="second_rfi_due_date" 
+                                           value="{{ old('second_rfi_due_date', $project->second_rfi_due_date?->format('Y-m-d')) }}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('second_rfi_due_date') border-red-500 @enderror">
+                                    @error('second_rfi_due_date')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p> 
+                                    @enderror
+                                </div>
+
+                                <!-- Second RFI Attachment -->
+                                <div>
+                                    <label for="second_rfi_attachment" class="block text-sm font-medium text-gray-700 mb-2">
+                                        2nd RFI Attachment
+                                    </label>
+                                    <input type="file" 
+                                           id="second_rfi_attachment" 
+                                           name="second_rfi_attachment" 
+                                           accept=".eml,.msg,.pdf,.png,.jpg,.jpeg"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('second_rfi_attachment') border-red-500 @enderror">
+                                    @if($project->second_rfi_attachment)
+                                        <p class="mt-1 text-sm text-gray-600">Current: 2nd RFI Attachment</p>
+                                    @endif
+                                    @error('second_rfi_attachment')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- Third RFI Request Date -->
+                                <div>
+                                    <label for="third_rfi_request_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Third RFI Request Date
+                                    </label>
+                                    <input type="date" 
+                                           id="third_rfi_request_date" 
+                                           name="third_rfi_request_date" 
+                                           value="{{ old('third_rfi_request_date', $project->third_rfi_request_date?->format('Y-m-d')) }}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('third_rfi_request_date') border-red-500 @enderror">
+                                    @error('third_rfi_request_date')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p> 
+                                    @enderror
+                                </div>
+
+                                <!-- Third RFI Due Date -->
+                                <div>
+                                    <label for="third_rfi_due_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Third RFI Due Date
+                                    </label>
+                                    <input type="date" 
+                                           id="third_rfi_due_date" 
+                                           name="third_rfi_due_date" 
+                                           value="{{ old('third_rfi_due_date', $project->third_rfi_due_date?->format('Y-m-d')) }}" 
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('third_rfi_due_date') border-red-500 @enderror">
+                                    @error('third_rfi_due_date')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p> 
+                                    @enderror
+                                </div>
+
+                                <!-- Third RFI Attachment -->
+                                <div>
+                                    <label for="third_rfi_attachment" class="block text-sm font-medium text-gray-700 mb-2">
+                                        3rd RFI Attachment
+                                    </label>
+                                    <input type="file" 
+                                           id="third_rfi_attachment" 
+                                           name="third_rfi_attachment" 
+                                           accept=".eml,.msg,.pdf,.png,.jpg,.jpeg"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('third_rfi_attachment') border-red-500 @enderror">
+                                    @if($project->third_rfi_attachment)
+                                        <p class="mt-1 text-sm text-gray-600">Current: 3rd RFI Attachment</p>
+                                    @endif
+                                    @error('third_rfi_attachment')
+                                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
                         </div>  
 
 

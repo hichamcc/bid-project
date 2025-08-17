@@ -9,6 +9,7 @@ use App\Models\Type;
 use App\Models\User;
 use App\Models\Gc;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 
 class ProjectController extends Controller
@@ -125,6 +126,13 @@ class ProjectController extends Controller
             'due_date' => 'nullable|date|after_or_equal:assigned_date',
             'rfi_due_date' => 'nullable|date|after_or_equal:rfi_request_date',
             'rfi_request_date' => 'nullable|date|after_or_equal:assigned_date',
+            'first_rfi_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
+            'second_rfi_request_date' => 'nullable|date',
+            'second_rfi_due_date' => 'nullable|date|after_or_equal:second_rfi_request_date',
+            'second_rfi_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
+            'third_rfi_request_date' => 'nullable|date',
+            'third_rfi_due_date' => 'nullable|date|after_or_equal:third_rfi_request_date',
+            'third_rfi_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
             'status' => 'nullable|exists:statuses,name',
             'type' => 'nullable|exists:types,name',
             'rfi' => 'nullable|string|max:255',
@@ -132,6 +140,21 @@ class ProjectController extends Controller
             'project_information' => 'nullable|string',
             'web_link' => 'nullable|url|max:255',
         ]);
+
+        // Handle file uploads
+        $attachmentFields = [
+            'first_rfi_attachment',
+            'second_rfi_attachment',
+            'third_rfi_attachment'
+        ];
+        
+        foreach ($attachmentFields as $field) {
+            if ($request->hasFile($field)) {
+                $file = $request->file($field);
+                $path = $file->store('project-rfi-attachments', 'public');
+                $validated[$field] = $path;
+            }
+        }
 
         Project::create($validated);
 
@@ -167,6 +190,13 @@ class ProjectController extends Controller
             'due_date' => 'nullable|date|after_or_equal:assigned_date',
             'rfi_due_date' => 'nullable|date|after_or_equal:rfi_request_date',
             'rfi_request_date' => 'nullable|date|after_or_equal:assigned_date',
+            'first_rfi_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
+            'second_rfi_request_date' => 'nullable|date',
+            'second_rfi_due_date' => 'nullable|date|after_or_equal:second_rfi_request_date',
+            'second_rfi_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
+            'third_rfi_request_date' => 'nullable|date',
+            'third_rfi_due_date' => 'nullable|date|after_or_equal:third_rfi_request_date',
+            'third_rfi_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
             'status' => 'nullable|exists:statuses,name',
             'type' => 'nullable|exists:types,name',
             'rfi' => 'nullable|string|max:255',
@@ -174,6 +204,26 @@ class ProjectController extends Controller
             'project_information' => 'nullable|string',
             'web_link' => 'nullable|url|max:255',
         ]);
+
+        // Handle file uploads
+        $attachmentFields = [
+            'first_rfi_attachment',
+            'second_rfi_attachment',
+            'third_rfi_attachment'
+        ];
+        
+        foreach ($attachmentFields as $field) {
+            if ($request->hasFile($field)) {
+                // Delete old file if exists
+                if ($project->$field && Storage::disk('public')->exists($project->$field)) {
+                    Storage::disk('public')->delete($project->$field);
+                }
+                // Store new file
+                $file = $request->file($field);
+                $path = $file->store('project-rfi-attachments', 'public');
+                $validated[$field] = $path;
+            }
+        }
 
         $project->update($validated);
 

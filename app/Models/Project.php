@@ -20,6 +20,13 @@ class Project extends Model
         'due_date',
         'rfi_due_date',
         'rfi_request_date',
+        'first_rfi_attachment',
+        'second_rfi_request_date',
+        'second_rfi_due_date',
+        'second_rfi_attachment',
+        'third_rfi_request_date',
+        'third_rfi_due_date',
+        'third_rfi_attachment',
         'status',
         'type',
         'rfi',
@@ -34,6 +41,10 @@ class Project extends Model
         'due_date' => 'date',
         'rfi_due_date' => 'date',
         'rfi_request_date' => 'date',
+        'second_rfi_request_date' => 'date',
+        'second_rfi_due_date' => 'date',
+        'third_rfi_request_date' => 'date',
+        'third_rfi_due_date' => 'date',
     ];
 
     /**

@@ -310,10 +310,15 @@
                                         @endif
 
                                         @if($project->status === 'RFI REQUESTED' )
-                                          <div class="flex flex-col">
+                                          <div class="flex flex-col space-y-1">
                                             @if($project->rfi_request_date)
                                             <span class="text-gray-500 text-sm">
                                                  Request : {{ $project->rfi_request_date->format('M d, Y') }} 
+                                                 @if($project->first_rfi_attachment)
+                                                    <svg class="inline w-3 h-3 text-blue-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                                    </svg>
+                                                 @endif
                                             </span>
                                             @endif      
                                             @if($project->rfi_due_date)
@@ -329,6 +334,35 @@
                                                     <span class="text-red-500 font-bold text-xs">Overdue</span>
                                                 @endif
                                                     )
+                                            </span>
+                                            @endif
+                                            
+                                            <!-- Additional RFI indicators -->
+                                            @if($project->second_rfi_request_date || $project->second_rfi_due_date || $project->second_rfi_attachment)
+                                            <span class="text-gray-500 text-xs">
+                                                2nd RFI: 
+                                                @if($project->second_rfi_request_date)
+                                                    {{ $project->second_rfi_request_date->format('M d') }}
+                                                @endif
+                                                @if($project->second_rfi_attachment)
+                                                    <svg class="inline w-3 h-3 text-blue-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                                    </svg>
+                                                @endif
+                                            </span>
+                                            @endif
+                                            
+                                            @if($project->third_rfi_request_date || $project->third_rfi_due_date || $project->third_rfi_attachment)
+                                            <span class="text-gray-500 text-xs">
+                                                3rd RFI: 
+                                                @if($project->third_rfi_request_date)
+                                                    {{ $project->third_rfi_request_date->format('M d') }}
+                                                @endif
+                                                @if($project->third_rfi_attachment)
+                                                    <svg class="inline w-3 h-3 text-blue-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                                    </svg>
+                                                @endif
                                             </span>
                                             @endif
                                         </div>

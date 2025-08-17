@@ -1,5 +1,9 @@
 @extends('components.layouts.app')
 
+@php
+    use Illuminate\Support\Facades\Storage;
+@endphp
+
 @section('content')
 <div class="py-12">
     <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
@@ -213,6 +217,119 @@
                 </div>
             </div>
             @endif
+        </div>
+        @endif
+
+        <!-- RFI Section -->
+        @if($project->status === 'RFI REQUESTED' && ($project->rfi_request_date || $project->rfi_due_date || $project->first_rfi_attachment || $project->second_rfi_request_date || $project->second_rfi_due_date || $project->second_rfi_attachment || $project->third_rfi_request_date || $project->third_rfi_due_date || $project->third_rfi_attachment))
+        <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">RFI Details</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- First RFI -->
+                    @if($project->rfi_request_date || $project->rfi_due_date || $project->first_rfi_attachment)
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-3">First RFI</h4>
+                        <div class="space-y-2">
+                            @if($project->rfi_request_date)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Request Date</label>
+                                <p class="text-sm text-gray-900">{{ $project->rfi_request_date->format('M d, Y') }}</p>
+                            </div>
+                            @endif
+                            @if($project->rfi_due_date)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Due Date</label>
+                                <p class="text-sm text-gray-900">{{ $project->rfi_due_date->format('M d, Y') }}</p>
+                            </div>
+                            @endif
+                            @if($project->first_rfi_attachment)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Attachment</label>
+                                <a href="{{ Storage::url($project->first_rfi_attachment) }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    1st RFI Attachment
+                                </a>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Second RFI -->
+                    @if($project->second_rfi_request_date || $project->second_rfi_due_date || $project->second_rfi_attachment)
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-3">Second RFI</h4>
+                        <div class="space-y-2">
+                            @if($project->second_rfi_request_date)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Request Date</label>
+                                <p class="text-sm text-gray-900">{{ $project->second_rfi_request_date->format('M d, Y') }}</p>
+                            </div>
+                            @endif
+                            @if($project->second_rfi_due_date)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Due Date</label>
+                                <p class="text-sm text-gray-900">{{ $project->second_rfi_due_date->format('M d, Y') }}</p>
+                            </div>
+                            @endif
+                            @if($project->second_rfi_attachment)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Attachment</label>
+                                <a href="{{ Storage::url($project->second_rfi_attachment) }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    2nd RFI Attachment
+                                </a>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Third RFI -->
+                    @if($project->third_rfi_request_date || $project->third_rfi_due_date || $project->third_rfi_attachment)
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-3">Third RFI</h4>
+                        <div class="space-y-2">
+                            @if($project->third_rfi_request_date)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Request Date</label>
+                                <p class="text-sm text-gray-900">{{ $project->third_rfi_request_date->format('M d, Y') }}</p>
+                            </div>
+                            @endif
+                            @if($project->third_rfi_due_date)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Due Date</label>
+                                <p class="text-sm text-gray-900">{{ $project->third_rfi_due_date->format('M d, Y') }}</p>
+                            </div>
+                            @endif
+                            @if($project->third_rfi_attachment)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500">Attachment</label>
+                                <a href="{{ Storage::url($project->third_rfi_attachment) }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    3rd RFI Attachment
+                                </a>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                    @endif
+                </div>
+            </div>
         </div>
         @endif
 
