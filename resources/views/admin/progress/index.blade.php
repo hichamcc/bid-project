@@ -226,7 +226,7 @@
                                         $denominator = $sqft + $lnft + $sinks;
                                         $performancePoint = $denominator > 0 ? $totalSlabs / $denominator : 0;
                                     @endphp
-                                    {{ $performancePoint > 0 ? number_format($performancePoint, 4) : '-' }}
+                                    {{ $performancePoint > 0 ? number_format($performancePoint, 4)*1000 : '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end space-x-2">
