@@ -439,6 +439,7 @@
                         Edit Project
                     </a>
                     
+                    @if(auth()->user()->role === 'admin')
                     <form method="POST" 
                           action="{{ route('admin.projects.destroy', $project) }}" 
                           class="inline"
@@ -450,6 +451,7 @@
                             Delete Project
                         </button>
                     </form>
+                    @endif
                 </div>
             </div>
         </div>

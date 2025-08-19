@@ -439,15 +439,17 @@
                                            class="text-blue-600 hover:text-blue-900">View</a>
                                         <a href="{{ route('admin.projects.edit', $project) }}" 
                                            class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                        @if(auth()->user()->role === 'admin')
                                         <form method="POST" 
                                               action="{{ route('admin.projects.destroy', $project) }}" 
                                               class="inline"
-                                              onsubmit="return confirm('Are you sure you want to delete this project?')">
+                                              onsubmit="return confirm('Are you sure you want to delete this project? This action cannot be undone.')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" 
                                                     class="text-red-600 hover:text-red-900">Delete</button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

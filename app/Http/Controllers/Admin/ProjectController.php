@@ -275,6 +275,11 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        // Only allow admin users to delete projects
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Only administrators can delete projects.');
+        }
+
         $project->delete();
 
         return redirect()->route('admin.projects.index')
