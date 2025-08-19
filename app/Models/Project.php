@@ -36,7 +36,6 @@ class Project extends Model
     ];
 
     protected $casts = [
-        'other_gc' => 'array',
         'assigned_date' => 'date',
         'due_date' => 'date',
         'rfi_due_date' => 'date',
@@ -46,6 +45,102 @@ class Project extends Model
         'third_rfi_request_date' => 'date',
         'third_rfi_due_date' => 'date',
     ];
+
+    /**
+     * Get the other_gc attribute - handles both old and new formats
+     */
+    public function getOtherGcAttribute($value)
+    {
+        if (!$value) {
+            return [];
+        }
+        
+        $decoded = json_decode($value, true);
+        
+        if (!is_array($decoded)) {
+            return [];
+        }
+        
+        // Check if it's old format (simple array of strings)
+        if (!empty($decoded) && is_string(reset($decoded))) {
+            // Convert old format to new format on-the-fly
+            $newFormat = [];
+            foreach ($decoded as $gcName) {
+                $newFormat[$gcName] = [
+                    'due_date' => null,
+                    'web_link' => null
+                ];
+            }
+            return $newFormat;
+        }
+        
+        // Return as-is if already new format or empty
+        return $decoded;
+    }
+
+    /**
+     * Set the other_gc attribute - always store in new format
+     */
+    public function setOtherGcAttribute($value)
+    {
+        if (empty($value)) {
+            $this->attributes['other_gc'] = null;
+            return;
+        }
+        
+        // If it's already in new format, store as-is
+        if (is_array($value) && !empty($value)) {
+            // Check if it's a simple array (old format input from form)
+            if (is_string(reset($value))) {
+                $newFormat = [];
+                foreach ($value as $gcName) {
+                    if (!empty($gcName)) {
+                        $newFormat[$gcName] = [
+                            'due_date' => null,
+                            'web_link' => null
+                        ];
+                    }
+                }
+                $this->attributes['other_gc'] = json_encode($newFormat);
+            } else {
+                // Already in new format
+                $this->attributes['other_gc'] = json_encode($value);
+            }
+        } else {
+            $this->attributes['other_gc'] = json_encode($value);
+        }
+    }
+
+    /**
+     * Get other GC names only (for backward compatibility)
+     */
+    public function getOtherGcNamesAttribute()
+    {
+        $otherGc = $this->other_gc;
+        return array_keys($otherGc);
+    }
+
+    /**
+     * Get other GC with details
+     */
+    public function getOtherGcDetailsAttribute()
+    {
+        return $this->other_gc;
+    }
+
+    /**
+     * Update other GC data with due dates and web links
+     */
+    public function updateOtherGc($gcName, $dueDate = null, $webLink = null)
+    {
+        $otherGc = $this->other_gc;
+        
+        if (isset($otherGc[$gcName])) {
+            $otherGc[$gcName]['due_date'] = $dueDate;
+            $otherGc[$gcName]['web_link'] = $webLink;
+            $this->other_gc = $otherGc;
+        }
+    }
 
     /**
      * Get the type record for this project

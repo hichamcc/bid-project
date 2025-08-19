@@ -59,9 +59,32 @@
                                 @endif
                                 
                                 @if($project->other_gc && count($project->other_gc) > 0)
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Other GCs</label>
-                                        <p class="text-gray-900">{{ implode(', ', $project->other_gc) }}</p>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Other General Contractors</label>
+                                        <div class="space-y-2">
+                                            @foreach($project->other_gc as $gcName => $gcData)
+                                                <div class="bg-gray-50 p-3 rounded border text-sm">
+                                                    <div class="font-medium text-gray-900">{{ $gcName }}</div>
+                                                    @if(is_array($gcData))
+                                                        @if(isset($gcData['due_date']) && $gcData['due_date'])
+                                                            <div class="text-gray-600 mt-1">Due: {{ \Carbon\Carbon::parse($gcData['due_date'])->format('M d, Y') }}</div>
+                                                        @endif
+                                                        @if(isset($gcData['web_link']) && $gcData['web_link'])
+                                                            <div class="mt-1">
+                                                                <a href="{{ $gcData['web_link'] }}" 
+                                                                   target="_blank" 
+                                                                   class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm">
+                                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                                    </svg>
+                                                                    View Link
+                                                                </a>
+                                                            </div>
+                                                        @endif
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
                                     </div>
                                 @endif
                             </div>

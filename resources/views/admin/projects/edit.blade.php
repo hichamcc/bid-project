@@ -62,36 +62,116 @@
                             @enderror
                         </div>
 
-                        <!-- Other GC / select from gcs table use select2 multiple-->
-                        <div>
+                        <!-- Other GC with Details -->
+                        <div class="md:col-span-2">
                             <label for="other_gc" class="block text-sm font-medium text-gray-700 mb-2">
-                                Other GC
+                                Other GCs
                             </label>
                             <select id="other_gc" 
-                            name="other_gc[]" 
-                            multiple
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('other_gc') border-red-500 @enderror">
-                        @foreach($gcs as $gc)
-                            <option value="{{ $gc->name }}" 
-                                    {{ in_array($gc->name, old('other_gc', $project->other_gc ?? [])) ? 'selected' : '' }}>
-                                {{ $gc->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                            <!-- jquery -->
-                            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                            <!-- select2 script --> 
-                            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-                            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-                            <!-- select2 script --> 
-                            <script>
-                                $(document).ready(function() {
-                                    $('#other_gc').select2();
-                                });
-                            </script>
+                                    name="other_gc_select[]" 
+                                    multiple
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('other_gc') border-red-500 @enderror">
+                                <option value="">Select GCs</option>
+                                @foreach($gcs as $gc)
+                                    @php
+                                        $isSelected = false;
+                                        if (old('other_gc_select')) {
+                                            $isSelected = in_array($gc->name, old('other_gc_select'));
+                                        } else {
+                                            $isSelected = array_key_exists($gc->name, $project->other_gc ?? []);
+                                        }
+                                    @endphp
+                                    <option value="{{ $gc->name }}" {{ $isSelected ? 'selected' : '' }}>
+                                        {{ $gc->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                             @error('other_gc')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
+
+                            <!-- Dynamic Other GC Details -->
+                            <div id="other_gc_details" class="mt-4 space-y-4">
+                                <!-- Dynamic fields will be inserted here -->
+                            </div>
+
+                            <!-- Include jQuery and Select2 -->
+                            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+                            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+                            
+                            <script>
+                                $(document).ready(function() {
+                                    // Get existing project data
+                                    const existingOtherGc = @json($project->other_gc ?? []);
+                                    const oldFormData = @json(old('other_gc_data', []));
+                                    
+                                    $('#other_gc').select2({
+                                        placeholder: 'Select Other GCs',
+                                        allowClear: true
+                                    });
+                                    
+                                    // Handle selection changes
+                                    $('#other_gc').on('change', function() {
+                                        updateOtherGcFields();
+                                    });
+                                    
+                                    function updateOtherGcFields() {
+                                        const selectedGCs = $('#other_gc').val() || [];
+                                        const container = $('#other_gc_details');
+                                        
+                                        // Clear existing fields
+                                        container.empty();
+                                        
+                                        // Create fields for each selected GC
+                                        selectedGCs.forEach(function(gcName) {
+                                            if (gcName) {
+                                                // Get existing data for this GC
+                                                let existingData = {
+                                                    due_date: '',
+                                                    web_link: ''
+                                                };
+                                                
+                                                // Check for old form data first (form validation errors)
+                                                if (oldFormData[gcName]) {
+                                                    existingData = oldFormData[gcName];
+                                                } else if (existingOtherGc[gcName]) {
+                                                    existingData = existingOtherGc[gcName];
+                                                }
+                                                
+                                                const fieldHtml = `
+                                                    <div class="bg-gray-50 p-4 rounded-lg border" data-gc="${gcName}">
+                                                        <h4 class="font-medium text-gray-900 mb-3">${gcName}</h4>
+                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                            <div>
+                                                                <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                                                                <input type="date" 
+                                                                       name="other_gc_data[${gcName}][due_date]" 
+                                                                       value="${existingData.due_date || ''}"
+                                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                            </div>
+                                                            <div>
+                                                                <label class="block text-sm font-medium text-gray-700 mb-1">Web Link</label>
+                                                                <input type="url" 
+                                                                       name="other_gc_data[${gcName}][web_link]" 
+                                                                       value="${existingData.web_link || ''}"
+                                                                       placeholder="https://example.com"
+                                                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                                            </div>
+                                                        </div>
+                                                        <!-- Hidden input to ensure GC is included in form data -->
+                                                        <input type="hidden" name="other_gc_names[]" value="${gcName}">
+                                                    </div>
+                                                `;
+                                                container.append(fieldHtml);
+                                            }
+                                        });
+                                    }
+                                    
+                                    // Initialize fields with existing data
+                                    updateOtherGcFields();
+                                });
+                            </script>
                         </div>
 
                          <!-- RFI -->

@@ -119,8 +119,12 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'gc' => 'nullable|string|max:255',
-            'other_gc' => 'nullable|array',
-            'other_gc.*' => 'string|max:255|distinct',
+            'other_gc_names' => 'nullable|array',
+            'other_gc_names.*' => 'string|max:255|distinct',
+            'other_gc_data' => 'nullable|array',
+            'other_gc_data.*' => 'array',
+            'other_gc_data.*.due_date' => 'nullable|date',
+            'other_gc_data.*.web_link' => 'nullable|url|max:255',
             'scope' => 'nullable|string',
             'assigned_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:assigned_date',
@@ -140,6 +144,23 @@ class ProjectController extends Controller
             'project_information' => 'nullable|string',
             'web_link' => 'nullable|url|max:255',
         ]);
+
+        // Process Other GC data
+        if (!empty($validated['other_gc_names'])) {
+            $otherGcData = [];
+            foreach ($validated['other_gc_names'] as $gcName) {
+                $otherGcData[$gcName] = [
+                    'due_date' => $validated['other_gc_data'][$gcName]['due_date'] ?? null,
+                    'web_link' => $validated['other_gc_data'][$gcName]['web_link'] ?? null,
+                ];
+            }
+            $validated['other_gc'] = $otherGcData;
+        } else {
+            $validated['other_gc'] = [];
+        }
+        
+        // Remove the temporary form fields
+        unset($validated['other_gc_names'], $validated['other_gc_data']);
 
         // Handle file uploads
         $attachmentFields = [
@@ -183,8 +204,12 @@ class ProjectController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'gc' => 'nullable|string|max:255',
-            'other_gc' => 'nullable|array',
-            'other_gc.*' => 'string|max:255|distinct',
+            'other_gc_names' => 'nullable|array',
+            'other_gc_names.*' => 'string|max:255|distinct',
+            'other_gc_data' => 'nullable|array',
+            'other_gc_data.*' => 'array',
+            'other_gc_data.*.due_date' => 'nullable|date',
+            'other_gc_data.*.web_link' => 'nullable|url|max:255',
             'scope' => 'nullable|string',
             'assigned_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:assigned_date',
@@ -204,6 +229,23 @@ class ProjectController extends Controller
             'project_information' => 'nullable|string',
             'web_link' => 'nullable|url|max:255',
         ]);
+
+        // Process Other GC data
+        if (!empty($validated['other_gc_names'])) {
+            $otherGcData = [];
+            foreach ($validated['other_gc_names'] as $gcName) {
+                $otherGcData[$gcName] = [
+                    'due_date' => $validated['other_gc_data'][$gcName]['due_date'] ?? null,
+                    'web_link' => $validated['other_gc_data'][$gcName]['web_link'] ?? null,
+                ];
+            }
+            $validated['other_gc'] = $otherGcData;
+        } else {
+            $validated['other_gc'] = [];
+        }
+        
+        // Remove the temporary form fields
+        unset($validated['other_gc_names'], $validated['other_gc_data']);
 
         // Handle file uploads
         $attachmentFields = [

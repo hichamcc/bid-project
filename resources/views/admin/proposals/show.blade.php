@@ -42,11 +42,34 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-600">Other GCs</label>
-                            <p class="text-sm text-gray-900">
-                                {{ $proposal->project->other_gc && count($proposal->project->other_gc) > 0 
-                                   ? implode(', ', $proposal->project->other_gc) 
-                                   : '-' }}
-                            </p>
+                            @if($proposal->project->other_gc && count($proposal->project->other_gc) > 0)
+                                <div class="space-y-2 mt-2">
+                                    @foreach($proposal->project->other_gc as $gcName => $gcData)
+                                        <div class="bg-gray-50 p-2 rounded text-sm">
+                                            <div class="font-medium text-gray-900">{{ $gcName }}</div>
+                                            @if(is_array($gcData))
+                                                @if(isset($gcData['due_date']) && $gcData['due_date'])
+                                                    <div class="text-gray-600 text-xs mt-1">Due: {{ \Carbon\Carbon::parse($gcData['due_date'])->format('M d, Y') }}</div>
+                                                @endif
+                                                @if(isset($gcData['web_link']) && $gcData['web_link'])
+                                                    <div class="mt-1">
+                                                        <a href="{{ $gcData['web_link'] }}" 
+                                                           target="_blank" 
+                                                           class="inline-flex items-center text-blue-600 hover:text-blue-800 text-xs">
+                                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                            </svg>
+                                                            View Link
+                                                        </a>
+                                                    </div>
+                                                @endif
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-sm text-gray-900">-</p>
+                            @endif
                         </div>
 
                         <div>

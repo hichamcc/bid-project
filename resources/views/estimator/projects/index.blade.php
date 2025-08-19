@@ -201,7 +201,7 @@
                                         </a>
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Client
+                                        Other GCs
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         <a href="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => request('sort') === 'status' && request('direction') === 'asc' ? 'desc' : 'asc']) }}" 
@@ -267,9 +267,6 @@
                                         </a>
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Budget
-                                    </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         <a href="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => request('sort') === 'created_at' && request('direction') === 'asc' ? 'desc' : 'asc']) }}" 
                                            class="group inline-flex items-center hover:text-gray-900">
                                             Created
@@ -316,9 +313,6 @@
                                                         @if($project->gc)
                                                             <div><span class="font-medium">GC:</span> {{ $project->gc }}</div>
                                                         @endif
-                                                        @if($project->other_gc && count($project->other_gc) > 0)
-                                                            <div><span class="font-medium">Other GCs:</span> {{ implode(', ', $project->other_gc) }}</div>
-                                                        @endif
                                                     </div>
                                                     @if($project->description)
                                                         <div class="text-sm text-gray-500 mt-1">
@@ -329,10 +323,37 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900">{{ $project->client_name ?: '-' }}</div>
-                                            @if($project->client_email)
-                                                <div class="text-sm text-gray-500">{{ $project->client_email }}</div>
-                                            @endif
+                                            <div class="text-sm text-gray-500">
+                                                @if($project->other_gc && count($project->other_gc) > 0)
+                                                    <div class="space-y-1">
+                                                        @foreach($project->other_gc as $gcName => $gcData)
+                                                            <div class="bg-gray-100 p-2 rounded text-xs">
+                                                                <div class="font-medium text-gray-800">{{ $gcName }}</div>
+                                                                @if(is_array($gcData) && isset($gcData['due_date']) && $gcData['due_date'])
+                                                                    @php
+                                                                        $dueDate = \Carbon\Carbon::parse($gcData['due_date']);
+                                                                        $daysUntilDue = (int) (now()->diffInDays($dueDate, false) + 1);
+                                                                    @endphp
+                                                                    <div class="mt-1">
+                                                                        <span class="text-gray-600">Due: {{ $dueDate->format('M d') }}</span>
+                                                                        @if($daysUntilDue > 3)
+                                                                            <span class="text-green-600 font-medium ml-1">({{ $daysUntilDue }} days)</span>
+                                                                        @elseif($daysUntilDue > 0 && $daysUntilDue <= 3)
+                                                                            <span class="text-yellow-600 font-medium ml-1">({{ $daysUntilDue }} days)</span>
+                                                                        @elseif($daysUntilDue === 0)
+                                                                            <span class="text-red-500 font-bold ml-1">(Due today)</span>
+                                                                        @else
+                                                                            <span class="text-red-500 font-bold ml-1">(Overdue)</span>
+                                                                        @endif
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <span class="text-gray-400 text-xs">No other GCs</span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="space-y-1">
@@ -417,13 +438,6 @@
                                             <span class="text-gray-400">No due date</span>
                                         @endif
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            @if($project->budget)
-                                                ${{ number_format($project->budget, 2) }}
-                                            @else
-                                                <span class="text-gray-400">-</span>
-                                            @endif
-                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div class="flex flex-col">
                                                 <span>{{ $project->created_at->format('M d, Y') }}</span>
@@ -436,12 +450,6 @@
                                                    class="text-blue-600 hover:text-blue-900">
                                                     View
                                                 </a>
-                                                @if($project->client_email)
-                                                    <a href="mailto:{{ $project->client_email }}" 
-                                                       class="text-green-600 hover:text-green-900">
-                                                        Email
-                                                    </a>
-                                                @endif
                                             </div>
                                         </td>
                                     </tr>

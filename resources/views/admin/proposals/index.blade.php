@@ -271,7 +271,13 @@
                                             <div><span class="font-medium text-gray-700">Primary:</span> {{ $proposal->project->gc }}</div>
                                         @endif
                                         @if($proposal->project->other_gc && count($proposal->project->other_gc) > 0)
-                                            <div><span class="font-medium text-gray-700">Others:</span> {{ implode(', ', array_slice($proposal->project->other_gc, 0, 2)) }}@if(count($proposal->project->other_gc) > 2)<span class="text-gray-500"> +{{ count($proposal->project->other_gc) - 2 }} more</span>@endif</div>
+                                            <div><span class="font-medium text-gray-700">Others:</span> 
+                                                @php
+                                                    $otherGcNames = array_keys($proposal->project->other_gc);
+                                                    $displayNames = array_slice($otherGcNames, 0, 2);
+                                                @endphp
+                                                {{ implode(', ', $displayNames) }}@if(count($otherGcNames) > 2)<span class="text-gray-500"> +{{ count($otherGcNames) - 2 }} more</span>@endif
+                                            </div>
                                         @endif
                                         @if(!$proposal->project->gc && (!$proposal->project->other_gc || count($proposal->project->other_gc) == 0))
                                             <span class="text-gray-400 text-xs">No GCs specified</span>

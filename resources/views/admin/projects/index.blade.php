@@ -286,10 +286,28 @@
                                     <div class="text-sm text-gray-500">
                                          <!-- Other GCs -->
                                 @if($project->other_gc && count($project->other_gc) > 0)
-                                <div class=" gap-1">
-                                    @foreach($project->other_gc as $otherGc)
-                                        <div     class="items-center px-2 py-1 mt-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                            {{ $otherGc }}
+                                <div class="space-y-1">
+                                    @foreach($project->other_gc as $gcName => $gcData)
+                                        <div class="bg-gray-100 p-2 rounded text-xs">
+                                            <div class="font-medium text-gray-800">{{ $gcName }}</div>
+                                            @if(is_array($gcData) && isset($gcData['due_date']) && $gcData['due_date'])
+                                                @php
+                                                    $dueDate = \Carbon\Carbon::parse($gcData['due_date']);
+                                                    $daysUntilDue = (int) (now()->diffInDays($dueDate, false) + 1);
+                                                @endphp
+                                                <div class="mt-1">
+                                                    <span class="text-gray-600">Due: {{ $dueDate->format('M d') }}</span>
+                                                    @if($daysUntilDue > 3)
+                                                        <span class="text-green-600 font-medium ml-1">({{ $daysUntilDue }} days)</span>
+                                                    @elseif($daysUntilDue > 0 && $daysUntilDue <= 3)
+                                                        <span class="text-yellow-600 font-medium ml-1">({{ $daysUntilDue }} days)</span>
+                                                    @elseif($daysUntilDue === 0)
+                                                        <span class="text-red-500 font-bold ml-1">(Due today)</span>
+                                                    @else
+                                                        <span class="text-red-500 font-bold ml-1">(Overdue)</span>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </div> 
                                     @endforeach
                                 </div>
