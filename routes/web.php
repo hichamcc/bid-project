@@ -73,6 +73,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/dashboard/chart-data', [DashboardController::class, 'getChartData'])->name('dashboard.chart-data');
 });
 
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/reports', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->name('reports.index');
+});
+
 // Estimator Routes
 Route::middleware(['auth', 'role:estimator,head_estimator'])->prefix('estimator')->name('estimator.')->group(function () {
     

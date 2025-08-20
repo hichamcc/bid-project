@@ -41,6 +41,9 @@
                     <x-navlist.item before="phosphor-user-list" href="{{ route('admin.users.index') }}" :current="request()->routeIs('admin.users.index')">
                         {{ __('Users') }}
                     </x-navlist.item>
+                    <x-navlist.item before="phosphor-chart-pie" href="{{ route('admin.reports.index') }}" :current="request()->routeIs('admin.reports.*')">
+                        {{ __('Reports') }}
+                    </x-navlist.item>
                     <x-navlist.item before="phosphor-bookmark-simple" href="{{ route('admin.statuses.index') }}" :current="request()->routeIs('admin.statuses.index')">
                         {{ __('Status') }}
                     </x-navlist.item>
