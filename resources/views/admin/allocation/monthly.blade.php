@@ -54,9 +54,9 @@
 
         <!-- Grid Table -->
         <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
-            <div class="overflow-x-auto">
+            <div class="overflow-auto" style="max-height: calc(100vh - 280px);">
                 <table class="min-w-full border-collapse text-sm">
-                    <thead>
+                    <thead class="sticky top-0 z-20">
                         <!-- Estimator name row -->
                         <tr class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                             <th class="sticky left-0 z-10 bg-gray-50 dark:bg-gray-700 px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap border-r border-gray-200 dark:border-gray-600 w-36">
