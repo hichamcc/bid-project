@@ -138,9 +138,9 @@
                                                 @foreach($jobs as $job)
                                                     @php
                                                         $isMU      = $job->job_type === 'MU';
-                                                        $labelMap  = $isMU ? $muLabels : $nonMuLabels;
                                                         $typeLabel = $isMU ? 'MU' : 'NM';
-                                                        $assigned  = $job->estimators->map(fn($e) => $labelMap[$e->id] ?? '?')->implode(', ');
+                                                        $position  = $job->estimators->search(fn($e) => $e->id === $estimator->id);
+                                                        $assigned  = $isMU ? (string)($position + 1) : chr(65 + $position);
                                                     @endphp
                                                     <div class="flex items-center gap-1.5 px-2 py-1 rounded text-xs whitespace-nowrap
                                                         {{ $isMU ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-blue-50 dark:bg-blue-900/20' }}">

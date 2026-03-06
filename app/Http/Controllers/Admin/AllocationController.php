@@ -134,7 +134,7 @@ class AllocationController extends Controller
         }
 
         // Load all allocations for the month (keyed by due_date month)
-        $allocations = Allocation::with('estimators')
+        $allocations = Allocation::with(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc')])
             ->whereMonth('due_date', $month)
             ->whereYear('due_date', $year)
             ->get();
