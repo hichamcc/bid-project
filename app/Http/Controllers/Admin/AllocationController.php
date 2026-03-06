@@ -29,6 +29,13 @@ class AllocationController extends Controller
             'job_type'      => 'required|in:MU,NON_MU',
         ]);
 
+        // Check if job number is already allocated
+        if (Allocation::where('job_number', $validated['job_number'])->exists()) {
+            return redirect()->route('admin.allocation.index')
+                ->withInput()
+                ->with('error', "Job \"{$validated['job_number']}\" has already been allocated.");
+        }
+
         $dueDate      = Carbon::parse($validated['due_date']);
         $assignedDate = $dueDate->copy()->subDays(2);
 
