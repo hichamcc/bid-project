@@ -75,6 +75,49 @@
                         @enderror
                     </div>
 
+                    <!-- Weight -->
+                    <div class="mb-6">
+                        <label for="weight" class="block text-sm font-medium text-gray-700 mb-2">
+                            Weight
+                        </label>
+                        <input type="number" step="0.01" min="0"
+                               id="weight"
+                               name="weight"
+                               value="{{ old('weight', $user->weight) }}"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('weight') border-red-500 @enderror">
+                        @error('weight')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- MU / NON_MU -->
+                    <div class="mb-6 grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="MU" class="block text-sm font-medium text-gray-700 mb-2">MU</label>
+                            <select id="MU" name="MU"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('MU') border-red-500 @enderror">
+                                <option value="">-- Select --</option>
+                                <option value="yes" {{ old('MU', $user->MU) === 'yes' ? 'selected' : '' }}>Yes</option>
+                                <option value="no" {{ old('MU', $user->MU) === 'no' ? 'selected' : '' }}>No</option>
+                            </select>
+                            @error('MU')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="NON_MU" class="block text-sm font-medium text-gray-700 mb-2">NON MU</label>
+                            <select id="NON_MU" name="NON_MU"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('NON_MU') border-red-500 @enderror">
+                                <option value="">-- Select --</option>
+                                <option value="yes" {{ old('NON_MU', $user->NON_MU) === 'yes' ? 'selected' : '' }}>Yes</option>
+                                <option value="no" {{ old('NON_MU', $user->NON_MU) === 'no' ? 'selected' : '' }}>No</option>
+                            </select>
+                            @error('NON_MU')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
                     <!-- Password -->
                     <div class="mb-6">
                         <label for="password" class="block text-sm font-medium text-gray-700 mb-2">

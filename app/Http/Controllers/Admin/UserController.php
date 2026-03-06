@@ -44,6 +44,9 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'role' => 'required|in:admin,estimator,head_estimator,bid_coordinator',
             'password' => 'required|string|min:8|confirmed',
+            'weight' => 'nullable|numeric|min:0',
+            'MU' => 'nullable|in:yes,no',
+            'NON_MU' => 'nullable|in:yes,no',
         ]);
 
         User::create([
@@ -51,6 +54,9 @@ class UserController extends Controller
             'email' => $validated['email'],
             'role' => $validated['role'],
             'password' => Hash::make($validated['password']),
+            'weight' => $validated['weight'] ?? null,
+            'MU' => $validated['MU'] ?? null,
+            'NON_MU' => $validated['NON_MU'] ?? null,
         ]);
 
         return redirect()->route('admin.users.index')
@@ -74,12 +80,18 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'role' => 'required|in:admin,estimator,head_estimator,bid_coordinator',
             'password' => 'nullable|string|min:8|confirmed',
+            'weight' => 'nullable|numeric|min:0',
+            'MU' => 'nullable|in:yes,no',
+            'NON_MU' => 'nullable|in:yes,no',
         ]);
 
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'role' => $validated['role'],
+            'weight' => $validated['weight'] ?? null,
+            'MU' => $validated['MU'] ?? null,
+            'NON_MU' => $validated['NON_MU'] ?? null,
         ]);
 
         // Only update password if provided

@@ -87,6 +87,28 @@
                                 </div>
                             </div>
 
+                            <!-- Extra Attributes -->
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-500 uppercase tracking-wider">
+                                        Weight
+                                    </label>
+                                    <p class="mt-1 text-lg text-gray-900">{{ $user->weight ?? '—' }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-500 uppercase tracking-wider">
+                                        MU
+                                    </label>
+                                    <p class="mt-1 text-lg text-gray-900">{{ $user->MU ? ucfirst($user->MU) : '—' }}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-500 uppercase tracking-wider">
+                                        NON MU
+                                    </label>
+                                    <p class="mt-1 text-lg text-gray-900">{{ $user->NON_MU ? ucfirst($user->NON_MU) : '—' }}</p>
+                                </div>
+                            </div>
+
                             <!-- System Information -->
                             <div class="space-y-4">
                                 <div>

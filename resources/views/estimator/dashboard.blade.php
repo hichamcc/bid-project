@@ -69,6 +69,117 @@
 
         </div>
 
+        <!-- Workload Distribution -->
+        @if($currentMonthAllocations->isNotEmpty() || $nextMonthAllocations->isNotEmpty())
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">My Workload Distribution</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Current Month -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-xl">
+                    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">{{ now()->format('F Y') }}</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Current month</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold text-blue-600">{{ $currentMonthDays }}<span class="text-base font-medium text-gray-400 ml-1">days</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Type badges -->
+                    @php
+                        $muCount    = $currentMonthAllocations->where('job_type', 'MU')->count();
+                        $nonMuCount = $currentMonthAllocations->where('job_type', 'NON_MU')->count();
+                    @endphp
+                    <div class="px-6 pt-4 flex gap-2">
+                        @if($muCount)
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">MU: {{ $muCount }}</span>
+                        @endif
+                        @if($nonMuCount)
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">NON MU: {{ $nonMuCount }}</span>
+                        @endif
+                    </div>
+
+                    <!-- Jobs list -->
+                    <div class="p-6 space-y-2 max-h-72 overflow-y-auto">
+                        @foreach($currentMonthAllocations as $allocation)
+                            <div class="flex items-center justify-between p-3 rounded-lg
+                                {{ $allocation->job_type === 'MU' ? 'bg-purple-50' : 'bg-blue-50' }}">
+                                <div>
+                                    <span class="font-semibold text-gray-900 text-sm">{{ $allocation->job_number }}</span>
+                                    <span class="ml-2 px-1.5 py-0.5 text-xs rounded font-medium
+                                        {{ $allocation->job_type === 'MU' ? 'bg-purple-200 text-purple-800' : 'bg-blue-200 text-blue-800' }}">
+                                        {{ $allocation->job_type === 'NON_MU' ? 'NON MU' : 'MU' }}
+                                    </span>
+                                </div>
+                                <div class="text-right text-xs text-gray-500">
+                                    <div class="font-bold text-gray-700">{{ $allocation->days_required }}d</div>
+                                    <div>Assigned {{ $allocation->assigned_date->format('M d') }}</div>
+                                    <div>Due {{ $allocation->due_date->format('M d') }}</div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Next Month -->
+                <div class="bg-white overflow-hidden shadow-lg rounded-xl">
+                    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">{{ now()->addMonth()->format('F Y') }}</h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Next month</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold text-indigo-600">{{ $nextMonthDays }}<span class="text-base font-medium text-gray-400 ml-1">days</span></div>
+                        </div>
+                    </div>
+
+                    @php
+                        $muNextCount    = $nextMonthAllocations->where('job_type', 'MU')->count();
+                        $nonMuNextCount = $nextMonthAllocations->where('job_type', 'NON_MU')->count();
+                    @endphp
+                    <div class="px-6 pt-4 flex gap-2">
+                        @if($muNextCount)
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">MU: {{ $muNextCount }}</span>
+                        @endif
+                        @if($nonMuNextCount)
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">NON MU: {{ $nonMuNextCount }}</span>
+                        @endif
+                    </div>
+
+                    <div class="p-6 space-y-2 max-h-72 overflow-y-auto">
+                        @forelse($nextMonthAllocations as $allocation)
+                            <div class="flex items-center justify-between p-3 rounded-lg
+                                {{ $allocation->job_type === 'MU' ? 'bg-purple-50' : 'bg-blue-50' }}">
+                                <div>
+                                    <span class="font-semibold text-gray-900 text-sm">{{ $allocation->job_number }}</span>
+                                    <span class="ml-2 px-1.5 py-0.5 text-xs rounded font-medium
+                                        {{ $allocation->job_type === 'MU' ? 'bg-purple-200 text-purple-800' : 'bg-blue-200 text-blue-800' }}">
+                                        {{ $allocation->job_type === 'NON_MU' ? 'NON MU' : 'MU' }}
+                                    </span>
+                                </div>
+                                <div class="text-right text-xs text-gray-500">
+                                    <div class="font-bold text-gray-700">{{ $allocation->days_required }}d</div>
+                                    <div>Assigned {{ $allocation->assigned_date->format('M d') }}</div>
+                                    <div>Due {{ $allocation->due_date->format('M d') }}</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center py-10 text-gray-400">
+                                <svg class="mx-auto h-10 w-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                No jobs scheduled yet
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        @endif
+
         <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Recent Projects (2/3 width) -->

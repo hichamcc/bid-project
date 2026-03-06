@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Estimator;
 
 use App\Http\Controllers\Controller;
+use App\Models\Allocation;
 use App\Models\Project;
 use App\Models\ProjectRemark;
 use App\Models\Status;
@@ -237,6 +238,25 @@ class ProjectController extends Controller
                                      ->limit(10)
                                      ->get();
 
+        // Workload distribution data
+        $user       = Auth::user();
+        $userWeight = $user->weight ?? 1.0;
+
+        $currentMonthAllocations = Allocation::whereHas('estimators', fn($q) => $q->where('users.id', $userId))
+            ->whereMonth('due_date', now()->month)
+            ->whereYear('due_date', now()->year)
+            ->orderBy('assigned_date')
+            ->get();
+
+        $nextMonthAllocations = Allocation::whereHas('estimators', fn($q) => $q->where('users.id', $userId))
+            ->whereMonth('due_date', now()->addMonth()->month)
+            ->whereYear('due_date', now()->addMonth()->year)
+            ->orderBy('assigned_date')
+            ->get();
+
+        $currentMonthDays = $currentMonthAllocations->sum('days_required');
+        $nextMonthDays    = $nextMonthAllocations->sum('days_required');
+
         return view('estimator.dashboard', compact(
             'totalProjects',
             'overdueProjects',
@@ -245,7 +265,12 @@ class ProjectController extends Controller
             'inProgressProjects',
             'recentProjects',
             'projectsByStatus',
-            'recentRemarks'
+            'recentRemarks',
+            'currentMonthAllocations',
+            'nextMonthAllocations',
+            'currentMonthDays',
+            'nextMonthDays',
+            'userWeight'
         ));
     }
 }
