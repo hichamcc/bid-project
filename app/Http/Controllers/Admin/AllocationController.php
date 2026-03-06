@@ -106,6 +106,22 @@ class AllocationController extends Controller
 
         $currentDate = Carbon::create($year, $month, 1);
 
+        // Build label maps based on insertion order (id asc)
+        $muPool = User::whereIn('role', ['estimator', 'head_estimator'])
+            ->where('MU', 'yes')->orderBy('id')->get();
+        $nonMuPool = User::whereIn('role', ['estimator', 'head_estimator'])
+            ->where('NON_MU', 'yes')->orderBy('id')->get();
+
+        $muLabels = [];
+        foreach ($muPool as $i => $u) {
+            $muLabels[$u->id] = (string)($i + 1);
+        }
+
+        $nonMuLabels = [];
+        foreach ($nonMuPool as $i => $u) {
+            $nonMuLabels[$u->id] = chr(65 + $i); // A, B, C...
+        }
+
         // Build list of Mon–Sat days in the month
         $days = [];
         $cursor = $currentDate->copy()->startOfMonth();
@@ -145,7 +161,8 @@ class AllocationController extends Controller
         }
 
         return view('admin.allocation.monthly', compact(
-            'estimators', 'days', 'jobsByDateAndUser', 'totals', 'month', 'year', 'currentDate'
+            'estimators', 'days', 'jobsByDateAndUser', 'totals', 'month', 'year', 'currentDate',
+            'muLabels', 'nonMuLabels'
         ));
     }
 }

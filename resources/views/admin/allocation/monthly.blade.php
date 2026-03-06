@@ -132,24 +132,25 @@
                                     @php
                                         $jobs = $jobsByDateAndUser[$dateKey][$estimator->id] ?? [];
                                     @endphp
-                                    <td class="px-3 py-2 border-r border-gray-100 dark:border-gray-700 align-top min-w-[160px]">
+                                    <td class="px-3 py-2 border-r border-gray-100 dark:border-gray-700 align-top min-w-[200px]">
                                         @if(count($jobs) > 0)
                                             <div class="space-y-1">
                                                 @foreach($jobs as $job)
-                                                    <div class="flex items-start justify-between gap-1 p-1.5 rounded
-                                                        {{ $job->job_type === 'MU' ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-blue-50 dark:bg-blue-900/20' }}">
-                                                        <div>
-                                                            <span class="font-semibold text-gray-800 dark:text-gray-100 text-xs">
-                                                                {{ $job->job_number }}
-                                                            </span>
-                                                            <span class="ml-1 px-1 py-0.5 text-xs rounded font-medium
-                                                                {{ $job->job_type === 'MU' ? 'bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-100' : 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-100' }}">
-                                                                {{ $job->job_type === 'NON_MU' ? 'NON MU' : 'MU' }}
-                                                            </span>
-                                                        </div>
-                                                        <span class="text-xs font-bold text-gray-600 dark:text-gray-300 whitespace-nowrap">
-                                                            {{ $job->days_required }}d
+                                                    @php
+                                                        $isMU      = $job->job_type === 'MU';
+                                                        $labelMap  = $isMU ? $muLabels : $nonMuLabels;
+                                                        $typeLabel = $isMU ? 'MU' : 'NM';
+                                                        $assigned  = $job->estimators->map(fn($e) => $labelMap[$e->id] ?? '?')->implode(', ');
+                                                    @endphp
+                                                    <div class="flex items-center gap-1.5 px-2 py-1 rounded text-xs whitespace-nowrap
+                                                        {{ $isMU ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-blue-50 dark:bg-blue-900/20' }}">
+                                                        <span class="font-bold text-gray-800 dark:text-gray-100">{{ $job->job_number }}</span>
+                                                        <span class="px-1 py-0.5 rounded font-semibold
+                                                            {{ $isMU ? 'bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-100' : 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-100' }}">
+                                                            {{ $typeLabel }}
                                                         </span>
+                                                        <span class="font-bold text-gray-700 dark:text-gray-300">{{ $job->days_required }}D</span>
+                                                        <span class="text-gray-500 dark:text-gray-400">{{ $assigned }}</span>
                                                     </div>
                                                 @endforeach
                                             </div>
