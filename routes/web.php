@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\TypeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\AllocationController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Estimator\AllocationController as EstimatorAllocationController;
 use App\Http\Controllers\Estimator\ProjectController as EstimatorProjectController;
 use App\Http\Controllers\Admin\GcController;
 use App\Http\Controllers\Settings;
@@ -16,6 +17,16 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+// Temporary email test route — remove after testing
+Route::get('/test-email', function () {
+    try {
+        \Illuminate\Support\Facades\Mail::to('owenhicham@gmail.com')->send(new \App\Mail\TestMail());
+        return 'Email sent successfully!';
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage();
+    }
+});
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
@@ -103,6 +114,10 @@ Route::middleware(['auth', 'role:estimator,head_estimator'])->prefix('estimator'
     Route::post('/projects/{project}/remarks', [EstimatorProjectController::class, 'storeRemark'])->name('projects.remarks.store');
     Route::delete('/remarks/{remark}', [EstimatorProjectController::class, 'deleteRemark'])->name('projects.remarks.destroy');
     
+    // Workload
+    Route::get('/workload', [EstimatorAllocationController::class, 'index'])->name('workload.index');
+    Route::patch('/workload/{allocation}/status', [EstimatorAllocationController::class, 'updateStatus'])->name('workload.status');
+
     // Progress
     Route::get('/progress', [\App\Http\Controllers\Estimator\ProgressController::class, 'index'])->name('progress.index');
     Route::get('/progress/create', [\App\Http\Controllers\Estimator\ProgressController::class, 'create'])->name('progress.create');

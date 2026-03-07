@@ -145,6 +145,21 @@
                 <x-navlist.item before="phosphor-chart-bar" href="{{ route('estimator.progress.index') }}" :current="request()->routeIs('estimator.progress.*')">
                     <span x-show="!collapsed" x-cloak>{{ __('Progress') }}</span>
                 </x-navlist.item>
+                @php
+                    $openJobsCount = \App\Models\Allocation::whereHas('estimators', fn($q) => $q->where('users.id', auth()->id()))
+                        ->where('status', 'open')
+                        ->count();
+                @endphp
+                <x-navlist.item before="phosphor-briefcase" href="{{ route('estimator.workload.index') }}" :current="request()->routeIs('estimator.workload.*')">
+                    <span x-show="!collapsed" x-cloak class="flex items-center justify-between w-full">
+                        {{ __('My Workload') }}
+                        @if($openJobsCount > 0)
+                            <span class="ml-2 px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+                                {{ $openJobsCount }}
+                            </span>
+                        @endif
+                    </span>
+                </x-navlist.item>
             </div>
             @endif
 

@@ -13,6 +13,7 @@ class Allocation extends Model
         'assigned_date',
         'days_required',
         'job_type',
+        'status',
     ];
 
     protected $casts = [

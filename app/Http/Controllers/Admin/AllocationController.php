@@ -71,6 +71,7 @@ class AllocationController extends Controller
                 ->where('allocation_user.user_id', $estimator->id)
                 ->whereMonth('allocations.due_date', $targetMonth)
                 ->whereYear('allocations.due_date', $targetYear)
+                ->where('allocations.status', 'open')
                 ->sum('allocations.days_required');
 
             $weight                  = $estimator->weight ?? 1.0;

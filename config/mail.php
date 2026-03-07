@@ -86,7 +86,9 @@ return [
                 'log',
             ],
         ],
-
+        'mailersend' => [
+            'transport' => 'mailersend',
+        ],
         'roundrobin' => [
             'transport' => 'roundrobin',
             'mailers' => [
