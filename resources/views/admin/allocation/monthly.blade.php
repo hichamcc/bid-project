@@ -139,8 +139,11 @@
                                                     @php
                                                         $isMU      = $job->job_type === 'MU';
                                                         $typeLabel = $isMU ? 'MU' : 'NM';
-                                                        $position  = $job->estimators->search(fn($e) => $e->id === $estimator->id);
-                                                        $assigned  = $isMU ? (string)($position + 1) : chr(65 + $position);
+                                                        // Label based on left-to-right column order, not assignment order
+                                                        $jobEstimatorIds  = $job->estimators->pluck('id');
+                                                        $orderedForJob    = $estimators->filter(fn($e) => $jobEstimatorIds->contains($e->id))->values();
+                                                        $position         = $orderedForJob->search(fn($e) => $e->id === $estimator->id);
+                                                        $assigned         = $isMU ? (string)($position + 1) : chr(65 + $position);
                                                     @endphp
                                                     <div class="flex items-center gap-1.5 px-2 py-1 rounded text-xs whitespace-nowrap
                                                         {{ $isMU ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-blue-50 dark:bg-blue-900/20' }}">
