@@ -111,6 +111,9 @@
                     <x-navlist.item before="phosphor-intersect" href="{{ route('admin.allocation.index') }}" :current="request()->routeIs('admin.allocation.*')">
                         <span x-show="!collapsed" x-cloak>{{ __('Distribution') }}</span>
                     </x-navlist.item>
+                    <x-navlist.item before="phosphor-calendar-x" href="{{ route('admin.off-days.index') }}" :current="request()->routeIs('admin.off-days.*')">
+                        <span x-show="!collapsed" x-cloak>{{ __('Off Days') }}</span>
+                    </x-navlist.item>
                     <x-navlist.item before="phosphor-bookmark-simple" href="{{ route('admin.statuses.index') }}" :current="request()->routeIs('admin.statuses.index')">
                         <span x-show="!collapsed" x-cloak>{{ __('Status') }}</span>
                     </x-navlist.item>

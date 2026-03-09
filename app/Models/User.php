@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\EstimatorOffDay;
 use App\Models\Project;
 
 class User extends Authenticatable
@@ -91,5 +92,10 @@ class User extends Authenticatable
     public function assignedProjects(): HasMany
     {
         return $this->hasMany(Project::class, 'assigned_to');
+    }
+
+    public function offDays(): HasMany
+    {
+        return $this->hasMany(EstimatorOffDay::class, 'user_id');
     }
 }

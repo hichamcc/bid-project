@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\StatusController;
 use App\Http\Controllers\Admin\TypeController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\AllocationController;
+use App\Http\Controllers\Admin\EstimatorOffDayController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Estimator\AllocationController as EstimatorAllocationController;
 use App\Http\Controllers\Estimator\ProjectController as EstimatorProjectController;
@@ -95,6 +96,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/allocation', [AllocationController::class, 'store'])->name('allocation.store');
     Route::get('/allocation/monthly', [AllocationController::class, 'monthly'])->name('allocation.monthly');
     Route::delete('/allocation/{allocation}', [AllocationController::class, 'destroy'])->name('allocation.destroy');
+
+    Route::get('/off-days', [EstimatorOffDayController::class, 'index'])->name('off-days.index');
+    Route::post('/off-days', [EstimatorOffDayController::class, 'store'])->name('off-days.store');
+    Route::delete('/off-days/{offDay}', [EstimatorOffDayController::class, 'destroy'])->name('off-days.destroy');
 });
 
 // Estimator Routes

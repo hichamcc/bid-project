@@ -29,6 +29,11 @@
                 {{ session('error') }}
             </div>
         @endif
+        @if(session('warning'))
+            <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded">
+                {{ session('warning') }}
+            </div>
+        @endif
 
         <!-- Allocation Form -->
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">

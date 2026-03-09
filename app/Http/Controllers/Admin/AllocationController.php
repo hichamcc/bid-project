@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\JobAssignedMail;
 use App\Models\Allocation;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +67,14 @@ class AllocationController extends Controller
         $targetMonth = $dueDate->month;
         $targetYear  = $dueDate->year;
 
+        // Filter out estimators with off days overlapping assigned_date–due_date
+        $eligible = $eligible->filter(function ($estimator) use ($assignedDate, $dueDate) {
+            return !\App\Models\EstimatorOffDay::where('user_id', $estimator->id)
+                ->where('start_date', '<=', $dueDate)
+                ->where('end_date', '>=', $assignedDate)
+                ->exists();
+        });
+
         $eligible = $eligible->map(function ($estimator) use ($targetMonth, $targetYear) {
             $load = DB::table('allocation_user')
                 ->join('allocations', 'allocation_user.allocation_id', '=', 'allocations.id')
@@ -74,7 +84,7 @@ class AllocationController extends Controller
                 ->where('allocations.status', 'open')
                 ->sum('allocations.days_required');
 
-            $weight                  = $estimator->weight ?? 1.0;
+            $weight                    = $estimator->weight ?? 1.0;
             $estimator->effective_load = $load / $weight;
 
             return $estimator;
@@ -84,8 +94,23 @@ class AllocationController extends Controller
 
         $allocation->estimators()->attach($selected->pluck('id'));
 
-        return redirect()->route('admin.allocation.index')
+        $warning = $selected->count() < $assignCount
+            ? "Warning: only {$selected->count()} of {$assignCount} estimators were available (others have off days during this period)."
+            : null;
+
+        // Notify each assigned estimator by email
+        foreach ($selected as $estimator) {
+            Mail::to($estimator->email)->send(new JobAssignedMail($allocation, $estimator));
+        }
+
+        $redirect = redirect()->route('admin.allocation.index')
             ->with('success', "Job {$allocation->job_number} assigned to {$selected->count()} estimator(s).");
+
+        if ($warning) {
+            $redirect = $redirect->with('warning', $warning);
+        }
+
+        return $redirect;
     }
 
     public function destroy(Allocation $allocation)
