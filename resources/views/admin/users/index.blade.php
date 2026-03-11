@@ -136,6 +136,9 @@
                                     {{ $user->NON_MU ? ucfirst($user->NON_MU) : '—' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ $user->location ?? '—' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {{ $user->created_at->format('M d, Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -158,7 +161,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                <td colspan="8" class="px-6 py-4 text-center text-gray-500">
                                     No users found.
                                 </td>
                             </tr>
