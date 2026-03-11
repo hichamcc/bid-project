@@ -43,13 +43,11 @@
                     <th>Days</th>
                     <th>Due Date</th>
                     <th>Estimator(s)</th>
-                    <th>Days Overdue</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($overdueJobs as $job)
                     @php
-                        $daysOverdue = $job->due_date->diffInDays(now());
                         $estimatorNames = $job->estimators->pluck('name')->join(', ');
                     @endphp
                     <tr>
@@ -62,7 +60,6 @@
                         <td>{{ $job->days_required }}d</td>
                         <td class="overdue">{{ $job->due_date->format('M d, Y') }}</td>
                         <td>{{ $estimatorNames ?: '—' }}</td>
-                        <td class="overdue">{{ $daysOverdue }} day(s)</td>
                     </tr>
                 @endforeach
             </tbody>
