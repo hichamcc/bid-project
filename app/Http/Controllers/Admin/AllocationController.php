@@ -90,7 +90,25 @@ class AllocationController extends Controller
             return $estimator;
         });
 
-        $selected = $eligible->sortBy('effective_load')->take($assignCount);
+        // Pick up to $assignCount estimators, sorted by effective load,
+        // ensuring no two selected estimators share the same location.
+        // Estimators with a null location are not subject to the location constraint.
+        $selected = collect();
+        $usedLocations = [];
+
+        foreach ($eligible->sortBy('effective_load') as $estimator) {
+            if ($selected->count() >= $assignCount) {
+                break;
+            }
+            $location = $estimator->location;
+            if ($location && in_array($location, $usedLocations)) {
+                continue; // skip — another estimator from this location already selected
+            }
+            $selected->push($estimator);
+            if ($location) {
+                $usedLocations[] = $location;
+            }
+        }
 
         $allocation->estimators()->attach($selected->pluck('id'));
 

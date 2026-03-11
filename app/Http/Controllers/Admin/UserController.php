@@ -47,6 +47,7 @@ class UserController extends Controller
             'weight' => 'nullable|numeric|min:0',
             'MU' => 'nullable|in:yes,no',
             'NON_MU' => 'nullable|in:yes,no',
+            'location' => 'nullable|string|max:255',
         ]);
 
         User::create([
@@ -57,6 +58,7 @@ class UserController extends Controller
             'weight' => $validated['weight'] ?? null,
             'MU' => $validated['MU'] ?? null,
             'NON_MU' => $validated['NON_MU'] ?? null,
+            'location' => $validated['location'] ?? null,
         ]);
 
         return redirect()->route('admin.users.index')
@@ -83,6 +85,7 @@ class UserController extends Controller
             'weight' => 'nullable|numeric|min:0',
             'MU' => 'nullable|in:yes,no',
             'NON_MU' => 'nullable|in:yes,no',
+            'location' => 'nullable|string|max:255',
         ]);
 
         $user->update([
@@ -92,6 +95,7 @@ class UserController extends Controller
             'weight' => $validated['weight'] ?? null,
             'MU' => $validated['MU'] ?? null,
             'NON_MU' => $validated['NON_MU'] ?? null,
+            'location' => $validated['location'] ?? null,
         ]);
 
         // Only update password if provided

@@ -128,11 +128,19 @@
                             </p>
                         </div>
 
-                        <!-- Total Jobs -->
-                        <div class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                            <div class="text-sm text-gray-600 dark:text-gray-400">Total Jobs</div>
-                            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {{ $data['total_jobs'] }}
+                        <!-- Total Jobs + Open Distribution Days -->
+                        <div class="mb-4 grid grid-cols-2 gap-3">
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Jobs</div>
+                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                    {{ $data['total_jobs'] }}
+                                </div>
+                            </div>
+                            <div class="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Open Dist. Days</div>
+                                <div class="text-2xl font-bold text-orange-500 dark:text-orange-400">
+                                    {{ $data['open_distribution_days'] }}d
+                                </div>
                             </div>
                         </div>
 

@@ -57,12 +57,19 @@ class WorkloadController extends Controller
                 return $type;
             })->map->count()->toArray();
 
+            $openDistributionDays = DB::table('allocation_user')
+                ->join('allocations', 'allocation_user.allocation_id', '=', 'allocations.id')
+                ->where('allocation_user.user_id', $estimator->id)
+                ->where('allocations.status', 'open')
+                ->sum('allocations.days_required');
+
             $workloadData[] = [
-                'estimator' => $estimator,
-                'total_jobs' => $totalJobs,
-                'status_counts' => $statusCounts,
-                'type_counts' => $typeCounts,
-                'projects' => $projects, // Add full projects data for modal
+                'estimator'            => $estimator,
+                'total_jobs'           => $totalJobs,
+                'status_counts'        => $statusCounts,
+                'type_counts'          => $typeCounts,
+                'projects'             => $projects,
+                'open_distribution_days' => $openDistributionDays,
             ];
         }
 

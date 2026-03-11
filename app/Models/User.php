@@ -29,6 +29,7 @@ class User extends Authenticatable
         'weight',
         'MU',
         'NON_MU',
+        'location',
     ];
 
     /**
