@@ -34,11 +34,11 @@
 
         <div class="detail-box">
             <div class="detail-row">
-                <span class="label">Job Number</span>
+                <span class="label">Job Number : </span>
                 <span class="value">{{ $allocation->job_number }}</span>
             </div>
             <div class="detail-row">
-                <span class="label">Job Type</span>
+                <span class="label">Job Type : </span>
                 <span class="value">
                     <span class="badge {{ $allocation->job_type === 'MU' ? 'mu' : 'nonmu' }}">
                         {{ $allocation->job_type === 'NON_MU' ? 'NON MU' : 'MU' }}
@@ -46,15 +46,15 @@
                 </span>
             </div>
             <div class="detail-row">
-                <span class="label">Days Required</span>
+                <span class="label">Days Required : </span>
                 <span class="value">{{ $allocation->days_required }}d</span>
             </div>
             <div class="detail-row">
-                <span class="label">Assigned Date</span>
+                <span class="label">Assigned Date : </span>
                 <span class="value">{{ $allocation->assigned_date->format('M d, Y') }}</span>
             </div>
             <div class="detail-row">
-                <span class="label">Due Date</span>
+                <span class="label">Due Date : </span>
                 <span class="value">{{ $allocation->due_date->format('M d, Y') }}</span>
             </div>
         </div>
