@@ -20,3 +20,15 @@ Artisan::command('inspire', function () {
 \Illuminate\Support\Facades\Schedule::command('report:workload monthly')
     ->lastDayOfMonth('08:00')
     ->description('Monthly workload report');
+
+// Due-today reminder — runs daily at 9am EST, notifies estimators of jobs due today
+\Illuminate\Support\Facades\Schedule::command('jobs:reminders due-today')
+    ->dailyAt('09:00')
+    ->timezone('America/New_York')
+    ->description('Send due-today reminders to estimators');
+
+// Overdue alert — runs daily at 5:05pm EST, alerts Leo & Rey of unsubmitted jobs past 5pm deadline
+\Illuminate\Support\Facades\Schedule::command('jobs:reminders overdue')
+    ->dailyAt('17:05')
+    ->timezone('America/New_York')
+    ->description('Send overdue job alerts to admins');
