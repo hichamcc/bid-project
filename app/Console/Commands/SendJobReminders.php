@@ -42,9 +42,14 @@ class SendJobReminders extends Command
             return;
         }
 
+        $count = 0;
         foreach ($jobs as $job) {
             foreach ($job->estimators as $estimator) {
+                if ($count > 0) {
+                    usleep(600000); // 600ms between sends — Resend allows max 2 req/sec
+                }
                 Mail::to($estimator->email)->send(new JobDueTodayMail($job, $estimator));
+                $count++;
             }
         }
 
@@ -65,7 +70,10 @@ class SendJobReminders extends Command
             return;
         }
 
-        foreach (self::OVERDUE_RECIPIENTS as $email) {
+        foreach (self::OVERDUE_RECIPIENTS as $index => $email) {
+            if ($index > 0) {
+                usleep(600000);
+            }
             Mail::to($email)->send(new JobOverdueMail($overdueJobs));
         }
 

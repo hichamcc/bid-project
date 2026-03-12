@@ -117,7 +117,10 @@ class AllocationController extends Controller
             : null;
 
         // Notify each assigned estimator by email
-        foreach ($selected as $estimator) {
+        foreach ($selected as $index => $estimator) {
+            if ($index > 0) {
+                usleep(600000); // 600ms between sends — Resend allows max 2 req/sec
+            }
             Mail::to($estimator->email)->send(new JobAssignedMail($allocation, $estimator));
         }
 

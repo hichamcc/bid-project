@@ -50,7 +50,10 @@ class SendWorkloadReport extends Command
 
         $admins = User::where('role', 'admin')->get();
 
-        foreach ($admins as $admin) {
+        foreach ($admins as $index => $admin) {
+            if ($index > 0) {
+                usleep(600000);
+            }
             Mail::to($admin->email)->send(new WorkloadReportMail($period, $periodLabel, $reportData));
         }
 
