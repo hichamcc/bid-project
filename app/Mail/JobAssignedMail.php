@@ -6,6 +6,7 @@ use App\Models\Allocation;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -23,6 +24,7 @@ class JobAssignedMail extends Mailable
     {
         return new Envelope(
             subject: "New Job Assigned — {$this->allocation->job_number}",
+            cc: [new Address('commercial.admin@artelye.com')],
         );
     }
 

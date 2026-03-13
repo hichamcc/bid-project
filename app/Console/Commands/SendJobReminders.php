@@ -60,8 +60,11 @@ class SendJobReminders extends Command
     {
         $today = Carbon::now('America/New_York')->toDateString();
 
+        // Fire the day after assigned_date (estimator's due date + 1 day)
+        $yesterday = Carbon::now('America/New_York')->subDay()->toDateString();
+
         $overdueJobs = Allocation::with('estimators')
-            ->whereDate('assigned_date', $today)
+            ->whereDate('assigned_date', $yesterday)
             ->where('status', 'open')
             ->get();
 
@@ -70,11 +73,27 @@ class SendJobReminders extends Command
             return;
         }
 
+        // Notify Leo & Rey with all overdue jobs
         foreach (self::OVERDUE_RECIPIENTS as $index => $email) {
             if ($index > 0) {
                 usleep(600000);
             }
             Mail::to($email)->send(new JobOverdueMail($overdueJobs));
+        }
+
+        // Notify each estimator with only their own overdue jobs
+        $estimatorJobs = [];
+        foreach ($overdueJobs as $job) {
+            foreach ($job->estimators as $estimator) {
+                $estimatorJobs[$estimator->id]['estimator'] = $estimator;
+                $estimatorJobs[$estimator->id]['jobs'][]    = $job;
+            }
+        }
+
+        foreach ($estimatorJobs as $entry) {
+            usleep(600000);
+            Mail::to($entry['estimator']->email)
+                ->send(new JobOverdueMail(collect($entry['jobs'])));
         }
 
         $this->info("Overdue alert sent for {$overdueJobs->count()} job(s).");
