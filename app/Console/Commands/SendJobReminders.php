@@ -33,7 +33,7 @@ class SendJobReminders extends Command
         $today = Carbon::now('America/New_York')->toDateString();
 
         $jobs = Allocation::with('estimators')
-            ->whereDate('due_date', $today)
+            ->whereDate('assigned_date', $today)
             ->where('status', 'open')
             ->get();
 
@@ -61,7 +61,7 @@ class SendJobReminders extends Command
         $today = Carbon::now('America/New_York')->toDateString();
 
         $overdueJobs = Allocation::with('estimators')
-            ->whereDate('due_date', $today)
+            ->whereDate('assigned_date', $today)
             ->where('status', 'open')
             ->get();
 

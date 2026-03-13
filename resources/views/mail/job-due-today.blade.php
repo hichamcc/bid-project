@@ -56,12 +56,8 @@
                 <span class="value">{{ $allocation->days_required }}d</span>
             </div>
             <div class="detail-row">
-                <span class="label">Assigned Date : </span>
-                <span class="value">{{ $allocation->assigned_date->format('M d, Y') }}</span>
-            </div>
-            <div class="detail-row">
                 <span class="label">Due Date : </span>
-                <span class="value" style="color:#b45309; font-weight:700;">{{ $allocation->due_date->format('M d, Y') }} — TODAY</span>
+                <span class="value" style="color:#b45309; font-weight:700;">{{ $allocation->assigned_date->format('M d, Y') }} — TODAY</span>
             </div>
         </div>
 

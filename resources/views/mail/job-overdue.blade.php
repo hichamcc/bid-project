@@ -58,7 +58,7 @@
                             </span>
                         </td>
                         <td>{{ $job->days_required }}d</td>
-                        <td class="overdue">{{ $job->due_date->format('M d, Y') }}</td>
+                        <td class="overdue">{{ $job->assigned_date->format('M d, Y') }}</td>
                         <td>{{ $estimatorNames ?: '—' }}</td>
                     </tr>
                 @endforeach

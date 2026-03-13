@@ -115,8 +115,7 @@
                                 </div>
                                 <div class="text-right text-xs text-gray-500">
                                     <div class="font-bold text-gray-700">{{ $allocation->days_required }}d</div>
-                                    <div>Assigned {{ $allocation->assigned_date->format('M d') }}</div>
-                                    <div>Due {{ $allocation->due_date->format('M d') }}</div>
+                                    <div>Due {{ $allocation->assigned_date->format('M d') }}</div>
                                 </div>
                             </div>
                         @endforeach
@@ -161,8 +160,7 @@
                                 </div>
                                 <div class="text-right text-xs text-gray-500">
                                     <div class="font-bold text-gray-700">{{ $allocation->days_required }}d</div>
-                                    <div>Assigned {{ $allocation->assigned_date->format('M d') }}</div>
-                                    <div>Due {{ $allocation->due_date->format('M d') }}</div>
+                                    <div>Due {{ $allocation->assigned_date->format('M d') }}</div>
                                 </div>
                             </div>
                         @empty

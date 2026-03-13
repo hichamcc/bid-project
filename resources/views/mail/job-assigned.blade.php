@@ -40,7 +40,7 @@
     <div class="body">
         <div class="meta">
             <p><strong>Project:</strong> {{ $allocation->job_number }}</p>
-            <p><strong>Due Date:</strong> {{ $allocation->due_date->format('M d, Y') }}</p>
+            <p><strong>Due Date:</strong> {{ $allocation->assigned_date->format('M d, Y') }}</p>
         </div>
 
         <div class="paragraph">
