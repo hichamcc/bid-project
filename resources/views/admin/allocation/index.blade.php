@@ -313,7 +313,6 @@
                                                 $project = $allocation->projects->firstWhere('assigned_to', $estimator->id);
                                             @endphp
                                             <div class="flex items-center gap-1.5">
-                                                <span class="font-semibold text-gray-500 dark:text-gray-400 text-xs w-4">{{ $letter }}</span>
                                                 @if($project)
                                                     <a href="{{ route('admin.projects.show', $project) }}"
                                                        class="text-blue-600 dark:text-blue-400 hover:underline text-xs">
