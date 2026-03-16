@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\JobAssignedMail;
 use App\Mail\JobRemovedMail;
 use App\Models\Allocation;
-use App\Models\GC;
+use App\Models\Gc;
 use App\Models\Project;
 use App\Models\Status;
 use App\Models\User;
@@ -45,7 +45,7 @@ class AllocationController extends Controller
         $allocations = $query->paginate(20)->withQueryString();
 
         $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
-        $gcs        = GC::active()->ordered()->get();
+        $gcs        = Gc::active()->ordered()->get();
         $statuses   = Status::ordered()->get();
 
         return view('admin.allocation.index', compact('allocations', 'estimators', 'gcs', 'statuses'));
