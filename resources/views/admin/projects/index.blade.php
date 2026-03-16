@@ -394,7 +394,10 @@
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" style="background-color: {{ $project->typeRecord->color }}20; color: {{ $project->typeRecord->color }};">
                                                 {{ $project->type }}
                                             </span>
+                                        
                                         @endif
+                                   
+
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">

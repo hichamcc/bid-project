@@ -112,6 +112,85 @@
                         </div>
                     </div>
 
+                    <!-- Other Information for Project (collapsible) -->
+                    <div x-data="{ open: true }" class="mt-4">
+                        <button type="button"
+                                @click="open = !open"
+                                class="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline focus:outline-none">
+                            <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <svg x-show="open" x-cloak xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            Other Information for Project
+                        </button>
+
+                        <div x-show="open" x-cloak x-transition class="mt-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                                <!-- Project Name -->
+                                <div class="lg:col-span-2">
+                                    <label for="project_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Project Name <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text"
+                                           id="project_name"
+                                           name="project_name"
+                                           value="{{ old('project_name') }}"
+                                           placeholder="e.g. Downtown Tower"
+                                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 @error('project_name') border-red-500 @enderror">
+                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Final name will be: <em>5454A. Project Name</em></p>
+                                    @error('project_name')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <!-- GC -->
+                                <div>
+                                    <label for="gc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        GC
+                                    </label>
+                                    <select id="gc"
+                                            name="gc"
+                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">-- None --</option>
+                                        @foreach($gcs as $gcItem)
+                                            <option value="{{ $gcItem->name }}" {{ old('gc') === $gcItem->name ? 'selected' : '' }}>
+                                                {{ $gcItem->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Status -->
+                                <div>
+                                    <label for="project_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Status
+                                    </label>
+                                    <select id="project_status"
+                                            name="project_status"
+                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="">-- None --</option>
+                                        @foreach($statuses as $statusItem)
+                                            <option value="{{ $statusItem->name }}" {{ old('project_status') === $statusItem->name ? 'selected' : '' }}>
+                                                {{ $statusItem->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Project Information -->
+                                <div class="lg:col-span-4">
+                                    <label for="project_information" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Project Information
+                                    </label>
+                                    <textarea id="project_information"
+                                              name="project_information"
+                                              rows="3"
+                                              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ old('project_information') }}</textarea>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mt-4 flex justify-end">
                         <button type="submit"
                                 class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
@@ -125,7 +204,65 @@
         <!-- Allocations Table -->
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Allocation History</h3>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Allocation History</h3>
+                <form method="GET" action="{{ route('admin.allocation.index') }}" class="flex flex-wrap gap-3 items-end">
+
+                    <div class="flex-1 min-w-36">
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Job Number</label>
+                        <input type="text" name="job_number" value="{{ request('job_number') }}"
+                               placeholder="Search..."
+                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
+                        <select name="job_type"
+                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Types</option>
+                            <option value="MU" {{ request('job_type') === 'MU' ? 'selected' : '' }}>MU</option>
+                            <option value="NON_MU" {{ request('job_type') === 'NON_MU' ? 'selected' : '' }}>NON MU</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Estimator</label>
+                        <select name="estimator_id"
+                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Estimators</option>
+                            @foreach($estimators as $estimator)
+                                <option value="{{ $estimator->id }}" {{ request('estimator_id') == $estimator->id ? 'selected' : '' }}>
+                                    {{ $estimator->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Due Date From</label>
+                        <input type="date" name="date_from" value="{{ request('date_from') }}"
+                               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Due Date To</label>
+                        <input type="date" name="date_to" value="{{ request('date_to') }}"
+                               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button type="submit"
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
+                            Filter
+                        </button>
+                        @if(request()->hasAny(['job_number', 'job_type', 'estimator_id', 'date_from', 'date_to']))
+                            <a href="{{ route('admin.allocation.index') }}"
+                               class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md">
+                                Clear
+                            </a>
+                        @endif
+                    </div>
+
+                </form>
             </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -136,8 +273,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Days</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Assigned Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Assigned To</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Assigned To / Status</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -162,37 +298,60 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $allocation->assigned_date->format('M d, Y') }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                                    <div class="flex flex-wrap gap-1">
+                                <td class="px-6 py-4 text-sm">
+                                    @php
+                                        $jobEstimatorIds = $allocation->estimators->pluck('id');
+                                        $allEstimators   = \App\Models\User::whereIn('role', ['estimator','head_estimator'])->orderBy('name')->get();
+                                        $orderedForJob   = $allEstimators->filter(fn($e) => $jobEstimatorIds->contains($e->id))->values();
+                                    @endphp
+                                    <div class="flex flex-col gap-1">
                                         @forelse($allocation->estimators as $estimator)
-                                            <span class="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-full">
-                                                {{ $estimator->name }}
-                                            </span>
+                                            @php
+                                                $pos    = $orderedForJob->search(fn($e) => $e->id === $estimator->id);
+                                                $letter = chr(65 + $pos);
+                                                $status = $estimator->pivot->status;
+                                                $project = $allocation->projects->firstWhere('assigned_to', $estimator->id);
+                                            @endphp
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-semibold text-gray-500 dark:text-gray-400 text-xs w-4">{{ $letter }}</span>
+                                                @if($project)
+                                                    <a href="{{ route('admin.projects.show', $project) }}"
+                                                       class="text-blue-600 dark:text-blue-400 hover:underline text-xs">
+                                                        {{ $estimator->name }}
+                                                    </a>
+                                                @else
+                                                    <span class="text-gray-800 dark:text-gray-200 text-xs">{{ $estimator->name }}</span>
+                                                @endif
+                                                <span class="px-1.5 py-0.5 text-xs font-semibold rounded-full
+                                                    {{ $status === 'submitted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' }}">
+                                                    {{ ucfirst($status) }}
+                                                </span>
+                                            </div>
                                         @empty
-                                            <span class="text-gray-400 italic">None</span>
+                                            <span class="text-gray-400 italic text-xs">None</span>
                                         @endforelse
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                        {{ $allocation->status === 'submitted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' }}">
-                                        {{ ucfirst($allocation->status) }}
-                                    </span>
-                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                    <form method="POST" action="{{ route('admin.allocation.destroy', $allocation) }}"
-                                          onsubmit="return confirm('Delete this allocation?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                            Delete
-                                        </button>
-                                    </form>
+                                    <div class="flex items-center justify-end gap-3">
+                                        <a href="{{ route('admin.allocation.edit', $allocation) }}"
+                                           class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                                            Edit
+                                        </a>
+                                        <form method="POST" action="{{ route('admin.allocation.destroy', $allocation) }}"
+                                              onsubmit="return confirm('Delete this allocation?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     No allocations yet. Use the form above to assign a job.
                                 </td>
                             </tr>

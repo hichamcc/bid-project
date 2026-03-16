@@ -149,8 +149,8 @@
                     <span x-show="!collapsed" x-cloak>{{ __('Progress') }}</span>
                 </x-navlist.item>
                 @php
-                    $openJobsCount = \App\Models\Allocation::whereHas('estimators', fn($q) => $q->where('users.id', auth()->id()))
-                        ->where('status', 'open')
+                    $openJobsCount = \App\Models\Allocation::whereHas('estimators', fn($q) => $q->where('users.id', auth()->id())
+                            ->where('allocation_user.status', 'open'))
                         ->count();
                 @endphp
                 <x-navlist.item before="phosphor-briefcase" href="{{ route('estimator.workload.index') }}" :current="request()->routeIs('estimator.workload.*')">

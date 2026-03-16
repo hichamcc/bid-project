@@ -108,14 +108,15 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $allocation->assigned_date->format('M d, Y') }}
                                 </td>
+                                @php $pivotStatus = $allocation->estimators->firstWhere('id', auth()->id())?->pivot->status ?? 'open'; @endphp
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full
-                                        {{ $allocation->status === 'submitted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' }}">
-                                        {{ ucfirst($allocation->status) }}
+                                        {{ $pivotStatus === 'submitted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' }}">
+                                        {{ ucfirst($pivotStatus) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right">
-                                    @if($allocation->status === 'open')
+                                    @if($pivotStatus === 'open')
                                         <form method="POST" action="{{ route('estimator.workload.status', $allocation) }}">
                                             @csrf
                                             @method('PATCH')

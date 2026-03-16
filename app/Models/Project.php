@@ -13,6 +13,7 @@ class Project extends Model
 
     protected $fillable = [
         'name',
+        'allocation_id',
         'gc',
         "other_gc",
         'scope',
@@ -160,6 +161,11 @@ class Project extends Model
     public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function allocation(): BelongsTo
+    {
+        return $this->belongsTo(Allocation::class);
     }
 
     /**

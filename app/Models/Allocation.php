@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Allocation extends Model
 {
@@ -13,7 +14,6 @@ class Allocation extends Model
         'assigned_date',
         'days_required',
         'job_type',
-        'status',
     ];
 
     protected $casts = [
@@ -23,6 +23,13 @@ class Allocation extends Model
 
     public function estimators(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'allocation_user');
+        return $this->belongsToMany(User::class, 'allocation_user')
+                    ->withPivot('status')
+                    ->withTimestamps();
+    }
+
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
     }
 }

@@ -20,7 +20,10 @@ class AllocationController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $query->whereHas('estimators', function ($q) use ($request) {
+                $q->where('users.id', Auth::id())
+                  ->where('allocation_user.status', $request->status);
+            });
         }
 
         $allocations = $query->paginate(20)->withQueryString();
@@ -39,7 +42,7 @@ class AllocationController extends Controller
             'status' => 'required|in:open,submitted',
         ]);
 
-        $allocation->update(['status' => $request->status]);
+        $allocation->estimators()->updateExistingPivot(Auth::id(), ['status' => $request->status]);
 
         return redirect()->back()->with('success', "Job {$allocation->job_number} marked as {$request->status}.");
     }

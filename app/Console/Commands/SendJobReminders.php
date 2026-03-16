@@ -34,7 +34,7 @@ class SendJobReminders extends Command
 
         $jobs = Allocation::with('estimators')
             ->whereDate('assigned_date', $today)
-            ->where('status', 'open')
+            ->whereHas('estimators', fn($q) => $q->where('allocation_user.status', 'open'))
             ->get();
 
         if ($jobs->isEmpty()) {
@@ -45,6 +45,10 @@ class SendJobReminders extends Command
         $count = 0;
         foreach ($jobs as $job) {
             foreach ($job->estimators as $estimator) {
+                // Only remind estimators whose own status is still open
+                if ($estimator->pivot->status !== 'open') {
+                    continue;
+                }
                 if ($count > 0) {
                     usleep(600000); // 600ms between sends — Resend allows max 2 req/sec
                 }
@@ -53,7 +57,7 @@ class SendJobReminders extends Command
             }
         }
 
-        $this->info("Due-today reminders sent for {$jobs->count()} job(s).");
+        $this->info("Due-today reminders sent for {$count} estimator(s).");
     }
 
     private function sendOverdueAlerts(): void
@@ -65,7 +69,7 @@ class SendJobReminders extends Command
 
         $overdueJobs = Allocation::with('estimators')
             ->whereDate('assigned_date', $yesterday)
-            ->where('status', 'open')
+            ->whereHas('estimators', fn($q) => $q->where('allocation_user.status', 'open'))
             ->get();
 
         if ($overdueJobs->isEmpty()) {
@@ -73,29 +77,43 @@ class SendJobReminders extends Command
             return;
         }
 
-        // Notify Leo & Rey with all overdue jobs
-        foreach (self::OVERDUE_RECIPIENTS as $index => $email) {
-            if ($index > 0) {
-                usleep(600000);
-            }
-            Mail::to($email)->send(new JobOverdueMail($overdueJobs));
-        }
-
-        // Notify each estimator with only their own overdue jobs
+        // Build per-estimator overdue list (only their open jobs)
         $estimatorJobs = [];
         foreach ($overdueJobs as $job) {
             foreach ($job->estimators as $estimator) {
+                if ($estimator->pivot->status !== 'open') {
+                    continue;
+                }
                 $estimatorJobs[$estimator->id]['estimator'] = $estimator;
                 $estimatorJobs[$estimator->id]['jobs'][]    = $job;
             }
         }
 
+        // If all estimators have submitted, nothing to alert
+        if (empty($estimatorJobs)) {
+            $this->info('No overdue jobs with open estimators — no alert sent.');
+            return;
+        }
+
+        // Notify Leo & Rey — only include jobs that have at least one open estimator
+        $jobsWithOpenEstimators = $overdueJobs->filter(function ($job) {
+            return $job->estimators->contains(fn($e) => $e->pivot->status === 'open');
+        });
+
+        foreach (self::OVERDUE_RECIPIENTS as $index => $email) {
+            if ($index > 0) {
+                usleep(600000);
+            }
+            Mail::to($email)->send(new JobOverdueMail($jobsWithOpenEstimators));
+        }
+
+        // Notify each estimator with only their own open overdue jobs
         foreach ($estimatorJobs as $entry) {
             usleep(600000);
             Mail::to($entry['estimator']->email)
                 ->send(new JobOverdueMail(collect($entry['jobs'])));
         }
 
-        $this->info("Overdue alert sent for {$overdueJobs->count()} job(s).");
+        $this->info("Overdue alert sent for {$jobsWithOpenEstimators->count()} job(s), " . count($estimatorJobs) . " estimator(s).");
     }
 }

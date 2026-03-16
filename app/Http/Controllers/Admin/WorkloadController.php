@@ -60,7 +60,7 @@ class WorkloadController extends Controller
             $openDistributionDays = DB::table('allocation_user')
                 ->join('allocations', 'allocation_user.allocation_id', '=', 'allocations.id')
                 ->where('allocation_user.user_id', $estimator->id)
-                ->where('allocations.status', 'open')
+                ->where('allocation_user.status', 'open')
                 ->sum('allocations.days_required');
 
             $workloadData[] = [

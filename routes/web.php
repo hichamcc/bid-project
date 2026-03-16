@@ -95,6 +95,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/allocation', [AllocationController::class, 'index'])->name('allocation.index');
     Route::post('/allocation', [AllocationController::class, 'store'])->name('allocation.store');
     Route::get('/allocation/monthly', [AllocationController::class, 'monthly'])->name('allocation.monthly');
+    Route::get('/allocation/{allocation}/edit', [AllocationController::class, 'edit'])->name('allocation.edit');
+    Route::put('/allocation/{allocation}', [AllocationController::class, 'update'])->name('allocation.update');
     Route::delete('/allocation/{allocation}', [AllocationController::class, 'destroy'])->name('allocation.destroy');
 
     Route::get('/off-days', [EstimatorOffDayController::class, 'index'])->name('off-days.index');
