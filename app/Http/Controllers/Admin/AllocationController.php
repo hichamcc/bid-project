@@ -152,20 +152,31 @@ class AllocationController extends Controller
         $attachData = $selected->pluck('id')->mapWithKeys(fn($id) => [$id => ['status' => 'open']]);
         $allocation->estimators()->attach($attachData);
 
-        // Build other_gc data
+        // Build other_gc data — apply -2 days (skip Sunday) to each due date
         $otherGcData = [];
         foreach ($validated['other_gc_names'] ?? [] as $gcName) {
+            $rawDate = $validated['other_gc_data'][$gcName]['due_date'] ?? null;
+            if ($rawDate) {
+                $gcAssignedDate = Carbon::parse($rawDate)->subDays(2);
+                if ($gcAssignedDate->isSunday()) {
+                    $gcAssignedDate->subDay();
+                }
+                $rawDate = $gcAssignedDate->toDateString();
+            }
             $otherGcData[$gcName] = [
-                'due_date' => $validated['other_gc_data'][$gcName]['due_date'] ?? null,
+                'due_date' => $rawDate,
                 'web_link' => $validated['other_gc_data'][$gcName]['web_link'] ?? null,
             ];
         }
 
-        // Create one Project per assigned estimator
+        // Create one Project per assigned estimator (primary GC)
+        // Plus one additional Project per other GC per estimator
         $projectType = $validated['job_type'] === 'MU' ? 'MULTIUNIT' : 'NON MU';
         foreach ($selected->values() as $index => $estimator) {
             $letter      = chr(65 + $index); // A, B, C
             $projectName = "{$validated['job_number']}{$letter}. {$validated['project_name']}";
+
+            // Primary GC project
             Project::create([
                 'allocation_id'       => $allocation->id,
                 'name'                => $projectName,
@@ -178,6 +189,21 @@ class AllocationController extends Controller
                 'type'                => $projectType,
                 'assigned_to'         => $estimator->id,
             ]);
+
+            // One project per other GC, using that GC's due date and web link
+            foreach ($otherGcData as $gcName => $gcInfo) {
+                Project::create([
+                    'allocation_id'       => $allocation->id,
+                    'name'                => $projectName,
+                    'gc'                  => $gcName,
+                    'status'              => $validated['project_status'] ?? null,
+                    'project_information' => $validated['project_information'] ?? null,
+                    'web_link'            => $gcInfo['web_link'] ?? null,
+                    'due_date'            => $gcInfo['due_date'] ?? null,
+                    'type'                => $projectType,
+                    'assigned_to'         => $estimator->id,
+                ]);
+            }
         }
 
         $warning = $selected->count() < $assignCount
