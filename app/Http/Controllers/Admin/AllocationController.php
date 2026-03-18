@@ -58,10 +58,16 @@ class AllocationController extends Controller
             'due_date'           => 'required|date',
             'days_required'      => 'required|numeric|min:0.1',
             'job_type'           => 'required|in:MU,NON_MU',
-            'project_name'       => 'required|string|max:255',
-            'gc'                 => 'nullable|string|max:255',
-            'project_status'     => 'nullable|string|max:255',
-            'project_information'=> 'nullable|string',
+            'project_name'              => 'required|string|max:255',
+            'gc'                        => 'nullable|string|max:255',
+            'project_status'            => 'nullable|string|max:255',
+            'project_information'       => 'nullable|string',
+            'web_link'                  => 'nullable|url|max:255',
+            'other_gc_names'            => 'nullable|array',
+            'other_gc_names.*'          => 'string|max:255',
+            'other_gc_data'             => 'nullable|array',
+            'other_gc_data.*.due_date'  => 'nullable|date',
+            'other_gc_data.*.web_link'  => 'nullable|url|max:255',
         ]);
 
         // Check if job number is already allocated
@@ -146,6 +152,15 @@ class AllocationController extends Controller
         $attachData = $selected->pluck('id')->mapWithKeys(fn($id) => [$id => ['status' => 'open']]);
         $allocation->estimators()->attach($attachData);
 
+        // Build other_gc data
+        $otherGcData = [];
+        foreach ($validated['other_gc_names'] ?? [] as $gcName) {
+            $otherGcData[$gcName] = [
+                'due_date' => $validated['other_gc_data'][$gcName]['due_date'] ?? null,
+                'web_link' => $validated['other_gc_data'][$gcName]['web_link'] ?? null,
+            ];
+        }
+
         // Create one Project per assigned estimator
         $projectType = $validated['job_type'] === 'MU' ? 'MULTIUNIT' : 'NON MU';
         foreach ($selected->values() as $index => $estimator) {
@@ -157,6 +172,8 @@ class AllocationController extends Controller
                 'gc'                  => $validated['gc'] ?? null,
                 'status'              => $validated['project_status'] ?? null,
                 'project_information' => $validated['project_information'] ?? null,
+                'web_link'            => $validated['web_link'] ?? null,
+                'other_gc'            => !empty($otherGcData) ? $otherGcData : null,
                 'due_date'            => $assignedDate,
                 'type'                => $projectType,
                 'assigned_to'         => $estimator->id,
