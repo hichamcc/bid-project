@@ -110,6 +110,19 @@
                             </div>
                         @endif
                         
+                        @if($project->web_link)
+                            <div class="mb-6">
+                                <h4 class="text-md font-medium text-gray-800 mb-2">Project Link</h4>
+                                <a href="{{ $project->web_link }}" target="_blank"
+                                   class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                    {{ $project->web_link }}
+                                </a>
+                            </div>
+                        @endif
+
                         @if($project->description)
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -478,8 +491,18 @@
                                 Back to Projects
                             </a>
                             
+                            @if($project->web_link)
+                                <a href="{{ $project->web_link }}" target="_blank"
+                                   class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 inline-flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                    </svg>
+                                    Open Project Link
+                                </a>
+                            @endif
+
                             @if($project->client_email)
-                                <a href="mailto:{{ $project->client_email }}" 
+                                <a href="mailto:{{ $project->client_email }}"
                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 inline-block text-center">
                                     Email Client
                                 </a>
