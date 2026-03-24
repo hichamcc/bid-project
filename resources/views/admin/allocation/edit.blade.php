@@ -100,6 +100,50 @@
                     </div>
                 </div>
 
+                <!-- Due Dates -->
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Due Dates</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                        Changing the main due date will notify all open estimators by email.
+                        Other GC due dates are estimator due dates (stored directly, -2 days applied on save).
+                    </p>
+
+                    <div class="space-y-3">
+                        <!-- Main allocation due date -->
+                        <div class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 w-40 flex-shrink-0">
+                                Main Due Date
+                            </span>
+                            <input type="date"
+                                   name="due_date"
+                                   value="{{ $allocation->due_date->format('Y-m-d') }}"
+                                   class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                Estimator due: {{ $allocation->assigned_date->format('M d, Y') }}
+                            </span>
+                        </div>
+
+                        <!-- Per other-GC due dates -->
+                        @foreach($gcGroups as $gcName => $currentDueDate)
+                            @if($gcName !== '' && $gcName !== $allocation->projects->first()?->gc)
+                                @php $realDueDate = $currentDueDate ? $currentDueDate->copy()->addDays(2) : null; @endphp
+                                <div class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300 w-40 flex-shrink-0 truncate" title="{{ $gcName }}">
+                                        {{ $gcName }}
+                                    </span>
+                                    <input type="date"
+                                           name="gc_due_dates[{{ $gcName }}]"
+                                           value="{{ $realDueDate ? $realDueDate->format('Y-m-d') : '' }}"
+                                           class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
+                                        Estimator due: {{ $currentDueDate ? $currentDueDate->format('M d, Y') : '—' }}
+                                    </span>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+
                 <!-- Add New Estimator -->
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700"
                      x-data="{

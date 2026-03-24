@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\JobAssignedMail;
+use App\Mail\JobDueDateChangedMail;
 use App\Mail\JobRemovedMail;
 use App\Models\Allocation;
 use App\Models\Gc;
@@ -256,7 +257,13 @@ class AllocationController extends Controller
             ];
         });
 
-        return view('admin.allocation.edit', compact('allocation', 'slots', 'allEstimators', 'limit'));
+        // Build unique GC groups from projects: gc_name => current due_date
+        // Main GC projects share due_date = assigned_date; other GC projects have their own due_date
+        $gcGroups = $allocation->projects
+            ->groupBy(fn($p) => $p->gc ?? '')
+            ->map(fn($projects) => $projects->first()->due_date);
+
+        return view('admin.allocation.edit', compact('allocation', 'slots', 'allEstimators', 'limit', 'gcGroups'));
     }
 
     public function update(Request $request, Allocation $allocation)
@@ -268,8 +275,74 @@ class AllocationController extends Controller
 
         $limit        = $allocation->job_type === 'MU' ? 3 : 2;
         $projectType  = $allocation->job_type === 'MU' ? 'MULTIUNIT' : 'NON MU';
-        $slots        = $request->input('slots', []);   // [original_user_id => ['new_id' => ..., 'project_id' => ...]]
+        $slots        = $request->input('slots', []);
         $newEstimators = array_filter($request->input('new_estimators', []));
+
+        $emailQueue = []; // collect emails to send with rate limiting
+
+        // --- Due date changes ---
+        $dueDateChanged = false;
+
+        // Main due date
+        if ($request->filled('due_date')) {
+            $newDueDate      = Carbon::parse($request->input('due_date'));
+            $newAssignedDate = $newDueDate->copy()->subDays(2);
+            if ($newAssignedDate->isSunday()) {
+                $newAssignedDate->subDay();
+            }
+
+            if ($newDueDate->toDateString() !== $allocation->due_date->toDateString()) {
+                $dueDateChanged = true;
+                $allocation->update([
+                    'due_date'      => $newDueDate,
+                    'assigned_date' => $newAssignedDate,
+                ]);
+                $allocation->refresh();
+
+                // Update all projects whose gc matches the primary GC (due_date was assigned_date)
+                // We identify main GC projects as those with other_gc set OR as the first gc group
+                // Simplest: update all projects for this allocation whose due_date was the old assigned_date
+                Project::where('allocation_id', $allocation->id)
+                    ->whereNotIn('gc', array_keys($request->input('gc_due_dates', [])))
+                    ->update(['due_date' => $newAssignedDate]);
+            }
+        }
+
+        // Per other-GC due dates (admin enters estimator due date directly — stored as-is)
+        foreach ($request->input('gc_due_dates', []) as $gcName => $rawDate) {
+            if (empty($rawDate)) continue;
+            $gcAssignedDate = Carbon::parse($rawDate)->subDays(2);
+            if ($gcAssignedDate->isSunday()) {
+                $gcAssignedDate->subDay();
+            }
+            // Update the separate other-GC projects
+            Project::where('allocation_id', $allocation->id)
+                ->where('gc', $gcName)
+                ->update(['due_date' => $gcAssignedDate]);
+
+            // Also update the other_gc JSON on main projects that reference this GC
+            Project::where('allocation_id', $allocation->id)
+                ->where('gc', '!=', $gcName)
+                ->get()
+                ->each(function ($project) use ($gcName, $gcAssignedDate) {
+                    $otherGc = $project->other_gc;
+                    if (is_array($otherGc) && isset($otherGc[$gcName])) {
+                        $otherGc[$gcName]['due_date'] = $gcAssignedDate->toDateString();
+                        $project->other_gc = $otherGc;
+                        $project->save();
+                    }
+                });
+        }
+
+        // Notify open estimators if main due date changed
+        if ($dueDateChanged) {
+            $allocation->load('estimators');
+            foreach ($allocation->estimators as $estimator) {
+                if ($estimator->pivot->status === 'open') {
+                    $emailQueue[] = fn() => Mail::to($estimator->email)->send(new JobDueDateChangedMail($allocation, $estimator));
+                }
+            }
+        }
 
         // Validate final count
         $removals    = collect($slots)->filter(fn($s) => empty($s['new_id']))->count();
@@ -288,7 +361,6 @@ class AllocationController extends Controller
             return back()->with('error', 'Cannot assign the same estimator twice.');
         }
 
-        $emailQueue = []; // collect emails to send with rate limiting
         $currentEstimators = $allocation->estimators->keyBy('id');
 
         // Process existing slots

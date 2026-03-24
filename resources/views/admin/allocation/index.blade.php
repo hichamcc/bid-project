@@ -341,6 +341,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Days</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Assigned Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">GCs</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Assigned To / Status</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
@@ -365,6 +366,16 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $allocation->assigned_date->format('M d, Y') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    @php $gcCount = $allocation->projects->pluck('gc')->filter()->unique()->count(); @endphp
+                                    @if($gcCount > 0)
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                            {{ $gcCount }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400 text-xs">—</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-sm">
                                     @php
@@ -418,7 +429,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     No allocations yet. Use the form above to assign a job.
                                 </td>
                             </tr>
