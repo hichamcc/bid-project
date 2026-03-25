@@ -134,7 +134,8 @@
                                            id="project_name"
                                            name="project_name"
                                            value="{{ old('project_name') }}"
-                                           placeholder="e.g. Downtown Tower"
+                                           placeholder="e.g. DOWNTOWN TOWER"
+                                           oninput="this.value = this.value.toUpperCase()"
                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 @error('project_name') border-red-500 @enderror">
                                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Final name will be: <em>5454A. Project Name</em></p>
                                     @error('project_name')
