@@ -44,14 +44,19 @@ class WorkloadController extends Controller
                 ->orderBy('due_date', 'asc')
                 ->get();
 
-            // Count total jobs
-            $totalJobs = $projects->count();
+            // Deduplicate by allocation_id so multiple GC projects for the same job count once
+            $uniqueProjects = $projects->groupBy(function ($project) {
+                return $project->allocation_id ?? ('name:' . $project->name);
+            })->map->first();
 
-            // Group by status and count
-            $statusCounts = $projects->groupBy('status')->map->count()->toArray();
+            // Count total jobs (unique)
+            $totalJobs = $uniqueProjects->count();
 
-            // Group by type and count (handle empty as "Regular")
-            $typeCounts = $projects->map(function($project) {
+            // Group by status and count (unique jobs)
+            $statusCounts = $uniqueProjects->groupBy('status')->map->count()->toArray();
+
+            // Group by type and count (unique jobs, handle empty as "Regular")
+            $typeCounts = $uniqueProjects->map(function($project) {
                 return $project->type ?: 'Regular';
             })->groupBy(function($type) {
                 return $type;
@@ -68,7 +73,7 @@ class WorkloadController extends Controller
                 'total_jobs'           => $totalJobs,
                 'status_counts'        => $statusCounts,
                 'type_counts'          => $typeCounts,
-                'projects'             => $projects,
+                'projects'             => $uniqueProjects,
                 'open_distribution_days' => $openDistributionDays,
             ];
         }

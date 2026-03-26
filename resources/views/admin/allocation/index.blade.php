@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="py-12">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <div class="max-w-10xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
         <!-- Header -->
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
@@ -318,12 +318,21 @@
                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Sort By Date</label>
+                        <select name="sort"
+                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="asc" {{ request('sort', 'asc') === 'asc' ? 'selected' : '' }}>Oldest First</option>
+                            <option value="desc" {{ request('sort') === 'desc' ? 'selected' : '' }}>Newest First</option>
+                        </select>
+                    </div>
+
                     <div class="flex gap-2">
                         <button type="submit"
                                 class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
                             Filter
                         </button>
-                        @if(request()->hasAny(['job_number', 'job_type', 'estimator_id', 'date_from', 'date_to']))
+                        @if(request()->hasAny(['job_number', 'job_type', 'estimator_id', 'date_from', 'date_to', 'sort']))
                             <a href="{{ route('admin.allocation.index') }}"
                                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md">
                                 Clear
@@ -338,6 +347,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Job Number</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Job Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Days</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due Date</th>
@@ -352,6 +362,14 @@
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {{ $allocation->job_number }}
+                                </td>
+                                @php
+                                    $firstProject = $allocation->projects->first();
+                                    $dotPos = $firstProject ? strpos($firstProject->name, '. ') : false;
+                                    $jobName = $dotPos !== false ? substr($firstProject->name, $dotPos + 2) : null;
+                                @endphp
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $jobName ?? '—' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full
@@ -430,7 +448,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="9" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     No allocations yet. Use the form above to assign a job.
                                 </td>
                             </tr>

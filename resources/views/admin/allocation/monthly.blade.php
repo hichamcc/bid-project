@@ -137,16 +137,18 @@
                                             <div class="space-y-1">
                                                 @foreach($jobs as $job)
                                                     @php
-                                                        $isMU      = $job->job_type === 'MU';
-                                                        $typeLabel = $isMU ? 'MU' : 'NM';
+                                                        $isMU        = $job->job_type === 'MU';
+                                                        $typeLabel   = $isMU ? 'MU' : 'NM';
                                                         // Label based on left-to-right column order, not assignment order
                                                         $jobEstimatorIds  = $job->estimators->pluck('id');
                                                         $orderedForJob    = $estimators->filter(fn($e) => $jobEstimatorIds->contains($e->id))->values();
                                                         $position         = $orderedForJob->search(fn($e) => $e->id === $estimator->id);
                                                         $assigned         = $isMU ? (string)($position + 1) : chr(65 + $position);
+                                                        $isSubmitted = in_array($job->id, $submittedMap[$estimator->id] ?? []);
                                                     @endphp
-                                                    <div class="flex items-center gap-1.5 px-2 py-1 rounded text-xs whitespace-nowrap
-                                                        {{ $isMU ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-blue-50 dark:bg-blue-900/20' }}">
+                                                    <div class="relative flex items-center gap-1.5 px-2 py-1 rounded text-xs whitespace-nowrap
+                                                        {{ $isMU ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-blue-50 dark:bg-blue-900/20' }}
+                                                        {{ $isSubmitted ? 'opacity-70' : '' }}">
                                                         <span class="font-bold text-gray-800 dark:text-gray-100">{{ $job->job_number }}</span>
                                                         <span class="px-1 py-0.5 rounded font-semibold
                                                             {{ $isMU ? 'bg-purple-200 text-purple-800 dark:bg-purple-800 dark:text-purple-100' : 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-100' }}">
@@ -154,6 +156,9 @@
                                                         </span>
                                                         <span class="font-bold text-gray-700 dark:text-gray-300">{{ $job->days_required }}D</span>
                                                         <span class="text-gray-500 dark:text-gray-400">{{ $assigned }}</span>
+                                                        @if($isSubmitted)
+                                                            <span class="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t-2 border-red-500 pointer-events-none"></span>
+                                                        @endif
                                                     </div>
                                                 @endforeach
                                             </div>

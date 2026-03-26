@@ -59,7 +59,6 @@
         </div>
 
 
-
         <div class="closing">
             Thank you for your teamwork.
         </div>

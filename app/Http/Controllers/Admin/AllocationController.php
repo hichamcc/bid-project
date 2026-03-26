@@ -20,8 +20,9 @@ class AllocationController extends Controller
 {
     public function index(Request $request)
     {
+        $sortDir = $request->get('sort', 'asc') === 'desc' ? 'desc' : 'asc';
         $query = Allocation::with(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'), 'projects'])
-            ->orderBy('due_date', 'desc');
+            ->orderBy('assigned_date', $sortDir);
 
         if ($request->filled('job_number')) {
             $query->where('job_number', 'like', '%' . $request->job_number . '%');
@@ -258,12 +259,19 @@ class AllocationController extends Controller
         });
 
         // Build unique GC groups from projects: gc_name => current due_date
-        // Main GC projects share due_date = assigned_date; other GC projects have their own due_date
         $gcGroups = $allocation->projects
             ->groupBy(fn($p) => $p->gc ?? '')
             ->map(fn($projects) => $projects->first()->due_date);
 
-        return view('admin.allocation.edit', compact('allocation', 'slots', 'allEstimators', 'limit', 'gcGroups'));
+        // All active GCs for the "Add Other GCs" dropdown
+        $gcs = Gc::active()->ordered()->get();
+
+        // GC names already used (primary + existing other GCs) — excluded from "add" dropdown
+        $excludedGcNames = $allocation->projects->pluck('gc')->filter()->unique()->values()->toArray();
+
+        return view('admin.allocation.edit', compact(
+            'allocation', 'slots', 'allEstimators', 'limit', 'gcGroups', 'gcs', 'excludedGcNames'
+        ));
     }
 
     public function update(Request $request, Allocation $allocation)
@@ -332,6 +340,64 @@ class AllocationController extends Controller
                         $project->save();
                     }
                 });
+        }
+
+        // Add new other GCs
+        $newOtherGcNames = array_filter($request->input('other_gc_names', []));
+        // All other-GC names (existing + new) — used to identify main projects
+        $allOtherGcNames = array_merge(
+            array_keys($request->input('gc_due_dates', [])),
+            $newOtherGcNames
+        );
+        foreach ($newOtherGcNames as $gcName) {
+            // Skip if this GC already has projects for this allocation
+            if ($allocation->projects->where('gc', $gcName)->isNotEmpty()) {
+                continue;
+            }
+
+            $rawDate = $request->input("other_gc_data.{$gcName}.due_date");
+            $webLink = $request->input("other_gc_data.{$gcName}.web_link") ?: null;
+
+            $gcAssignedDate = null;
+            if ($rawDate) {
+                $gcAssignedDate = Carbon::parse($rawDate)->subDays(2);
+                if ($gcAssignedDate->isSunday()) {
+                    $gcAssignedDate->subDay();
+                }
+            }
+
+            // Create one project per current estimator with status RECEIVED
+            foreach ($allocation->estimators as $estimator) {
+                $mainProject = $allocation->projects->firstWhere('assigned_to', $estimator->id);
+                $projectName = $mainProject ? $mainProject->name : $allocation->job_number;
+
+                Project::create([
+                    'allocation_id' => $allocation->id,
+                    'name'          => $projectName,
+                    'gc'            => $gcName,
+                    'status'        => 'RECEIVED',
+                    'due_date'      => $gcAssignedDate,
+                    'web_link'      => $webLink,
+                    'type'          => $projectType,
+                    'assigned_to'   => $estimator->id,
+                ]);
+            }
+
+            // Update other_gc JSON only on main projects (not other-GC projects)
+            $allocation->projects
+                ->filter(fn($p) => !in_array($p->gc, $allOtherGcNames))
+                ->each(function ($project) use ($gcName, $gcAssignedDate, $webLink) {
+                    $otherGc = $project->other_gc ?? [];
+                    $otherGc[$gcName] = [
+                        'due_date' => $gcAssignedDate?->toDateString(),
+                        'web_link' => $webLink,
+                    ];
+                    $project->other_gc = $otherGc;
+                    $project->save();
+                });
+
+            // Refresh projects so subsequent iterations see the new ones
+            $allocation->load('projects');
         }
 
         // Notify open estimators if main due date changed
@@ -508,11 +574,16 @@ class AllocationController extends Controller
             ->get();
 
         // Index: $jobsByDateAndUser['Y-m-d'][userId] = [allocations]
+        // Also build submitted map: [estimatorId => [allocationId, ...]]
         $jobsByDateAndUser = [];
+        $submittedMap = [];
         foreach ($allocations as $allocation) {
             $dateKey = $allocation->assigned_date->format('Y-m-d');
             foreach ($allocation->estimators as $estimator) {
                 $jobsByDateAndUser[$dateKey][$estimator->id][] = $allocation;
+                if ($estimator->pivot->status === 'submitted') {
+                    $submittedMap[$estimator->id][] = $allocation->id;
+                }
             }
         }
 
@@ -529,7 +600,7 @@ class AllocationController extends Controller
         }
 
         return view('admin.allocation.monthly', compact(
-            'estimators', 'days', 'jobsByDateAndUser', 'totals', 'month', 'year', 'currentDate',
+            'estimators', 'days', 'jobsByDateAndUser', 'submittedMap', 'totals', 'month', 'year', 'currentDate',
             'muLabels', 'nonMuLabels'
         ));
     }
