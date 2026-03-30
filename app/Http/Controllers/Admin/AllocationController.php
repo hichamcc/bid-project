@@ -567,10 +567,10 @@ class AllocationController extends Controller
             $cursor->addDay();
         }
 
-        // Load all allocations for the month (keyed by due_date month)
+        // Load all allocations for the month keyed by assigned_date (what the calendar displays)
         $allocations = Allocation::with(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc')])
-            ->whereMonth('due_date', $month)
-            ->whereYear('due_date', $year)
+            ->whereMonth('assigned_date', $month)
+            ->whereYear('assigned_date', $year)
             ->get();
 
         // Index: $jobsByDateAndUser['Y-m-d'][userId] = [allocations]
