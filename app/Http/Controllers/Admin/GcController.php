@@ -87,7 +87,7 @@ class GCController extends Controller
         $totalProjects = $gc->primaryProjects()->count();
 
         $activeProjects = $gc->primaryProjects()
-                             ->whereNotIn('status', ['completed', 'cancelled'])
+                             ->whereNotIn('status', ['completed', 'SUBMITTED', 'DECLINED', 'MISSED', 'Avoided'])
                              ->count();
 
         $completedProjects = $gc->primaryProjects()
