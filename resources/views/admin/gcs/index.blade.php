@@ -147,8 +147,8 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    @if(method_exists($gc, 'projects'))
-                                        {{ $gc->projects()->count() }} projects
+                                    @if(method_exists($gc, 'primaryProjects'))
+                                        {{ $gc->primaryProjects()->count() }} projects
                                     @else
                                         -
                                     @endif
