@@ -23,43 +23,35 @@ class DashboardController extends Controller
         $overdueProjects = Project::overdue()->count();
         $dueSoonProjects = Project::dueSoon()->count();
 
-        // Allocations that have other-GC project rows (to exclude duplicates)
-        $allocationsWithOtherGc = function ($sub) {
-            $sub->select('allocation_id')
-                ->from('projects')
-                ->whereNotNull('other_gc')
-                ->whereNotNull('allocation_id');
-        };
-
-        $primaryGcFilter = function ($q) use ($allocationsWithOtherGc) {
-            $q->whereNotNull('other_gc')
-              ->orWhereNull('allocation_id')
-              ->orWhereNotIn('allocation_id', $allocationsWithOtherGc);
-        };
+        // Unique key per job+GC (option B: same job with different GCs counts separately)
+        $uniqueKey = "IF(allocation_id IS NOT NULL,
+            CONCAT('a:', allocation_id, ':', gc),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+)[A-Z]\\\\.', '\\\\1.'), ':', gc)
+        )";
 
         $submittedMU = Project::where('type', 'MULTIUNIT')
                               ->where('status', 'SUBMITTED')
-                              ->where($primaryGcFilter)
-                              ->count();
+                              ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
+                              ->value('total');
 
         $submittedMUThisMonth = Project::where('type', 'MULTIUNIT')
                                        ->where('status', 'SUBMITTED')
                                        ->whereMonth('updated_at', now()->month)
                                        ->whereYear('updated_at', now()->year)
-                                       ->where($primaryGcFilter)
-                                       ->count();
+                                       ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
+                                       ->value('total');
 
-        $submittedNonMU = Project::where('type', 'NON MU')
+        $submittedNonMU = Project::where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'))
                                  ->where('status', 'SUBMITTED')
-                                 ->where($primaryGcFilter)
-                                 ->count();
+                                 ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
+                                 ->value('total');
 
-        $submittedNonMUThisMonth = Project::where('type', 'NON MU')
+        $submittedNonMUThisMonth = Project::where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'))
                                           ->where('status', 'SUBMITTED')
                                           ->whereMonth('updated_at', now()->month)
                                           ->whereYear('updated_at', now()->year)
-                                          ->where($primaryGcFilter)
-                                          ->count();
+                                          ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
+                                          ->value('total');
 
         // User Statistics
         $totalUsers = User::count();

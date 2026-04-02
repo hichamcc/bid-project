@@ -83,26 +83,38 @@ class GCController extends Controller
                              ->limit(10)
                              ->get();
     
-        // Get project statistics (primary GC only — no other_gc double-counting)
-        $totalProjects = $gc->primaryProjects()->count();
+        // Unique key per job+GC:
+        // - new projects (has allocation_id): CONCAT('a:', allocation_id, ':', gc)
+        // - old projects (no allocation_id):  CONCAT('n:', normalized_name, ':', gc)
+        // Normalized name strips estimator letter: "26221A. NAME" → "26221. NAME"
+        $uniqueKey = "IF(allocation_id IS NOT NULL,
+            CONCAT('a:', allocation_id, ':', gc),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+)[A-Z]\\\\.', '\\\\1.'), ':', gc)
+        )";
 
-        $activeProjects = $gc->primaryProjects()
-                             ->whereNotIn('status', ['completed', 'SUBMITTED', 'DECLINED', 'MISSED', 'Avoided'])
-                             ->count();
+        $totalProjects = Project::where('gc', $gc->name)
+                                ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
+                                ->value('total');
 
-        $completedProjects = $gc->primaryProjects()
-                                ->whereIn('status', ['completed', 'SUBMITTED'])
-                                ->count();
+        $activeProjects = Project::where('gc', $gc->name)
+                                 ->whereNotIn('status', ['completed', 'SUBMITTED', 'DECLINED', 'MISSED', 'Avoided'])
+                                 ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
+                                 ->value('total');
 
-        // MU / NON-MU counts — use gc = name only to avoid double-counting
-        // projects that also appear via the other_gc JSON reference
+        $completedProjects = Project::where('gc', $gc->name)
+                                    ->whereIn('status', ['completed', 'SUBMITTED'])
+                                    ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
+                                    ->value('total');
+
         $muProjects = Project::where('gc', $gc->name)
                              ->where('type', 'MULTIUNIT')
-                             ->count();
+                             ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
+                             ->value('total');
 
         $nonMuProjects = Project::where('gc', $gc->name)
                                 ->where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'))
-                                ->count();
+                                ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
+                                ->value('total');
 
         // Add recent projects to the GC object for the view
         $gc->recentProjects = $recentProjects;
