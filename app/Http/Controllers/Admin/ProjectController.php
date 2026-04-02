@@ -40,6 +40,11 @@ class ProjectController extends Controller
             $query->where('type', $request->type);
         }
 
+        // Filter by GC
+        if ($request->filled('gc')) {
+            $query->where('gc', $request->gc);
+        }
+
         // Filter by assigned user
         if ($request->filled('assigned_to')) {
             $query->where('assigned_to', $request->assigned_to);
