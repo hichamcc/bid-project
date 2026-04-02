@@ -91,7 +91,7 @@ class GCController extends Controller
                              ->count();
 
         $completedProjects = $gc->primaryProjects()
-                                ->where('status', 'completed')
+                                ->whereIn('status', ['completed', 'SUBMITTED'])
                                 ->count();
 
         // MU / NON-MU counts — use gc = name only to avoid double-counting
