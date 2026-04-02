@@ -102,7 +102,7 @@ class GCController extends Controller
                              ->count();
 
         $nonMuProjects = Project::where('gc', $gc->name)
-                                ->where('type', 'NON MU')
+                                ->where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'))
                                 ->count();
 
         // Add recent projects to the GC object for the view

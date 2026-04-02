@@ -29,6 +29,41 @@
             </div>
         @endif
 
+        <!-- Search & Filters -->
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+            <div class="p-4">
+                <form method="GET" action="{{ route('admin.gcs.index') }}" class="flex flex-wrap gap-3 items-end">
+                    <div class="flex-1 min-w-48">
+                        <input type="text"
+                               name="search"
+                               value="{{ request('search') }}"
+                               placeholder="Search by name, company or email..."
+                               class="w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2 border">
+                    </div>
+                    <div>
+                        <select name="active_filter"
+                                class="border-gray-300 rounded-md shadow-sm text-sm focus:ring-blue-500 focus:border-blue-500 px-3 py-2 border">
+                            <option value="">All Statuses</option>
+                            <option value="active" {{ request('active_filter') === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ request('active_filter') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit"
+                                class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded">
+                            Search
+                        </button>
+                        @if(request('search') || request('active_filter'))
+                            <a href="{{ route('admin.gcs.index') }}"
+                               class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium py-2 px-4 rounded">
+                                Clear
+                            </a>
+                        @endif
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- GCs Table -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="overflow-x-auto">
@@ -156,7 +191,7 @@
             <!-- Pagination -->
             @if(method_exists($gcs, 'hasPages') && $gcs->hasPages())
                 <div class="px-6 py-3 border-t border-gray-200">
-                    {{ $gcs->links() }}
+                    {{ $gcs->appends(request()->query())->links() }}
                 </div>
             @endif
         </div>

@@ -178,7 +178,7 @@
 
                     @if($totalProjects > 0)
                         <div class="mt-6">
-                            <a href="{{ route('admin.projects.index', ['gc' => $gc->name]) }}" 
+                            <a href="{{ route('admin.projects.index', ['gc' => $gc->name, 'due_filter' => 'all']) }}"
                                class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 inline-block text-center">
                                 View All Projects
                             </a>
@@ -195,7 +195,7 @@
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">Recent Projects</h3>
                         @if($totalProjects > 10)
-                            <a href="{{ route('admin.projects.index', ['gc' => $gc->name]) }}" 
+                            <a href="{{ route('admin.projects.index', ['gc' => $gc->name, 'due_filter' => 'all']) }}"
                                class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                 View all {{ $totalProjects }} projects →
                             </a>
