@@ -31,9 +31,12 @@ class GCController extends Controller
             $query->where('is_active', $request->active_filter === 'active');
         }
 
-        $gcs = $query->selectRaw('gcs.*,
-        (SELECT COUNT(*) FROM projects
-         WHERE projects.gc = gcs.name) as projects_count')
+        $gcs = $query->selectRaw("gcs.*,
+        (SELECT COUNT(DISTINCT IF(allocation_id IS NOT NULL,
+            CONCAT('a:', allocation_id),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+)[A-Z]\\\\.', '\\\\1.'))
+        )) FROM projects
+         WHERE projects.gc = gcs.name) as projects_count")
     ->ordered()
     ->paginate(15);
 
