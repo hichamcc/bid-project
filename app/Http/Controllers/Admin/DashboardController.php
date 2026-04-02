@@ -23,6 +23,44 @@ class DashboardController extends Controller
         $overdueProjects = Project::overdue()->count();
         $dueSoonProjects = Project::dueSoon()->count();
 
+        // Allocations that have other-GC project rows (to exclude duplicates)
+        $allocationsWithOtherGc = function ($sub) {
+            $sub->select('allocation_id')
+                ->from('projects')
+                ->whereNotNull('other_gc')
+                ->whereNotNull('allocation_id');
+        };
+
+        $primaryGcFilter = function ($q) use ($allocationsWithOtherGc) {
+            $q->whereNotNull('other_gc')
+              ->orWhereNull('allocation_id')
+              ->orWhereNotIn('allocation_id', $allocationsWithOtherGc);
+        };
+
+        $submittedMU = Project::where('type', 'MULTIUNIT')
+                              ->where('status', 'SUBMITTED')
+                              ->where($primaryGcFilter)
+                              ->count();
+
+        $submittedMUThisMonth = Project::where('type', 'MULTIUNIT')
+                                       ->where('status', 'SUBMITTED')
+                                       ->whereMonth('updated_at', now()->month)
+                                       ->whereYear('updated_at', now()->year)
+                                       ->where($primaryGcFilter)
+                                       ->count();
+
+        $submittedNonMU = Project::where('type', 'NON MU')
+                                 ->where('status', 'SUBMITTED')
+                                 ->where($primaryGcFilter)
+                                 ->count();
+
+        $submittedNonMUThisMonth = Project::where('type', 'NON MU')
+                                          ->where('status', 'SUBMITTED')
+                                          ->whereMonth('updated_at', now()->month)
+                                          ->whereYear('updated_at', now()->year)
+                                          ->where($primaryGcFilter)
+                                          ->count();
+
         // User Statistics
         $totalUsers = User::count();
         $activeEstimators = User::whereIn('role', ['estimator', 'head_estimator'])
@@ -98,7 +136,11 @@ class DashboardController extends Controller
             'projectsByType',
             'monthlyTrend',
             'workloadByEstimator',
-            'overdueByEstimator'
+            'overdueByEstimator',
+            'submittedMU',
+            'submittedMUThisMonth',
+            'submittedNonMU',
+            'submittedNonMUThisMonth'
         ));
     }
 

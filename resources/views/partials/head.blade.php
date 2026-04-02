@@ -37,5 +37,5 @@
             document.addEventListener("DOMContentLoaded", () => setButtons(appearance))
         }
     }
-    window.setAppearance(window.localStorage.getItem('appearance') || 'system')
+    window.setAppearance(window.localStorage.getItem('appearance') || 'light')
 </script>

@@ -86,23 +86,35 @@ class GCController extends Controller
     
         // Get project statistics
         $totalProjects = $gc->projects()->count();
-        
+
         $activeProjects = $gc->projects()
                              ->whereNotIn('status', ['completed', 'cancelled'])
                              ->count();
-        
+
         $completedProjects = $gc->projects()
                                 ->where('status', 'completed')
                                 ->count();
-    
+
+        // MU / NON-MU counts — use gc = name only to avoid double-counting
+        // projects that also appear via the other_gc JSON reference
+        $muProjects = Project::where('gc', $gc->name)
+                             ->where('type', 'MULTIUNIT')
+                             ->count();
+
+        $nonMuProjects = Project::where('gc', $gc->name)
+                                ->where('type', 'NON MU')
+                                ->count();
+
         // Add recent projects to the GC object for the view
         $gc->recentProjects = $recentProjects;
-    
+
         return view('admin.gcs.show', compact(
             'gc',
             'totalProjects',
             'activeProjects',
-            'completedProjects'
+            'completedProjects',
+            'muProjects',
+            'nonMuProjects'
         ));
     }
 
