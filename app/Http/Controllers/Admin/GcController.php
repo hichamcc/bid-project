@@ -78,20 +78,20 @@ class GCController extends Controller
      */
     public function show(GC $gc)
     {
-        // Get recent projects for this GC (latest 10)
-        $recentProjects = $gc->projects()
+        // Get recent projects for this GC (latest 10, primary GC only)
+        $recentProjects = $gc->primaryProjects()
                              ->latest()
                              ->limit(10)
                              ->get();
     
-        // Get project statistics
-        $totalProjects = $gc->projects()->count();
+        // Get project statistics (primary GC only — no other_gc double-counting)
+        $totalProjects = $gc->primaryProjects()->count();
 
-        $activeProjects = $gc->projects()
+        $activeProjects = $gc->primaryProjects()
                              ->whereNotIn('status', ['completed', 'cancelled'])
                              ->count();
 
-        $completedProjects = $gc->projects()
+        $completedProjects = $gc->primaryProjects()
                                 ->where('status', 'completed')
                                 ->count();
 
