@@ -23,13 +23,11 @@ class DashboardController extends Controller
         $overdueProjects = Project::overdue()->count();
         $dueSoonProjects = Project::dueSoon()->count();
 
-        // Unique key per job+GC (option B: same job with different GCs counts separately)
-        // New projects: use allocation_id (reliable)
-        // Old projects: extract leading job number only (e.g. "26006. LONG NAME..." → "26006")
-        //               so name variations across estimator rows don't produce different keys
+        // Unique key per job number only — all rows for the same job count as 1
+        // regardless of how many GCs or estimators are assigned
         $uniqueKey = "IF(allocation_id IS NOT NULL,
-            CONCAT('a:', allocation_id, ':', gc),
-            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'), ':', gc)
+            CONCAT('a:', allocation_id),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
         )";
 
         $submittedMU = Project::where('type', 'MULTIUNIT')

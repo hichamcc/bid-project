@@ -91,8 +91,8 @@ class GCController extends Controller
         // - old projects (no allocation_id):  CONCAT('n:', normalized_name, ':', gc)
         // Normalized name strips estimator letter: "26221A. NAME" → "26221. NAME"
         $uniqueKey = "IF(allocation_id IS NOT NULL,
-            CONCAT('a:', allocation_id, ':', gc),
-            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'), ':', gc)
+            CONCAT('a:', allocation_id),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
         )";
 
         $totalProjects = Project::where('gc', $gc->name)
