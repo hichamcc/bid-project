@@ -36,8 +36,8 @@ class DashboardController extends Controller
 
         $submittedMUThisMonth = Project::where('type', 'MULTIUNIT')
                                        ->where('status', 'SUBMITTED')
-                                       ->whereMonth('COALESCE(submitted_at, due_date)', now()->month)
-                                       ->whereYear('COALESCE(submitted_at, due_date)', now()->year)
+                                       ->whereRaw('MONTH(COALESCE(submitted_at, due_date)) = ?', [now()->month])
+                                       ->whereRaw('YEAR(COALESCE(submitted_at, due_date)) = ?', [now()->year])
                                        ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                                        ->value('total');
 
@@ -48,8 +48,8 @@ class DashboardController extends Controller
 
         $submittedNonMUThisMonth = Project::where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'))
                                           ->where('status', 'SUBMITTED')
-                                          ->whereMonth('COALESCE(submitted_at, due_date)', now()->month)
-                                          ->whereYear('COALESCE(submitted_at, due_date)', now()->year)
+                                          ->whereRaw('MONTH(COALESCE(submitted_at, due_date)) = ?', [now()->month])
+                                          ->whereRaw('YEAR(COALESCE(submitted_at, due_date)) = ?', [now()->year])
                                           ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                                           ->value('total');
 
