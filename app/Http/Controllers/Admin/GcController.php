@@ -34,7 +34,7 @@ class GCController extends Controller
         $gcs = $query->selectRaw("gcs.*,
         (SELECT COUNT(DISTINCT IF(allocation_id IS NOT NULL,
             CONCAT('a:', allocation_id),
-            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+)[A-Z]\\\\.', '\\\\1.'))
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
         )) FROM projects
          WHERE projects.gc = gcs.name) as projects_count")
     ->ordered()
@@ -92,7 +92,7 @@ class GCController extends Controller
         // Normalized name strips estimator letter: "26221A. NAME" → "26221. NAME"
         $uniqueKey = "IF(allocation_id IS NOT NULL,
             CONCAT('a:', allocation_id, ':', gc),
-            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+)[A-Z]\\\\.', '\\\\1.'), ':', gc)
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'), ':', gc)
         )";
 
         $totalProjects = Project::where('gc', $gc->name)
