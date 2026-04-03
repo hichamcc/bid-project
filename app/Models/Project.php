@@ -29,6 +29,7 @@ class Project extends Model
         'third_rfi_due_date',
         'third_rfi_attachment',
         'status',
+        'submitted_at',
         'type',
         'rfi',
         'assigned_to',
@@ -39,6 +40,7 @@ class Project extends Model
     protected $casts = [
         'assigned_date' => 'date',
         'due_date' => 'date',
+        'submitted_at' => 'datetime',
         'rfi_due_date' => 'date',
         'rfi_request_date' => 'date',
         'second_rfi_request_date' => 'date',

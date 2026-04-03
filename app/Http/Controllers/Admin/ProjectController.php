@@ -272,6 +272,16 @@ class ProjectController extends Controller
             }
         }
 
+        // Set submitted_at when status changes to SUBMITTED for the first time
+        if (
+            isset($validated['status']) &&
+            $validated['status'] === 'SUBMITTED' &&
+            $project->status !== 'SUBMITTED' &&
+            is_null($project->submitted_at)
+        ) {
+            $validated['submitted_at'] = now();
+        }
+
         $project->update($validated);
 
         return redirect()->route('admin.projects.index')
