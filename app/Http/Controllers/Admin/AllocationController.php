@@ -64,12 +64,12 @@ class AllocationController extends Controller
             'gc'                        => 'nullable|string|max:255',
             'project_status'            => 'nullable|string|max:255',
             'project_information'       => 'nullable|string',
-            'web_link'                  => 'nullable|url|max:255',
+            'web_link'                  => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
             'other_gc_names'            => 'nullable|array',
             'other_gc_names.*'          => 'string|max:255',
             'other_gc_data'             => 'nullable|array',
             'other_gc_data.*.due_date'  => 'nullable|date',
-            'other_gc_data.*.web_link'  => 'nullable|url|max:255',
+            'other_gc_data.*.web_link'  => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
         ]);
 
         // Check if job number is already allocated

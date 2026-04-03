@@ -37,7 +37,11 @@ class ProjectController extends Controller
         
         // Filter by type
         if ($request->filled('type')) {
-            $query->where('type', $request->type);
+            if ($request->type === 'NON MU') {
+                $query->where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'));
+            } else {
+                $query->where('type', $request->type);
+            }
         }
 
         // Filter by GC
@@ -129,7 +133,7 @@ class ProjectController extends Controller
             'other_gc_data' => 'nullable|array',
             'other_gc_data.*' => 'array',
             'other_gc_data.*.due_date' => 'nullable|date',
-            'other_gc_data.*.web_link' => 'nullable|url|max:255',
+            'other_gc_data.*.web_link' => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
             'scope' => 'nullable|string',
             'assigned_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:assigned_date',
@@ -147,7 +151,7 @@ class ProjectController extends Controller
             'rfi' => 'nullable|string|max:255',
             'assigned_to' => 'nullable|exists:users,id',
             'project_information' => 'nullable|string',
-            'web_link' => 'nullable|url|max:255',
+            'web_link' => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
         ]);
 
         // Process Other GC data
@@ -214,7 +218,7 @@ class ProjectController extends Controller
             'other_gc_data' => 'nullable|array',
             'other_gc_data.*' => 'array',
             'other_gc_data.*.due_date' => 'nullable|date',
-            'other_gc_data.*.web_link' => 'nullable|url|max:255',
+            'other_gc_data.*.web_link' => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
             'scope' => 'nullable|string',
             'assigned_date' => 'nullable|date',
             'due_date' => 'nullable|date|after_or_equal:assigned_date',
@@ -232,7 +236,7 @@ class ProjectController extends Controller
             'rfi' => 'nullable|string|max:255',
             'assigned_to' => 'nullable|exists:users,id',
             'project_information' => 'nullable|string',
-            'web_link' => 'nullable|url|max:255',
+            'web_link' => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
         ]);
 
         // Process Other GC data
