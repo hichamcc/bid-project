@@ -32,4 +32,9 @@ class Allocation extends Model
     {
         return $this->hasMany(Project::class);
     }
+
+    public function getProjectNameAttribute(): ?string
+    {
+        return $this->projects()->value('name');
+    }
 }

@@ -23,7 +23,7 @@ class JobRemovedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Job {$this->allocation->job_number} — Assignment Removed",
+            subject: "Job {$this->allocation->job_number}" . ($this->allocation->project_name ? " {$this->allocation->project_name}" : '') . " — Assignment Removed",
             cc: [new Address('commercial.admin@artelye.com')],
         );
     }

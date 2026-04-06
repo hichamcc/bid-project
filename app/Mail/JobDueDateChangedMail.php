@@ -23,7 +23,7 @@ class JobDueDateChangedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Job {$this->allocation->job_number} — Due Date Updated",
+            subject: "Job {$this->allocation->job_number}" . ($this->allocation->project_name ? " {$this->allocation->project_name}" : '') . " — Due Date Updated",
             cc: [new Address('commercial.admin@artelye.com')],
         );
     }

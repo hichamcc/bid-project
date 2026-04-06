@@ -41,7 +41,7 @@
         <div class="detail-box">
             <div class="detail-row">
                 <span class="label">Job Number : </span>
-                <span class="value">{{ $allocation->job_number }}</span>
+                <span class="value">{{ $allocation->job_number }}{{ $allocation->project_name ? ' ' . $allocation->project_name : '' }}</span>
             </div>
             <div class="detail-row">
                 <span class="label">Job Type : </span>

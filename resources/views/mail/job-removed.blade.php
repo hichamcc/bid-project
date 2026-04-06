@@ -27,12 +27,12 @@
     <div class="body">
         <div class="meta">
             <p><strong>Hi {{ $estimator->name }},</strong></p>
-            <p><strong>Job Number:</strong> {{ $allocation->job_number }}</p>
+            <p><strong>Job Number:</strong> {{ $allocation->job_number }}{{ $allocation->project_name ? ' ' . $allocation->project_name : '' }}</p>
             <p><strong>Job Type:</strong> {{ $allocation->job_type === 'MU' ? 'MU' : 'NON MU' }}</p>
         </div>
 
         <div class="paragraph">
-            Your assignment for job <strong>{{ $allocation->job_number }}</strong> has been removed.
+            Your assignment for job <strong>{{ $allocation->job_number }}{{ $allocation->project_name ? ' ' . $allocation->project_name : '' }}</strong> has been removed.
             You are no longer responsible for this job. If you believe this was done in error,
             please contact the estimating coordinator immediately.
         </div>

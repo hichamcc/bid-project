@@ -179,6 +179,33 @@
             </div>
         </div>
 
+        <!-- Proposal ART Stats -->
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Proposals <span class="text-sm font-normal text-gray-500">(ART)</span></h3>
+                    <a href="{{ route('admin.proposals.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">View all →</a>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <!-- Win -->
+                    <div class="bg-green-50 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-green-700">{{ number_format($proposalWin) }}</div>
+                        <div class="text-sm font-medium text-green-600 mt-1">Win</div>
+                    </div>
+                    <!-- Pending -->
+                    <div class="bg-yellow-50 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-yellow-700">{{ number_format($proposalPending) }}</div>
+                        <div class="text-sm font-medium text-yellow-600 mt-1">Pending</div>
+                    </div>
+                    <!-- Loss -->
+                    <div class="bg-red-50 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-red-700">{{ number_format($proposalLoss) }}</div>
+                        <div class="text-sm font-medium text-red-600 mt-1">Loss</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
            <!-- Recent Activities -->
            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
             <div class="p-6">

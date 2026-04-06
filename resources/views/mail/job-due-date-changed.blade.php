@@ -28,13 +28,13 @@
     <div class="body">
         <div class="meta">
             <p><strong>Hi {{ $estimator->name }},</strong></p>
-            <p><strong>Job Number:</strong> {{ $allocation->job_number }}</p>
+            <p><strong>Job Number:</strong> {{ $allocation->job_number }}{{ $allocation->project_name ? ' ' . $allocation->project_name : '' }}</p>
             <p><strong>Job Type:</strong> {{ $allocation->job_type === 'MU' ? 'MU' : 'NON MU' }}</p>
             <p><strong>New Due Date:</strong> <span class="highlight">{{ $allocation->assigned_date->format('M d, Y') }}</span></p>
         </div>
 
         <div class="paragraph">
-            Please note that the due date for job <strong>{{ $allocation->job_number }}</strong> has been updated.
+            Please note that the due date for job <strong>{{ $allocation->job_number }}{{ $allocation->project_name ? ' ' . $allocation->project_name : '' }}</strong> has been updated.
             Make sure to adjust your schedule accordingly.
         </div>
 

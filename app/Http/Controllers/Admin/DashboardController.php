@@ -8,6 +8,7 @@ use App\Models\Status;
 use App\Models\Type;
 use App\Models\User;
 use App\Models\ProjectRemark;
+use App\Models\Proposal;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -51,6 +52,11 @@ class DashboardController extends Controller
                                           ->whereRaw('YEAR(COALESCE(submitted_at, due_date)) = ?', [now()->year])
                                           ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                                           ->value('total');
+
+        // Proposal ART Statistics
+        $proposalWin     = Proposal::where('result_art', 'win')->count();
+        $proposalLoss    = Proposal::where('result_art', 'loss')->count();
+        $proposalPending = Proposal::whereNull('result_art')->count();
 
         // User Statistics
         $totalUsers = User::count();
@@ -131,7 +137,10 @@ class DashboardController extends Controller
             'submittedMU',
             'submittedMUThisMonth',
             'submittedNonMU',
-            'submittedNonMUThisMonth'
+            'submittedNonMUThisMonth',
+            'proposalWin',
+            'proposalLoss',
+            'proposalPending'
         ));
     }
 
