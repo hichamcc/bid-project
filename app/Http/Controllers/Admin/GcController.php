@@ -32,7 +32,7 @@ class GCController extends Controller
         }
 
         $gcs = $query->selectRaw("gcs.*,
-        (SELECT COUNT(DISTINCT REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
+        (SELECT COUNT(DISTINCT REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1'))
          FROM projects
          WHERE projects.gc = gcs.name) as projects_count")
     ->ordered()
@@ -84,7 +84,7 @@ class GCController extends Controller
                              ->limit(10)
                              ->get();
     
-        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
+        $uniqueKey = "REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1')";
 
         $totalProjects = Project::where('gc', $gc->name)
                                 ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")

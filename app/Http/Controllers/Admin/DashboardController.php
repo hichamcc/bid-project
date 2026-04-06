@@ -26,7 +26,7 @@ class DashboardController extends Controller
         // Group by leading job number (e.g. "26077A. NAME" → "26077").
         // Names without a leading number fall back to the full name.
         // This collapses all rows for the same job (A/B variants, multiple estimators) to one.
-        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
+        $uniqueKey = "REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1')";
 
         $submittedMU = Project::where('type', 'MULTIUNIT')
                               ->where('status', 'SUBMITTED')
@@ -139,7 +139,7 @@ class DashboardController extends Controller
     {
         $type = $request->get('type', 'MU');
 
-        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
+        $uniqueKey = "REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1')";
 
         $query = Project::where('status', 'SUBMITTED')
             ->selectRaw("{$uniqueKey} as job_key, MIN(name) as project_name")
@@ -161,7 +161,7 @@ class DashboardController extends Controller
     {
         $type = $request->get('type', 'MU');
 
-        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
+        $uniqueKey = "REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1')";
 
         $query = Project::where('status', 'SUBMITTED')
             ->selectRaw("
