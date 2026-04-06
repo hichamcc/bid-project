@@ -160,6 +160,62 @@ class DashboardController extends Controller
         return response()->json($projects);
     }
 
+    public function checkDuplicates(Request $request)
+    {
+        $type = $request->get('type', 'MU');
+
+        $uniqueKey = "IF(allocation_id IS NOT NULL,
+            CONCAT('a:', allocation_id),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
+        )";
+
+        $query = Project::where('status', 'SUBMITTED')
+            ->selectRaw("
+                {$uniqueKey} as job_key,
+                REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1') as job_number,
+                name,
+                allocation_id,
+                gc
+            ");
+
+        if ($type === 'MU') {
+            $query->where('type', 'MULTIUNIT');
+        } else {
+            $query->where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'));
+        }
+
+        $rows = $query->get();
+
+        // Group by extracted job number, collect all unique keys per job number
+        $byJobNumber = [];
+        foreach ($rows as $row) {
+            $jobNumber = $row->job_number;
+            if (!isset($byJobNumber[$jobNumber])) {
+                $byJobNumber[$jobNumber] = [];
+            }
+            $key = $row->job_key;
+            if (!isset($byJobNumber[$jobNumber][$key])) {
+                $byJobNumber[$jobNumber][$key] = [];
+            }
+            $byJobNumber[$jobNumber][$key][] = [
+                'name'          => $row->name,
+                'allocation_id' => $row->allocation_id,
+                'gc'            => $row->gc,
+            ];
+        }
+
+        // Keep only job numbers that have more than one unique key (duplicates)
+        $duplicates = array_filter($byJobNumber, fn($keys) => count($keys) > 1);
+
+        ksort($duplicates);
+
+        return response()->json([
+            'total_unique_keys' => $rows->pluck('job_key')->unique()->count(),
+            'duplicate_job_numbers' => count($duplicates),
+            'duplicates' => $duplicates,
+        ], 200, [], JSON_PRETTY_PRINT);
+    }
+
     public function getChartData(Request $request)
     {
         $type = $request->get('type', 'monthly');
