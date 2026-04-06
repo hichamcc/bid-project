@@ -23,32 +23,18 @@ class DashboardController extends Controller
         $overdueProjects = Project::overdue()->count();
         $dueSoonProjects = Project::dueSoon()->count();
 
-        $uniqueKey = "IF(allocation_id IS NOT NULL,
-            CONCAT('a:', allocation_id),
-            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
-        )";
-
-        // Exclude old projects (no allocation_id) when an allocation-based version
-        // of the same job number already exists — prevents a:X / n:X double-count
-        $excludeOldDuplicates = "NOT (
-            allocation_id IS NULL
-            AND EXISTS (
-                SELECT 1 FROM projects p2
-                WHERE p2.allocation_id IS NOT NULL
-                AND REGEXP_REPLACE(p2.name, '^([0-9]+).*$', '\\\\1')
-                  = REGEXP_REPLACE(projects.name, '^([0-9]+).*$', '\\\\1')
-            )
-        )";
+        // Group by leading job number (e.g. "26077A. NAME" → "26077").
+        // Names without a leading number fall back to the full name.
+        // This collapses all rows for the same job (A/B variants, multiple estimators) to one.
+        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
 
         $submittedMU = Project::where('type', 'MULTIUNIT')
                               ->where('status', 'SUBMITTED')
-                              ->whereRaw($excludeOldDuplicates)
                               ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                               ->value('total');
 
         $submittedMUThisMonth = Project::where('type', 'MULTIUNIT')
                                        ->where('status', 'SUBMITTED')
-                                       ->whereRaw($excludeOldDuplicates)
                                        ->whereRaw('MONTH(COALESCE(submitted_at, due_date)) = ?', [now()->month])
                                        ->whereRaw('YEAR(COALESCE(submitted_at, due_date)) = ?', [now()->year])
                                        ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
@@ -56,13 +42,11 @@ class DashboardController extends Controller
 
         $submittedNonMU = Project::where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'))
                                  ->where('status', 'SUBMITTED')
-                                 ->whereRaw($excludeOldDuplicates)
                                  ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                                  ->value('total');
 
         $submittedNonMUThisMonth = Project::where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'))
                                           ->where('status', 'SUBMITTED')
-                                          ->whereRaw($excludeOldDuplicates)
                                           ->whereRaw('MONTH(COALESCE(submitted_at, due_date)) = ?', [now()->month])
                                           ->whereRaw('YEAR(COALESCE(submitted_at, due_date)) = ?', [now()->year])
                                           ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
@@ -155,23 +139,9 @@ class DashboardController extends Controller
     {
         $type = $request->get('type', 'MU');
 
-        $uniqueKey = "IF(allocation_id IS NOT NULL,
-            CONCAT('a:', allocation_id),
-            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
-        )";
-
-        $excludeOldDuplicates = "NOT (
-            allocation_id IS NULL
-            AND EXISTS (
-                SELECT 1 FROM projects p2
-                WHERE p2.allocation_id IS NOT NULL
-                AND REGEXP_REPLACE(p2.name, '^([0-9]+).*$', '\\\\1')
-                  = REGEXP_REPLACE(projects.name, '^([0-9]+).*$', '\\\\1')
-            )
-        )";
+        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
 
         $query = Project::where('status', 'SUBMITTED')
-            ->whereRaw($excludeOldDuplicates)
             ->selectRaw("{$uniqueKey} as job_key, MIN(name) as project_name")
             ->groupByRaw($uniqueKey)
             ->orderBy('project_name');
@@ -191,26 +161,12 @@ class DashboardController extends Controller
     {
         $type = $request->get('type', 'MU');
 
-        $uniqueKey = "IF(allocation_id IS NOT NULL,
-            CONCAT('a:', allocation_id),
-            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
-        )";
-
-        $excludeOldDuplicates = "NOT (
-            allocation_id IS NULL
-            AND EXISTS (
-                SELECT 1 FROM projects p2
-                WHERE p2.allocation_id IS NOT NULL
-                AND REGEXP_REPLACE(p2.name, '^([0-9]+).*$', '\\\\1')
-                  = REGEXP_REPLACE(projects.name, '^([0-9]+).*$', '\\\\1')
-            )
-        )";
+        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
 
         $query = Project::where('status', 'SUBMITTED')
-            ->whereRaw($excludeOldDuplicates)
             ->selectRaw("
                 {$uniqueKey} as job_key,
-                REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1') as job_number,
+                {$uniqueKey} as job_number,
                 name,
                 allocation_id,
                 gc
