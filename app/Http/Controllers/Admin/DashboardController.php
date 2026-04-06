@@ -143,12 +143,12 @@ class DashboardController extends Controller
 
         $uniqueKey = "IF(allocation_id IS NOT NULL,
             CONCAT('a:', allocation_id),
-            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\1'))
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
         )";
 
         $query = Project::where('status', 'SUBMITTED')
             ->selectRaw("{$uniqueKey} as job_key, MIN(name) as project_name")
-            ->groupBy('job_key')
+            ->groupByRaw($uniqueKey)
             ->orderBy('project_name');
 
         if ($type === 'MU') {
