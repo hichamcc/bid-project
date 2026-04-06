@@ -36,7 +36,16 @@ class GCController extends Controller
             CONCAT('a:', allocation_id),
             CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
         )) FROM projects
-         WHERE projects.gc = gcs.name) as projects_count")
+         WHERE projects.gc = gcs.name
+           AND NOT (
+               allocation_id IS NULL
+               AND EXISTS (
+                   SELECT 1 FROM projects p2
+                   WHERE p2.allocation_id IS NOT NULL
+                   AND REGEXP_REPLACE(p2.name, '^([0-9]+).*$', '\\\\1')
+                     = REGEXP_REPLACE(projects.name, '^([0-9]+).*$', '\\\\1')
+               )
+           )) as projects_count")
     ->ordered()
     ->paginate(15);
 
@@ -91,27 +100,42 @@ class GCController extends Controller
             CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
         )";
 
+        $excludeOldDuplicates = "NOT (
+            allocation_id IS NULL
+            AND EXISTS (
+                SELECT 1 FROM projects p2
+                WHERE p2.allocation_id IS NOT NULL
+                AND REGEXP_REPLACE(p2.name, '^([0-9]+).*$', '\\\\1')
+                  = REGEXP_REPLACE(projects.name, '^([0-9]+).*$', '\\\\1')
+            )
+        )";
+
         $totalProjects = Project::where('gc', $gc->name)
+                                ->whereRaw($excludeOldDuplicates)
                                 ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                                 ->value('total');
 
         $activeProjects = Project::where('gc', $gc->name)
                                  ->whereNotIn('status', ['completed', 'SUBMITTED', 'DECLINED', 'MISSED', 'Avoided'])
+                                 ->whereRaw($excludeOldDuplicates)
                                  ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                                  ->value('total');
 
         $completedProjects = Project::where('gc', $gc->name)
                                     ->whereIn('status', ['completed', 'SUBMITTED'])
+                                    ->whereRaw($excludeOldDuplicates)
                                     ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                                     ->value('total');
 
         $muProjects = Project::where('gc', $gc->name)
                              ->where('type', 'MULTIUNIT')
+                             ->whereRaw($excludeOldDuplicates)
                              ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                              ->value('total');
 
         $nonMuProjects = Project::where('gc', $gc->name)
                                 ->where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'))
+                                ->whereRaw($excludeOldDuplicates)
                                 ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                                 ->value('total');
 
