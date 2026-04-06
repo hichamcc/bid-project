@@ -386,11 +386,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <!-- Submitted Projects Modal -->
-<div id="submittedModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="closeSubmittedModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col" style="max-height: 80vh;">
-            <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
+<div id="submittedModal" class="fixed inset-0 z-50 hidden" style="background: rgba(107,114,128,0.75);">
+    <div class="flex items-center justify-center w-full h-full p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col" style="height: 70vh;">
+            <div class="flex items-center justify-between p-4 border-b" style="flex-shrink: 0;">
                 <h3 id="submittedModalTitle" class="text-lg font-semibold text-gray-900"></h3>
                 <button onclick="closeSubmittedModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -398,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </svg>
                 </button>
             </div>
-            <div id="submittedModalBody" class="overflow-y-auto p-4" style="flex: 1 1 auto; min-height: 0;">
+            <div id="submittedModalBody" style="overflow-y: auto; flex: 1; padding: 1rem;">
                 <p class="text-gray-500 text-sm">Loading...</p>
             </div>
         </div>
@@ -422,9 +421,12 @@ function openSubmittedModal(type) {
                 body.innerHTML = '<p class="text-gray-500 text-sm">No projects found.</p>';
                 return;
             }
-            body.innerHTML = '<ol class="list-decimal list-inside space-y-1">' +
-                projects.map(name => `<li class="text-sm text-gray-800 py-1 border-b border-gray-100">${name}</li>`).join('') +
-                '</ol>';
+            body.innerHTML = projects.map((name, i) =>
+                `<div class="flex items-start gap-3 py-2 border-b border-gray-100">
+                    <span class="text-xs font-semibold text-gray-400 w-6 text-right flex-shrink-0">${i + 1}</span>
+                    <span class="text-sm text-gray-800">${name}</span>
+                </div>`
+            ).join('');
         })
         .catch(() => {
             body.innerHTML = '<p class="text-red-500 text-sm">Failed to load projects.</p>';
