@@ -32,8 +32,10 @@ class GCController extends Controller
         }
 
         $gcs = $query->selectRaw("gcs.*,
-        (SELECT COUNT(DISTINCT REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
-         FROM projects
+        (SELECT COUNT(DISTINCT IF(allocation_id IS NOT NULL,
+            CONCAT('a:', allocation_id),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
+        )) FROM projects
          WHERE projects.gc = gcs.name) as projects_count")
     ->ordered()
     ->paginate(15);
@@ -84,7 +86,10 @@ class GCController extends Controller
                              ->limit(10)
                              ->get();
     
-        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
+        $uniqueKey = "IF(allocation_id IS NOT NULL,
+            CONCAT('a:', allocation_id),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
+        )";
 
         $totalProjects = Project::where('gc', $gc->name)
                                 ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")

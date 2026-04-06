@@ -23,10 +23,10 @@ class DashboardController extends Controller
         $overdueProjects = Project::overdue()->count();
         $dueSoonProjects = Project::dueSoon()->count();
 
-        // Unique key: extract leading job number from name for all projects.
-        // Using name-only (not allocation_id) prevents double-counting when the same
-        // job exists as both an old manual project and a newer allocation project.
-        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
+        $uniqueKey = "IF(allocation_id IS NOT NULL,
+            CONCAT('a:', allocation_id),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
+        )";
 
         $submittedMU = Project::where('type', 'MULTIUNIT')
                               ->where('status', 'SUBMITTED')
@@ -139,7 +139,10 @@ class DashboardController extends Controller
     {
         $type = $request->get('type', 'MU');
 
-        $uniqueKey = "REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1')";
+        $uniqueKey = "IF(allocation_id IS NOT NULL,
+            CONCAT('a:', allocation_id),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\\\1'))
+        )";
 
         $query = Project::where('status', 'SUBMITTED')
             ->selectRaw("{$uniqueKey} as job_key, MIN(name) as project_name")
