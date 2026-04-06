@@ -142,9 +142,9 @@ class DashboardController extends Controller
         $uniqueKey = "REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1')";
 
         $query = Project::where('status', 'SUBMITTED')
-            ->selectRaw("{$uniqueKey} as job_key, MIN(name) as project_name")
+            ->selectRaw("{$uniqueKey} as job_key, MIN(name) as project_name, MAX(COALESCE(submitted_at, due_date)) as latest_date")
             ->groupByRaw($uniqueKey)
-            ->orderBy('project_name');
+            ->orderByRaw('latest_date DESC');
 
         if ($type === 'MU') {
             $query->where('type', 'MULTIUNIT');
