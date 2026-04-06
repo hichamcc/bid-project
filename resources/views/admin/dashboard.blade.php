@@ -387,10 +387,10 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <!-- Submitted Projects Modal -->
 <div id="submittedModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen px-4">
+    <div class="flex items-center justify-center min-h-screen px-4 py-8">
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="closeSubmittedModal()"></div>
-        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
-            <div class="flex items-center justify-between p-4 border-b">
+        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg flex flex-col" style="max-height: 80vh;">
+            <div class="flex items-center justify-between p-4 border-b flex-shrink-0">
                 <h3 id="submittedModalTitle" class="text-lg font-semibold text-gray-900"></h3>
                 <button onclick="closeSubmittedModal()" class="text-gray-400 hover:text-gray-600">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </svg>
                 </button>
             </div>
-            <div id="submittedModalBody" class="overflow-y-auto p-4 flex-1">
+            <div id="submittedModalBody" class="overflow-y-auto p-4" style="flex: 1 1 auto; min-height: 0;">
                 <p class="text-gray-500 text-sm">Loading...</p>
             </div>
         </div>
