@@ -56,7 +56,7 @@ class DashboardController extends Controller
         // Proposal ART Statistics
         $proposalWin     = Proposal::where('result_art', 'win')->count();
         $proposalLoss    = Proposal::where('result_art', 'loss')->count();
-        $proposalPending = Proposal::whereNull('result_art')->count();
+        $proposalPending = Proposal::where(fn($q) => $q->whereNull('result_art')->orWhere('result_art', 'pending'))->count();
 
         // User Statistics
         $totalUsers = User::count();
