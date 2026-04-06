@@ -16,13 +16,23 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Project Statistics
-        $totalProjects = Project::count();
+        // Project Statistics (deduplicated by leading job number)
+        $uniqueJobKey = "REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1')";
+
+        $totalProjects = Project::selectRaw("COUNT(DISTINCT {$uniqueJobKey}) as total")->value('total');
+
         $projectsThisMonth = Project::whereMonth('created_at', now()->month)
                                   ->whereYear('created_at', now()->year)
-                                  ->count();
-        $overdueProjects = Project::overdue()->count();
-        $dueSoonProjects = Project::dueSoon()->count();
+                                  ->selectRaw("COUNT(DISTINCT {$uniqueJobKey}) as total")
+                                  ->value('total');
+
+        $overdueProjects = Project::overdue()
+                                  ->selectRaw("COUNT(DISTINCT {$uniqueJobKey}) as total")
+                                  ->value('total');
+
+        $dueSoonProjects = Project::dueSoon()
+                                  ->selectRaw("COUNT(DISTINCT {$uniqueJobKey}) as total")
+                                  ->value('total');
 
         // Group by leading job number (e.g. "26077A. NAME" → "26077").
         // Names without a leading number fall back to the full name.
