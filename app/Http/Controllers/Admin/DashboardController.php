@@ -137,6 +137,31 @@ class DashboardController extends Controller
         ));
     }
 
+    public function submittedProjects(Request $request)
+    {
+        $type = $request->get('type', 'MU');
+
+        $uniqueKey = "IF(allocation_id IS NOT NULL,
+            CONCAT('a:', allocation_id),
+            CONCAT('n:', REGEXP_REPLACE(name, '^([0-9]+).*$', '\\1'))
+        )";
+
+        $query = Project::where('status', 'SUBMITTED')
+            ->selectRaw("{$uniqueKey} as job_key, MIN(name) as project_name")
+            ->groupBy('job_key')
+            ->orderBy('project_name');
+
+        if ($type === 'MU') {
+            $query->where('type', 'MULTIUNIT');
+        } else {
+            $query->where(fn($q) => $q->where('type', 'NON MU')->orWhereNull('type'));
+        }
+
+        $projects = $query->get()->pluck('project_name');
+
+        return response()->json($projects);
+    }
+
     public function getChartData(Request $request)
     {
         $type = $request->get('type', 'monthly');

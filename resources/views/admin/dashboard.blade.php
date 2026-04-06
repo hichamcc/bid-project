@@ -140,7 +140,9 @@
                         <div class="ml-5 w-0 flex-1">
                             <dl>
                                 <dt class="text-sm font-medium text-gray-500 truncate">Submitted MU Projects</dt>
-                                <dd class="text-lg font-medium text-gray-900">{{ number_format($submittedMU) }}</dd>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    <button onclick="openSubmittedModal('MU')" class="hover:text-indigo-600 hover:underline focus:outline-none">{{ number_format($submittedMU) }}</button>
+                                </dd>
                             </dl>
                         </div>
                     </div>
@@ -162,7 +164,9 @@
                         <div class="ml-5 w-0 flex-1">
                             <dl>
                                 <dt class="text-sm font-medium text-gray-500 truncate">Submitted NON-MU Projects</dt>
-                                <dd class="text-lg font-medium text-gray-900">{{ number_format($submittedNonMU) }}</dd>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    <button onclick="openSubmittedModal('NON_MU')" class="hover:text-purple-600 hover:underline focus:outline-none">{{ number_format($submittedNonMU) }}</button>
+                                </dd>
                             </dl>
                         </div>
                     </div>
@@ -379,6 +383,60 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+});
+</script>
+<!-- Submitted Projects Modal -->
+<div id="submittedModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75" onclick="closeSubmittedModal()"></div>
+        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between p-4 border-b">
+                <h3 id="submittedModalTitle" class="text-lg font-semibold text-gray-900"></h3>
+                <button onclick="closeSubmittedModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="submittedModalBody" class="overflow-y-auto p-4 flex-1">
+                <p class="text-gray-500 text-sm">Loading...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openSubmittedModal(type) {
+    const modal = document.getElementById('submittedModal');
+    const title = document.getElementById('submittedModalTitle');
+    const body = document.getElementById('submittedModalBody');
+
+    title.textContent = (type === 'MU' ? 'Submitted MU' : 'Submitted NON-MU') + ' Projects';
+    body.innerHTML = '<p class="text-gray-500 text-sm">Loading...</p>';
+    modal.classList.remove('hidden');
+
+    fetch('{{ route("admin.dashboard.submitted-projects") }}?type=' + type)
+        .then(res => res.json())
+        .then(projects => {
+            if (!projects.length) {
+                body.innerHTML = '<p class="text-gray-500 text-sm">No projects found.</p>';
+                return;
+            }
+            body.innerHTML = '<ol class="list-decimal list-inside space-y-1">' +
+                projects.map(name => `<li class="text-sm text-gray-800 py-1 border-b border-gray-100">${name}</li>`).join('') +
+                '</ol>';
+        })
+        .catch(() => {
+            body.innerHTML = '<p class="text-red-500 text-sm">Failed to load projects.</p>';
+        });
+}
+
+function closeSubmittedModal() {
+    document.getElementById('submittedModal').classList.add('hidden');
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSubmittedModal();
 });
 </script>
 @endsection
