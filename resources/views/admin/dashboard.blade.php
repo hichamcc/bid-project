@@ -141,7 +141,7 @@
                             <dl>
                                 <dt class="text-sm font-medium text-gray-500 truncate">Submitted MU Projects</dt>
                                 <dd class="text-lg font-medium text-gray-900">
-                                    <button onclick="openSubmittedModal('MU')" class="hover:text-indigo-600 hover:underline focus:outline-none">{{ number_format($submittedMU) }}</button>
+                                    <button onclick="openSubmittedModal('MU')" class="text-blue-600 underline font-bold hover:text-blue-800 focus:outline-none">{{ number_format($submittedMU) }}</button>
                                 </dd>
                             </dl>
                         </div>
@@ -165,7 +165,7 @@
                             <dl>
                                 <dt class="text-sm font-medium text-gray-500 truncate">Submitted NON-MU Projects</dt>
                                 <dd class="text-lg font-medium text-gray-900">
-                                    <button onclick="openSubmittedModal('NON_MU')" class="hover:text-purple-600 hover:underline focus:outline-none">{{ number_format($submittedNonMU) }}</button>
+                                    <button onclick="openSubmittedModal('NON_MU')" class="text-blue-600 underline font-bold hover:text-blue-800 focus:outline-none">{{ number_format($submittedNonMU) }}</button>
                                 </dd>
                             </dl>
                         </div>
