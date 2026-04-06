@@ -435,14 +435,11 @@
                                            class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
                                             Edit
                                         </a>
-                                        <form method="POST" action="{{ route('admin.allocation.destroy', $allocation) }}"
-                                              onsubmit="return confirm('Delete this allocation?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                                Delete
-                                            </button>
-                                        </form>
+                                        <button type="button"
+                                            onclick="openDeleteModal({{ $allocation->id }}, '{{ $allocation->job_number }}', {{ $allocation->projects->pluck('name')->toJson() }})"
+                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                            Delete
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -466,4 +463,49 @@
 
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" style="display:none; position:fixed; inset:0; z-index:50; background:rgba(0,0,0,0.5);" onclick="if(event.target===this) closeDeleteModal()">
+    <div style="background:#fff; border-radius:8px; max-width:520px; width:90%; margin:80px auto; padding:24px; position:relative;">
+        <h3 style="font-size:18px; font-weight:700; color:#111; margin:0 0 4px;">Delete Allocation</h3>
+        <p style="font-size:14px; color:#6b7280; margin:0 0 16px;">
+            Deleting job <strong id="deleteJobNumber"></strong> will also permanently delete the following projects:
+        </p>
+        <div id="deleteProjectList" style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:12px 16px; max-height:240px; overflow-y:auto; margin-bottom:20px;">
+        </div>
+        <p style="font-size:13px; color:#dc2626; font-weight:600; margin:0 0 20px;">This action cannot be undone.</p>
+        <div style="display:flex; justify-content:flex-end; gap:12px;">
+            <button onclick="closeDeleteModal()" style="padding:8px 18px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; background:#fff; cursor:pointer;">Cancel</button>
+            <form id="deleteForm" method="POST">
+                @csrf
+                @method('DELETE')
+                <button type="submit" style="padding:8px 18px; background:#dc2626; color:#fff; border:none; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer;">
+                    Yes, Delete Everything
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openDeleteModal(id, jobNumber, projects) {
+    document.getElementById('deleteJobNumber').textContent = jobNumber;
+    document.getElementById('deleteForm').action = '/admin/allocation/' + id;
+
+    const list = document.getElementById('deleteProjectList');
+    if (projects.length === 0) {
+        list.innerHTML = '<p style="font-size:13px; color:#6b7280; margin:0;">No linked projects.</p>';
+    } else {
+        list.innerHTML = projects.map((name, i) =>
+            `<div style="font-size:13px; color:#991b1b; padding:3px 0;">${i + 1}. ${name}</div>`
+        ).join('');
+    }
+
+    document.getElementById('deleteModal').style.display = 'block';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+</script>
 @endsection

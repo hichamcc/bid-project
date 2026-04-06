@@ -232,6 +232,9 @@ class AllocationController extends Controller
 
     public function destroy(Allocation $allocation)
     {
+        // Delete all linked projects first
+        $allocation->projects()->delete();
+
         $allocation->delete();
 
         return redirect()->route('admin.allocation.index')
