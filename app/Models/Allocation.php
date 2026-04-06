@@ -35,6 +35,9 @@ class Allocation extends Model
 
     public function getProjectNameAttribute(): ?string
     {
-        return $this->projects()->value('name');
+        $name = $this->projects()->value('name');
+        if (!$name) return null;
+        // Strip leading number+letter+dot prefix (e.g. "1111A. " or "(NC) 26077. ") leaving just the name
+        return trim(preg_replace('/^[^0-9]*[0-9]+[A-Za-z]*\.\s*/', '', $name)) ?: null;
     }
 }

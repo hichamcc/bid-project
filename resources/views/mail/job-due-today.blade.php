@@ -41,8 +41,14 @@
         <div class="detail-box">
             <div class="detail-row">
                 <span class="label">Job Number : </span>
-                <span class="value">{{ $allocation->job_number }}{{ $allocation->project_name ? ' ' . $allocation->project_name : '' }}</span>
+                <span class="value">{{ $allocation->job_number }}</span>
             </div>
+            @if($allocation->project_name)
+            <div class="detail-row">
+                <span class="label">Project Name : </span>
+                <span class="value">{{ $allocation->project_name }}</span>
+            </div>
+            @endif
             <div class="detail-row">
                 <span class="label">Job Type : </span>
                 <span class="value">

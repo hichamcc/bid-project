@@ -23,7 +23,7 @@ class JobAssignedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "New Job Assigned — {$this->allocation->job_number}" . ($this->allocation->project_name ? " {$this->allocation->project_name}" : ''),
+            subject: "New Job Assigned — {$this->allocation->job_number}" . ($this->allocation->project_name ? " — {$this->allocation->project_name}" : ''),
             cc: [new Address('commercial.admin@artelye.com')],
         );
     }

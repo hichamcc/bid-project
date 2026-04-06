@@ -39,7 +39,10 @@
 
     <div class="body">
         <div class="meta">
-            <p><strong>Project:</strong> {{ $allocation->job_number }}{{ $allocation->project_name ? ' ' . $allocation->project_name : '' }}</p>
+            <p><strong>Project #:</strong> {{ $allocation->job_number }}</p>
+            @if($allocation->project_name)
+            <p><strong>Project Name:</strong> {{ $allocation->project_name }}</p>
+            @endif
             <p><strong>Due Date:</strong> {{ $allocation->assigned_date->format('M d, Y') }}</p>
         </div>
 

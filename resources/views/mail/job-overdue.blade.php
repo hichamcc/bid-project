@@ -39,6 +39,7 @@
             <thead>
                 <tr>
                     <th>Job Number</th>
+                    <th>Project Name</th>
                     <th>Type</th>
                     <th>Days</th>
                     <th>Due Date</th>
@@ -51,7 +52,8 @@
                         $estimatorNames = $job->estimators->pluck('name')->join(', ');
                     @endphp
                     <tr>
-                        <td><strong>{{ $job->job_number }}{{ $job->project_name ? ' ' . $job->project_name : '' }}</strong></td>
+                        <td><strong>{{ $job->job_number }}</strong></td>
+                        <td>{{ $job->project_name ?: '—' }}</td>
                         <td>
                             <span class="badge {{ $job->job_type === 'MU' ? 'mu' : 'nonmu' }}">
                                 {{ $job->job_type === 'NON_MU' ? 'NON MU' : 'MU' }}

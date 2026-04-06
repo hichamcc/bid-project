@@ -23,7 +23,7 @@ class JobDueTodayMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "Reminder: Job {$this->allocation->job_number}" . ($this->allocation->project_name ? " {$this->allocation->project_name}" : '') . " is Due Today by 5 PM EST",
+            subject: "Reminder: Job {$this->allocation->job_number}" . ($this->allocation->project_name ? " — {$this->allocation->project_name}" : '') . " is Due Today by 5 PM EST",
             cc: [new Address('commercial.admin@artelye.com')],
         );
     }
