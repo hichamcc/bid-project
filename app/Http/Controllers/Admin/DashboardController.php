@@ -154,6 +154,36 @@ class DashboardController extends Controller
         ));
     }
 
+    public function proposalsList(Request $request)
+    {
+        $result = $request->get('result', 'win');
+
+        $query = Proposal::with('project')->orderBy('created_at', 'desc');
+
+        if ($result === 'pending') {
+            $query->where(fn($q) => $q->whereNull('result_art')->orWhere('result_art', 'pending'));
+        } else {
+            $query->where('result_art', $result);
+        }
+
+        $proposals = $query->get()->map(fn($p) => $p->job_number . ($p->project ? ' — ' . $p->project->name : ''));
+
+        return response()->json($proposals);
+    }
+
+    public function allProjects()
+    {
+        $uniqueKey = "REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1')";
+
+        $projects = Project::selectRaw("{$uniqueKey} as job_key, MIN(name) as project_name")
+            ->groupByRaw($uniqueKey)
+            ->orderByRaw('MIN(name)')
+            ->get()
+            ->pluck('project_name');
+
+        return response()->json($projects);
+    }
+
     public function submittedProjects(Request $request)
     {
         $type = $request->get('type', 'MU');

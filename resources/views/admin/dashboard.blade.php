@@ -31,7 +31,9 @@
                         <div class="ml-5 w-0 flex-1">
                             <dl>
                                 <dt class="text-sm font-medium text-gray-500 truncate">Total Projects</dt>
-                                <dd class="text-lg font-medium text-gray-900">{{ number_format($totalProjects) }}</dd>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    <button onclick="openSubmittedModal('all')" class="text-blue-600 underline font-bold hover:text-blue-800 focus:outline-none">{{ number_format($totalProjects) }}</button>
+                                </dd>
                             </dl>
                         </div>
                     </div>
@@ -189,17 +191,17 @@
                 <div class="grid grid-cols-3 gap-4">
                     <!-- Win -->
                     <div class="bg-green-50 rounded-lg p-4 text-center">
-                        <div class="text-2xl font-bold text-green-700">{{ number_format($proposalWin) }}</div>
+                        <button onclick="openProposalsModal('win')" class="text-2xl font-bold text-green-700 underline hover:text-green-900 focus:outline-none">{{ number_format($proposalWin) }}</button>
                         <div class="text-sm font-medium text-green-600 mt-1">Win</div>
                     </div>
                     <!-- Pending -->
                     <div class="bg-yellow-50 rounded-lg p-4 text-center">
-                        <div class="text-2xl font-bold text-yellow-700">{{ number_format($proposalPending) }}</div>
+                        <button onclick="openProposalsModal('pending')" class="text-2xl font-bold text-yellow-700 underline hover:text-yellow-900 focus:outline-none">{{ number_format($proposalPending) }}</button>
                         <div class="text-sm font-medium text-yellow-600 mt-1">Pending</div>
                     </div>
                     <!-- Loss -->
                     <div class="bg-red-50 rounded-lg p-4 text-center">
-                        <div class="text-2xl font-bold text-red-700">{{ number_format($proposalLoss) }}</div>
+                        <button onclick="openProposalsModal('loss')" class="text-2xl font-bold text-red-700 underline hover:text-red-900 focus:outline-none">{{ number_format($proposalLoss) }}</button>
                         <div class="text-sm font-medium text-red-600 mt-1">Loss</div>
                     </div>
                 </div>
@@ -437,11 +439,16 @@ function openSubmittedModal(type) {
     const title = document.getElementById('submittedModalTitle');
     const body = document.getElementById('submittedModalBody');
 
-    title.textContent = (type === 'MU' ? 'Submitted MU' : 'Submitted NON-MU') + ' Projects';
+    const titles = { MU: 'Submitted MU Projects', NON_MU: 'Submitted NON-MU Projects', all: 'All Projects' };
+    title.textContent = titles[type] || 'Projects';
     body.innerHTML = '<p class="text-gray-500 text-sm">Loading...</p>';
     modal.classList.remove('hidden');
 
-    fetch('{{ route("admin.dashboard.submitted-projects") }}?type=' + type)
+    const url = type === 'all'
+        ? '{{ route("admin.dashboard.all-projects") }}'
+        : '{{ route("admin.dashboard.submitted-projects") }}?type=' + type;
+
+    fetch(url)
         .then(res => res.json())
         .then(projects => {
             if (!projects.length) {
@@ -462,6 +469,35 @@ function openSubmittedModal(type) {
 
 function closeSubmittedModal() {
     document.getElementById('submittedModal').classList.add('hidden');
+}
+
+function openProposalsModal(result) {
+    const modal = document.getElementById('submittedModal');
+    const title = document.getElementById('submittedModalTitle');
+    const body = document.getElementById('submittedModalBody');
+
+    const titles = { win: 'Proposals — Win', pending: 'Proposals — Pending', loss: 'Proposals — Loss' };
+    title.textContent = titles[result] || 'Proposals';
+    body.innerHTML = '<p class="text-gray-500 text-sm">Loading...</p>';
+    modal.classList.remove('hidden');
+
+    fetch('{{ route("admin.dashboard.proposals-list") }}?result=' + result)
+        .then(res => res.json())
+        .then(items => {
+            if (!items.length) {
+                body.innerHTML = '<p class="text-gray-500 text-sm">No proposals found.</p>';
+                return;
+            }
+            body.innerHTML = items.map((name, i) =>
+                `<div class="flex items-start gap-3 py-2 border-b border-gray-100">
+                    <span class="text-xs font-semibold text-gray-400 w-6 text-right flex-shrink-0">${i + 1}</span>
+                    <span class="text-sm text-gray-800">${name}</span>
+                </div>`
+            ).join('');
+        })
+        .catch(() => {
+            body.innerHTML = '<p class="text-red-500 text-sm">Failed to load proposals.</p>';
+        });
 }
 
 document.addEventListener('keydown', e => {

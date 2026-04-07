@@ -85,6 +85,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/chart-data', [DashboardController::class, 'getChartData'])->name('dashboard.chart-data');
     Route::get('/dashboard/submitted-projects', [DashboardController::class, 'submittedProjects'])->name('dashboard.submitted-projects');
+    Route::get('/dashboard/all-projects', [DashboardController::class, 'allProjects'])->name('dashboard.all-projects');
+    Route::get('/dashboard/proposals-list', [DashboardController::class, 'proposalsList'])->name('dashboard.proposals-list');
     Route::get('/dashboard/check-duplicates', [DashboardController::class, 'checkDuplicates'])->name('dashboard.check-duplicates');
 });
 
