@@ -284,12 +284,45 @@ class AllocationController extends Controller
             'projects',
         ]);
 
-        $limit        = $allocation->job_type === 'MU' ? 3 : 2;
-        $projectType  = $allocation->job_type === 'MU' ? 'MULTIUNIT' : 'NON MU';
         $slots        = $request->input('slots', []);
         $newEstimators = array_filter($request->input('new_estimators', []));
 
         $emailQueue = []; // collect emails to send with rate limiting
+
+        // --- Job type change ---
+        $newJobType = $request->input('job_type');
+        if ($newJobType && $newJobType !== $allocation->job_type) {
+            if ($allocation->job_type === 'MU' && $newJobType === 'NON_MU' && $allocation->estimators->count() > 2) {
+                $removeId = (int) $request->input('remove_for_type_change');
+                if (!$removeId) {
+                    return back()->with('error', 'Please select which estimator to remove when switching from MU to NON MU.');
+                }
+                $allocation->estimators()->detach($removeId);
+                Project::where('allocation_id', $allocation->id)
+                    ->where('assigned_to', $removeId)
+                    ->delete();
+                $removedUser = User::find($removeId);
+                if ($removedUser) {
+                    $emailQueue[] = fn() => Mail::to($removedUser->email)->send(new JobRemovedMail($allocation, $removedUser));
+                }
+                $allocation->load(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'), 'projects']);
+            }
+            $newProjectType = $newJobType === 'MU' ? 'MULTIUNIT' : 'NON MU';
+            $allocation->update(['job_type' => $newJobType]);
+            Project::where('allocation_id', $allocation->id)->update(['type' => $newProjectType]);
+            $allocation->refresh();
+        }
+
+        // --- Days required change ---
+        $newDaysRequired = $request->input('days_required');
+        if ($newDaysRequired !== null && (float) $newDaysRequired !== (float) $allocation->days_required) {
+            $allocation->update(['days_required' => (float) $newDaysRequired]);
+            $allocation->refresh();
+        }
+
+        // Derive limit and projectType from (possibly updated) job_type
+        $limit        = $allocation->job_type === 'MU' ? 3 : 2;
+        $projectType  = $allocation->job_type === 'MU' ? 'MULTIUNIT' : 'NON MU';
 
         // --- Due date changes ---
         $dueDateChanged = false;
@@ -442,16 +475,9 @@ class AllocationController extends Controller
             if ($newId === null) {
                 // Remove
                 $allocation->estimators()->detach($originalId);
-                if ($project) {
-                    $hasActivity = $project->remarks()->exists()
-                        || $project->proposals()->exists()
-                        || $project->progress()->exists();
-                    if ($hasActivity) {
-                        $project->update(['assigned_to' => null]);
-                    } else {
-                        $project->delete();
-                    }
-                }
+                Project::where('allocation_id', $allocation->id)
+                    ->where('assigned_to', $originalId)
+                    ->delete();
                 $oldUser = User::find($originalId);
                 if ($oldUser) {
                     $emailQueue[] = fn() => Mail::to($oldUser->email)->send(new JobRemovedMail($allocation, $oldUser));

@@ -40,6 +40,53 @@
 
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
 
+                <!-- Job Settings -->
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-4">Job Settings</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Job Type</label>
+                            <select name="job_type" id="job_type_select"
+                                    class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="MU" {{ $allocation->job_type === 'MU' ? 'selected' : '' }}>MU</option>
+                                <option value="NON_MU" {{ $allocation->job_type === 'NON_MU' ? 'selected' : '' }}>NON MU</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Days Required</label>
+                            <input type="number" name="days_required" step="0.5" min="0.5"
+                                   value="{{ $allocation->days_required }}"
+                                   class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    @if($allocation->job_type === 'MU' && $slots->count() >= 3)
+                    <div id="remove_estimator_row" style="display:none;" class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                        <label class="block text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-2">
+                            Switching to NON MU requires removing one estimator — select which one:
+                        </label>
+                        <select name="remove_for_type_change"
+                                class="w-full px-3 py-2 text-sm border border-yellow-300 dark:border-yellow-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                            <option value="">— Select estimator to remove —</option>
+                            @foreach($slots as $slot)
+                                <option value="{{ $slot['estimator']->id }}">
+                                    {{ $slot['letter'] }} — {{ $slot['estimator']->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    @endif
+                </div>
+
+                <script>
+                    document.getElementById('job_type_select').addEventListener('change', function () {
+                        const removeRow = document.getElementById('remove_estimator_row');
+                        if (removeRow) {
+                            removeRow.style.display = (this.value === 'NON_MU') ? 'block' : 'none';
+                        }
+                    });
+                </script>
+
                 <!-- Current Slots -->
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Current Estimators</h3>
@@ -111,8 +158,11 @@
                     <div class="space-y-3">
                         <!-- Main allocation due date -->
                         <div class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 w-40 flex-shrink-0">
-                                Main Due Date
+                            <span class="w-40 flex-shrink-0">
+                                <span class="block text-sm font-medium text-gray-700 dark:text-gray-300">Main Due Date</span>
+                                @if($allocation->projects->first()?->gc)
+                                    <span class="block text-xs text-gray-500 dark:text-gray-400 truncate">{{ $allocation->projects->first()->gc }}</span>
+                                @endif
                             </span>
                             <input type="date"
                                    name="due_date"
