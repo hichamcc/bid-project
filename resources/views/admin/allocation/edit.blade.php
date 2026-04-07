@@ -181,7 +181,10 @@
                         <!-- Per other-GC due dates -->
                         @foreach($gcGroups as $gcName => $currentDueDate)
                             @if($gcName !== '' && $gcName !== $allocation->projects->first()?->gc)
-                                @php $realDueDate = $currentDueDate ? $currentDueDate->copy()->addDays(2) : null; @endphp
+                                @php
+                                    $realDueDate = $currentDueDate ? $currentDueDate->copy()->addDays(2) : null;
+                                    $gcProjects  = $allocation->projects->where('gc', $gcName)->pluck('name')->values()->toJson();
+                                @endphp
                                 <div class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300 w-40 flex-shrink-0 truncate" title="{{ $gcName }}">
                                         {{ $gcName }}
@@ -193,6 +196,11 @@
                                     <span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
                                         Estimator due: {{ $currentDueDate ? $currentDueDate->format('M d, Y') : '—' }}
                                     </span>
+                                    <button type="button"
+                                            onclick="openRemoveGcModal('{{ addslashes($gcName) }}', {{ $gcProjects }})"
+                                            class="flex-shrink-0 text-red-500 hover:text-red-700 dark:text-red-400 text-xs font-medium">
+                                        Remove
+                                    </button>
                                 </div>
                             @endif
                         @endforeach
@@ -310,4 +318,41 @@
 
     </div>
 </div>
+<!-- Remove GC Modal -->
+<div id="removeGcModal" style="display:none; position:fixed; inset:0; z-index:50; background:rgba(0,0,0,0.5);" onclick="if(event.target===this) closeRemoveGcModal()">
+    <div style="background:#fff; border-radius:8px; max-width:480px; width:90%; margin:80px auto; padding:24px;">
+        <h3 style="font-size:17px; font-weight:700; color:#111; margin:0 0 6px;">Remove GC</h3>
+        <p style="font-size:14px; color:#6b7280; margin:0 0 14px;">
+            Removing <strong id="removeGcName"></strong> will permanently delete the following projects:
+        </p>
+        <div id="removeGcProjectList" style="background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:10px 14px; max-height:200px; overflow-y:auto; margin-bottom:14px;"></div>
+        <p style="font-size:13px; color:#dc2626; font-weight:600; margin:0 0 18px;">This action cannot be undone.</p>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button onclick="closeRemoveGcModal()" style="padding:8px 16px; border:1px solid #d1d5db; border-radius:6px; font-size:14px; background:#fff; cursor:pointer;">Cancel</button>
+            <form id="removeGcForm" method="POST" action="{{ route('admin.allocation.remove-gc', $allocation) }}">
+                @csrf
+                @method('DELETE')
+                <input type="hidden" name="gc_name" id="removeGcInput">
+                <button type="submit" style="padding:8px 16px; background:#dc2626; color:#fff; border:none; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer;">
+                    Yes, Remove GC
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openRemoveGcModal(gcName, projects) {
+    document.getElementById('removeGcName').textContent = gcName;
+    document.getElementById('removeGcInput').value = gcName;
+    const list = document.getElementById('removeGcProjectList');
+    list.innerHTML = projects.length
+        ? projects.map((n, i) => `<div style="font-size:13px;color:#991b1b;padding:2px 0;">${i+1}. ${n}</div>`).join('')
+        : '<p style="font-size:13px;color:#6b7280;margin:0;">No linked projects.</p>';
+    document.getElementById('removeGcModal').style.display = 'block';
+}
+function closeRemoveGcModal() {
+    document.getElementById('removeGcModal').style.display = 'none';
+}
+</script>
 @endsection

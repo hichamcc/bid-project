@@ -100,6 +100,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/allocation/{allocation}/edit', [AllocationController::class, 'edit'])->name('allocation.edit');
     Route::put('/allocation/{allocation}', [AllocationController::class, 'update'])->name('allocation.update');
     Route::delete('/allocation/{allocation}', [AllocationController::class, 'destroy'])->name('allocation.destroy');
+    Route::delete('/allocation/{allocation}/gc', [AllocationController::class, 'removeGc'])->name('allocation.remove-gc');
 
     Route::get('/off-days', [EstimatorOffDayController::class, 'index'])->name('off-days.index');
     Route::post('/off-days', [EstimatorOffDayController::class, 'store'])->name('off-days.store');

@@ -230,6 +230,34 @@ class AllocationController extends Controller
         return $redirect;
     }
 
+    public function removeGc(Request $request, Allocation $allocation)
+    {
+        $gcName = $request->input('gc_name');
+        $mainGc = $allocation->projects()->value('gc');
+
+        if ($gcName === $mainGc) {
+            return back()->with('error', 'Cannot remove the main GC.');
+        }
+
+        // Hard delete all projects for this allocation with this GC
+        Project::where('allocation_id', $allocation->id)
+            ->where('gc', $gcName)
+            ->delete();
+
+        // Remove the GC from the other_gc JSON on remaining projects
+        $allocation->projects()->where('gc', '!=', $gcName)->get()
+            ->each(function ($project) use ($gcName) {
+                $otherGc = $project->other_gc;
+                if (is_array($otherGc) && isset($otherGc[$gcName])) {
+                    unset($otherGc[$gcName]);
+                    $project->other_gc = empty($otherGc) ? null : $otherGc;
+                    $project->save();
+                }
+            });
+
+        return back()->with('success', "GC '{$gcName}' removed.");
+    }
+
     public function destroy(Allocation $allocation)
     {
         // Delete all linked projects first
