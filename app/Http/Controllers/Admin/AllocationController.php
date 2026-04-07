@@ -292,21 +292,94 @@ class AllocationController extends Controller
         // --- Job type change ---
         $newJobType = $request->input('job_type');
         if ($newJobType && $newJobType !== $allocation->job_type) {
-            if ($allocation->job_type === 'MU' && $newJobType === 'NON_MU' && $allocation->estimators->count() > 2) {
-                $removeId = (int) $request->input('remove_for_type_change');
-                if (!$removeId) {
-                    return back()->with('error', 'Please select which estimator to remove when switching from MU to NON MU.');
+
+            if ($allocation->job_type === 'MU' && $newJobType === 'NON_MU') {
+                // Auto-remove the last estimator (slot C)
+                if ($allocation->estimators->count() > 2) {
+                    $lastEstimator = $allocation->estimators->last();
+                    $allocation->estimators()->detach($lastEstimator->id);
+                    Project::where('allocation_id', $allocation->id)
+                        ->where('assigned_to', $lastEstimator->id)
+                        ->delete();
+                    $emailQueue[] = fn() use ($lastEstimator, $allocation) => Mail::to($lastEstimator->email)->send(new JobRemovedMail($allocation, $lastEstimator));
+                    $allocation->load(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'), 'projects']);
                 }
-                $allocation->estimators()->detach($removeId);
-                Project::where('allocation_id', $allocation->id)
-                    ->where('assigned_to', $removeId)
-                    ->delete();
-                $removedUser = User::find($removeId);
-                if ($removedUser) {
-                    $emailQueue[] = fn() => Mail::to($removedUser->email)->send(new JobRemovedMail($allocation, $removedUser));
+
+            } elseif ($allocation->job_type === 'NON_MU' && $newJobType === 'MU') {
+                // Auto-assign a third estimator using the same logic as store()
+                $eligible = User::whereIn('role', ['estimator', 'head_estimator'])
+                    ->where('MU', 'yes')
+                    ->whereNotIn('id', $allocation->estimators->pluck('id'))
+                    ->get();
+
+                // Filter out estimators with off days overlapping the allocation window
+                $eligible = $eligible->filter(function ($estimator) use ($allocation) {
+                    return !\App\Models\EstimatorOffDay::where('user_id', $estimator->id)
+                        ->where('start_date', '<=', $allocation->due_date)
+                        ->where('end_date', '>=', $allocation->assigned_date)
+                        ->exists();
+                });
+
+                // Calculate effective load for the allocation's month
+                $targetMonth = $allocation->due_date->month;
+                $targetYear  = $allocation->due_date->year;
+                $usedLocations = $allocation->estimators->pluck('location')->filter()->unique()->values()->toArray();
+
+                $eligible = $eligible->map(function ($estimator) use ($targetMonth, $targetYear) {
+                    $load = DB::table('allocation_user')
+                        ->join('allocations', 'allocation_user.allocation_id', '=', 'allocations.id')
+                        ->where('allocation_user.user_id', $estimator->id)
+                        ->whereMonth('allocations.due_date', $targetMonth)
+                        ->whereYear('allocations.due_date', $targetYear)
+                        ->where('allocation_user.status', 'open')
+                        ->sum('allocations.days_required');
+                    $estimator->effective_load = $load / ($estimator->weight ?? 1.0);
+                    return $estimator;
+                });
+
+                $newEstimator = null;
+                foreach ($eligible->sortBy('effective_load') as $candidate) {
+                    $location = $candidate->location;
+                    if ($location && in_array($location, $usedLocations)) continue;
+                    $newEstimator = $candidate;
+                    break;
                 }
-                $allocation->load(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'), 'projects']);
+
+                if ($newEstimator) {
+                    // Determine next letter
+                    $allocation->load('projects');
+                    $jobNumber      = $allocation->job_number;
+                    $usedLetterOrds = $allocation->projects->map(function ($p) use ($jobNumber) {
+                        $pos    = strlen($jobNumber);
+                        $letter = strlen($p->name) > $pos ? $p->name[$pos] : null;
+                        return ($letter && ctype_upper($letter)) ? ord($letter) : null;
+                    })->filter();
+                    $nextOrd   = $usedLetterOrds->isEmpty() ? 65 : $usedLetterOrds->max() + 1;
+                    $newLetter = chr($nextOrd);
+
+                    $firstProject = $allocation->projects->first();
+                    $dotPos       = $firstProject ? strpos($firstProject->name, '. ') : false;
+                    $baseName     = $dotPos !== false ? substr($firstProject->name, $dotPos + 2) : null;
+                    $projectName  = $jobNumber . $newLetter . ($baseName ? '. ' . $baseName : '');
+
+                    Project::create([
+                        'allocation_id'       => $allocation->id,
+                        'name'                => $projectName,
+                        'gc'                  => $firstProject?->gc,
+                        'status'              => $firstProject?->status,
+                        'project_information' => $firstProject?->project_information,
+                        'web_link'            => $firstProject?->web_link,
+                        'due_date'            => $allocation->assigned_date,
+                        'type'                => 'MULTIUNIT',
+                        'assigned_to'         => $newEstimator->id,
+                    ]);
+
+                    $allocation->estimators()->attach($newEstimator->id, ['status' => 'open']);
+                    $emailQueue[] = fn() use ($newEstimator, $allocation) => Mail::to($newEstimator->email)->send(new JobAssignedMail($allocation, $newEstimator));
+                    $allocation->load(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'), 'projects']);
+                }
             }
+
             $newProjectType = $newJobType === 'MU' ? 'MULTIUNIT' : 'NON MU';
             $allocation->update(['job_type' => $newJobType]);
             Project::where('allocation_id', $allocation->id)->update(['type' => $newProjectType]);
