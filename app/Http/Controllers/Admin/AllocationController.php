@@ -320,6 +320,31 @@ class AllocationController extends Controller
             $allocation->refresh();
         }
 
+        // --- Project name / web link / project information ---
+        $projectUpdates = [];
+
+        if ($request->filled('project_name')) {
+            // Rebuild each project's name keeping its individual prefix (e.g. "26077A. ")
+            foreach ($allocation->projects as $project) {
+                $dotPos = strpos($project->name, '. ');
+                $prefix = $dotPos !== false ? substr($project->name, 0, $dotPos + 2) : '';
+                $project->update(['name' => $prefix . trim($request->input('project_name'))]);
+            }
+            $allocation->load('projects');
+        }
+
+        if ($request->has('web_link')) {
+            $projectUpdates['web_link'] = $request->input('web_link') ?: null;
+        }
+
+        if ($request->has('project_information')) {
+            $projectUpdates['project_information'] = $request->input('project_information') ?: null;
+        }
+
+        if (!empty($projectUpdates)) {
+            Project::where('allocation_id', $allocation->id)->update($projectUpdates);
+        }
+
         // Derive limit and projectType from (possibly updated) job_type
         $limit        = $allocation->job_type === 'MU' ? 3 : 2;
         $projectType  = $allocation->job_type === 'MU' ? 'MULTIUNIT' : 'NON MU';

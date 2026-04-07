@@ -60,6 +60,36 @@
                         </div>
                     </div>
 
+                    @php $firstProject = $allocation->projects->first(); @endphp
+
+                    <div class="mt-4 space-y-4">
+                        <!-- Project Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Name</label>
+                            <input type="text" name="project_name"
+                                   value="{{ $firstProject ? trim(preg_replace('/^[^0-9]*[0-9]+[A-Za-z]*\.\s*/', '', $firstProject->name)) : '' }}"
+                                   placeholder="Project name (without job number)"
+                                   class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Job number prefix (e.g. 26077A.) is preserved automatically.</p>
+                        </div>
+
+                        <!-- Web Link -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Web Link</label>
+                            <input type="text" name="web_link"
+                                   value="{{ $firstProject?->web_link ?? '' }}"
+                                   placeholder="https://..."
+                                   class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                        <!-- Project Information -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Project Information</label>
+                            <textarea name="project_information" rows="3"
+                                      class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $firstProject?->project_information ?? '' }}</textarea>
+                        </div>
+                    </div>
+
                     @if($allocation->job_type === 'MU' && $slots->count() >= 3)
                     <div id="remove_estimator_row" style="display:none;" class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
                         <label class="block text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-2">
