@@ -301,7 +301,7 @@ class AllocationController extends Controller
                     Project::where('allocation_id', $allocation->id)
                         ->where('assigned_to', $lastEstimator->id)
                         ->delete();
-                    $emailQueue[] = fn() use ($lastEstimator, $allocation) => Mail::to($lastEstimator->email)->send(new JobRemovedMail($allocation, $lastEstimator));
+                    $emailQueue[] = fn() => Mail::to($lastEstimator->email)->send(new JobRemovedMail($allocation, $lastEstimator));
                     $allocation->load(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'), 'projects']);
                 }
 
@@ -375,7 +375,7 @@ class AllocationController extends Controller
                     ]);
 
                     $allocation->estimators()->attach($newEstimator->id, ['status' => 'open']);
-                    $emailQueue[] = fn() use ($newEstimator, $allocation) => Mail::to($newEstimator->email)->send(new JobAssignedMail($allocation, $newEstimator));
+                    $emailQueue[] = fn() => Mail::to($newEstimator->email)->send(new JobAssignedMail($allocation, $newEstimator));
                     $allocation->load(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'), 'projects']);
                 }
             }
