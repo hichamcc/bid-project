@@ -110,6 +110,9 @@ class AllocationController extends Controller
 
         // Filter out estimators with off days overlapping assigned_date–due_date
         $eligible = $eligible->filter(function ($estimator) use ($assignedDate, $dueDate) {
+            if (($estimator->weight ?? 1.0) == 0) {
+                return false;
+            }
             return !\App\Models\EstimatorOffDay::where('user_id', $estimator->id)
                 ->where('start_date', '<=', $dueDate)
                 ->where('end_date', '>=', $assignedDate)
@@ -342,6 +345,9 @@ class AllocationController extends Controller
 
                 // Filter out estimators with off days overlapping the allocation window
                 $eligible = $eligible->filter(function ($estimator) use ($allocation) {
+                    if (($estimator->weight ?? 1.0) == 0) {
+                        return false;
+                    }
                     return !\App\Models\EstimatorOffDay::where('user_id', $estimator->id)
                         ->where('start_date', '<=', $allocation->due_date)
                         ->where('end_date', '>=', $allocation->assigned_date)
@@ -750,7 +756,7 @@ class AllocationController extends Controller
             $weight    = $estimator->weight ?? 1.0;
             $totals[$estimator->id] = [
                 'total_days'    => $totalDays,
-                'effective_load'=> round($totalDays / $weight, 2),
+                'effective_load'=> $weight > 0 ? round($totalDays / $weight, 2) : 0,
             ];
         }
 

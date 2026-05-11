@@ -264,6 +264,15 @@
                                             Job #{{ $proposal->job_number }}
                                         </div>
                                     @endif
+                                    @if($proposal->project->type)
+                                        <div class="mt-1">
+                                            @if($proposal->project->type === 'MULTIUNIT')
+                                                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800">MU</span>
+                                            @else
+                                                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">NON MU</span>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900">
                                     <div class="space-y-1">
