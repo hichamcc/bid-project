@@ -12,7 +12,10 @@ class AllocationController extends Controller
     public function index(Request $request)
     {
         $query = Allocation::whereHas('estimators', fn($q) => $q->where('users.id', Auth::id()))
-            ->with(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc')])
+            ->with([
+                'estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'),
+                'projects'   => fn($q) => $q->where('assigned_to', Auth::id()),
+            ])
             ->orderBy('due_date', 'asc');
 
         if ($request->filled('search')) {

@@ -66,6 +66,13 @@ class ProposalController extends Controller
             });
         }
 
+        // Filter by job type (MU / NON MU)
+        if ($request->filled('job_type')) {
+            $query->whereHas('project', function($q) use ($request) {
+                $q->where('type', $request->job_type);
+            });
+        }
+
         // Filter by submission date range
         if ($request->filled('date_from')) {
             $query->whereDate('submission_date', '>=', $request->date_from);

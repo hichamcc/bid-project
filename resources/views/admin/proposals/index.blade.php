@@ -27,21 +27,21 @@
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
             <div class="p-6">
                 <form method="GET" action="{{ route('admin.proposals.index') }}" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                             <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                            <input type="text" 
-                                   id="search" 
-                                   name="search" 
+                            <input type="text"
+                                   id="search"
+                                   name="search"
                                    value="{{ request('search') }}"
                                    placeholder="Search by project name, GC, or job number..."
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                         </div>
-                        
+
                         <div>
                             <label for="responded" class="block text-sm font-medium text-gray-700 mb-1">Responded</label>
-                            <select id="responded" 
-                                    name="responded" 
+                            <select id="responded"
+                                    name="responded"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">All Status</option>
                                 <option value="yes" {{ request('responded') == 'yes' ? 'selected' : '' }}>Responded</option>
@@ -51,8 +51,8 @@
 
                         <div>
                             <label for="estimator_id" class="block text-sm font-medium text-gray-700 mb-1">Estimator</label>
-                            <select id="estimator_id" 
-                                    name="estimator_id" 
+                            <select id="estimator_id"
+                                    name="estimator_id"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 <option value="">All Estimators</option>
                                 @foreach($estimators as $estimator)
@@ -60,6 +60,17 @@
                                         {{ $estimator->name }}
                                     </option>
                                 @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="job_type" class="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
+                            <select id="job_type"
+                                    name="job_type"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">All Types</option>
+                                <option value="MULTIUNIT" {{ request('job_type') == 'MULTIUNIT' ? 'selected' : '' }}>MU</option>
+                                <option value="NON MU" {{ request('job_type') == 'NON MU' ? 'selected' : '' }}>NON MU</option>
                             </select>
                         </div>
                     </div>
@@ -105,7 +116,7 @@
         </div>
 
         <!-- Results Summary -->
-        @if(request()->hasAny(['search', 'responded', 'result_gc', 'result_art', 'estimator_id']))
+        @if(request()->hasAny(['search', 'responded', 'result_gc', 'result_art', 'estimator_id', 'job_type']))
             <div class="bg-blue-50 border border-blue-200 px-4 py-3 rounded mb-6">
                 <p class="text-blue-800">
                     Showing {{ $proposals->total() }} filtered result(s)

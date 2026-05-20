@@ -83,6 +83,7 @@
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Job Number</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Job Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Days</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due Date</th>
@@ -95,6 +96,13 @@
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100">
                                     {{ $allocation->job_number }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                    @php
+                                        $project = $allocation->projects->first();
+                                        $jobName = $project ? (($pos = strpos($project->name, '. ')) !== false ? substr($project->name, $pos + 2) : $project->name) : null;
+                                    @endphp
+                                    {{ $jobName ?? '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full
@@ -143,7 +151,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
                                     No jobs found.
                                 </td>
                             </tr>
