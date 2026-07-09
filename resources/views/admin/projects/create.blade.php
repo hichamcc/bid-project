@@ -405,8 +405,8 @@
                             <label for="assigned_to" class="block text-sm font-medium text-gray-700 mb-2">
                                 Assigned To (Estimator)
                             </label>
-                            <select id="assigned_to" 
-                                    name="assigned_to" 
+                            <select id="assigned_to"
+                                    name="assigned_to"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('assigned_to') border-red-500 @enderror">
                                 <option value="">Select an estimator</option>
                                 @foreach($estimators as $estimator)
@@ -419,6 +419,38 @@
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+
+                        <!-- Days Required (only needed when assigning an estimator) -->
+                        <div id="days_required_wrapper">
+                            <label for="days_required" class="block text-sm font-medium text-gray-700 mb-2">
+                                Days Required
+                            </label>
+                            <input type="number"
+                                   id="days_required"
+                                   name="days_required"
+                                   step="0.1"
+                                   min="0.1"
+                                   value="{{ old('days_required') }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('days_required') border-red-500 @enderror">
+                            <p class="mt-1 text-xs text-gray-500">Used to track this estimator's workload. Required when assigning an estimator.</p>
+                            @error('days_required')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <script>
+                            $(document).ready(function() {
+                                function toggleDaysRequired() {
+                                    if ($('#assigned_to').val()) {
+                                        $('#days_required_wrapper').show();
+                                    } else {
+                                        $('#days_required_wrapper').hide();
+                                    }
+                                }
+                                toggleDaysRequired();
+                                $('#assigned_to').change(toggleDaysRequired);
+                            });
+                        </script>
 
                         <!-- Web Link -->
                         <div class="md:col-span-2">

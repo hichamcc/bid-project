@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Allocation;
 use App\Models\Project;
 use App\Models\Status;
 use App\Models\Type;
 use App\Models\User;
 use App\Models\Gc;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -136,7 +138,7 @@ class ProjectController extends Controller
             'other_gc_data.*.web_link' => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
             'scope' => 'nullable|string',
             'assigned_date' => 'nullable|date',
-            'due_date' => 'nullable|date|after_or_equal:assigned_date',
+            'due_date' => 'nullable|date|after_or_equal:assigned_date|required_with:assigned_to',
             'rfi_due_date' => 'nullable|date|after_or_equal:rfi_request_date',
             'rfi_request_date' => 'nullable|date|after_or_equal:assigned_date',
             'first_rfi_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
@@ -150,9 +152,15 @@ class ProjectController extends Controller
             'type' => 'nullable|exists:types,name',
             'rfi' => 'nullable|string|max:255',
             'assigned_to' => 'nullable|exists:users,id',
+            'days_required' => 'nullable|numeric|min:0.1|required_with:assigned_to',
             'project_information' => 'nullable|string',
             'web_link' => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
         ]);
+
+        // Normalize empty-string select values to null (e.g. "Select an estimator" blank option)
+        if (($validated['assigned_to'] ?? null) === '') {
+            $validated['assigned_to'] = null;
+        }
 
         // Process Other GC data
         if (!empty($validated['other_gc_names'])) {
@@ -167,7 +175,7 @@ class ProjectController extends Controller
         } else {
             $validated['other_gc'] = [];
         }
-        
+
         // Remove the temporary form fields
         unset($validated['other_gc_names'], $validated['other_gc_data']);
 
@@ -177,7 +185,7 @@ class ProjectController extends Controller
             'second_rfi_attachment',
             'third_rfi_attachment'
         ];
-        
+
         foreach ($attachmentFields as $field) {
             if ($request->hasFile($field)) {
                 $file = $request->file($field);
@@ -186,7 +194,13 @@ class ProjectController extends Controller
             }
         }
 
-        Project::create($validated);
+        $daysRequired = $validated['days_required'] ?? null;
+        unset($validated['days_required']);
+
+        DB::transaction(function () use ($validated, $daysRequired) {
+            $project = Project::create($validated);
+            $this->syncAllocationForProject($project, $daysRequired);
+        });
 
         return redirect()->route('admin.projects.index')
             ->with('success', 'Project created successfully.');
@@ -221,7 +235,7 @@ class ProjectController extends Controller
             'other_gc_data.*.web_link' => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
             'scope' => 'nullable|string',
             'assigned_date' => 'nullable|date',
-            'due_date' => 'nullable|date|after_or_equal:assigned_date',
+            'due_date' => 'nullable|date|after_or_equal:assigned_date|required_with:assigned_to',
             'rfi_due_date' => 'nullable|date|after_or_equal:rfi_request_date',
             'rfi_request_date' => 'nullable|date|after_or_equal:assigned_date',
             'first_rfi_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
@@ -235,9 +249,15 @@ class ProjectController extends Controller
             'type' => 'nullable|exists:types,name',
             'rfi' => 'nullable|string|max:255',
             'assigned_to' => 'nullable|exists:users,id',
+            'days_required' => 'nullable|numeric|min:0.1|required_with:assigned_to',
             'project_information' => 'nullable|string',
             'web_link' => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
         ]);
+
+        // Normalize empty-string select values to null (e.g. "Select an estimator" blank option)
+        if (($validated['assigned_to'] ?? null) === '') {
+            $validated['assigned_to'] = null;
+        }
 
         // Process Other GC data
         if (!empty($validated['other_gc_names'])) {
@@ -252,7 +272,7 @@ class ProjectController extends Controller
         } else {
             $validated['other_gc'] = [];
         }
-        
+
         // Remove the temporary form fields
         unset($validated['other_gc_names'], $validated['other_gc_data']);
 
@@ -262,7 +282,7 @@ class ProjectController extends Controller
             'second_rfi_attachment',
             'third_rfi_attachment'
         ];
-        
+
         foreach ($attachmentFields as $field) {
             if ($request->hasFile($field)) {
                 // Delete old file if exists
@@ -286,7 +306,13 @@ class ProjectController extends Controller
             $validated['submitted_at'] = now();
         }
 
-        $project->update($validated);
+        $daysRequired = $validated['days_required'] ?? null;
+        unset($validated['days_required']);
+
+        DB::transaction(function () use ($project, $validated, $daysRequired) {
+            $project->update($validated);
+            $this->syncAllocationForProject($project, $daysRequired);
+        });
 
         return redirect()->route('admin.projects.index')
             ->with('success', 'Project updated successfully.');
@@ -318,5 +344,92 @@ class ProjectController extends Controller
 
         return redirect()->route('admin.projects.show', $project)
             ->with('success', 'Remark added successfully.');
+    }
+
+    /**
+     * Keep the Allocation/allocation_user pivot in sync with a manually
+     * assigned/unassigned/edited Project, so the estimator's workload page
+     * and the auto-distribution load calculation both see manual assignments.
+     */
+    private function syncAllocationForProject(Project $project, ?float $daysRequired): void
+    {
+        $estimatorId = $project->assigned_to;
+
+        // No estimator assigned: drop any existing allocation link.
+        if (!$estimatorId) {
+            $this->detachProjectAllocation($project);
+            return;
+        }
+
+        $dueDate = $project->due_date;
+        $allocationDueDate = $dueDate->copy()->addDays((int) ceil($daysRequired));
+
+        if (!$project->allocation_id) {
+            // New assignment: create the Allocation.
+            $allocation = Allocation::create([
+                'job_number'     => $this->deriveJobNumber($project->name, $project->id),
+                'assigned_date'  => $dueDate,
+                'due_date'       => $allocationDueDate,
+                'days_required'  => $daysRequired,
+                'job_type'       => $this->deriveJobType($project->type),
+            ]);
+
+            $allocation->estimators()->attach($estimatorId, ['status' => 'open']);
+            $project->update(['allocation_id' => $allocation->id]);
+            return;
+        }
+
+        // Existing assignment: keep the Allocation's estimator/dates in sync.
+        $allocation = Allocation::find($project->allocation_id);
+        if (!$allocation) {
+            return;
+        }
+
+        $currentEstimatorId = $allocation->estimators()->value('users.id');
+        if ($currentEstimatorId !== $estimatorId) {
+            if ($currentEstimatorId) {
+                $allocation->estimators()->detach($currentEstimatorId);
+            }
+            $allocation->estimators()->attach($estimatorId, ['status' => 'open']);
+        }
+
+        $allocation->update([
+            'assigned_date' => $dueDate,
+            'due_date'      => $allocationDueDate,
+            'days_required' => $daysRequired,
+            'job_type'      => $this->deriveJobType($project->type),
+        ]);
+    }
+
+    private function detachProjectAllocation(Project $project): void
+    {
+        if (!$project->allocation_id) {
+            return;
+        }
+
+        $allocation = Allocation::find($project->allocation_id);
+        $project->update(['allocation_id' => null]);
+
+        if ($allocation) {
+            $allocation->delete();
+        }
+    }
+
+    private function deriveJobType(?string $type): string
+    {
+        return $type === 'MULTIUNIT' ? 'MU' : 'NON_MU';
+    }
+
+    private function deriveJobNumber(string $projectName, int $projectId): string
+    {
+        // Mirrors Allocation::getProjectNameAttribute()'s prefix pattern
+        // (e.g. "1111A. Some Name" -> "1111A"). Falls back to the project id
+        // when no such prefix exists, since job_number must stay unique and
+        // manually-named projects often share the same free-text name.
+        if (preg_match('/^([^0-9]*[0-9]+[A-Za-z]*)\.\s*/', $projectName, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return 'PRJ-' . $projectId;
     }
 }
