@@ -21,7 +21,7 @@ class AllocationController extends Controller
     public function index(Request $request)
     {
         $sortDir = $request->get('sort', 'asc') === 'desc' ? 'desc' : 'asc';
-        $query = Allocation::with(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'), 'projects'])
+        $query = Allocation::with(['estimators' => fn($q) => $q->orderBy('allocation_user.id', 'asc'), 'projects.statusRecord'])
             ->orderBy('assigned_date', $sortDir);
 
         if ($request->filled('job_number')) {

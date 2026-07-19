@@ -386,12 +386,33 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $allocation->assigned_date->format('M d, Y') }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                    @php $gcCount = $allocation->projects->pluck('gc')->filter()->unique()->count(); @endphp
-                                    @if($gcCount > 0)
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                                            {{ $gcCount }}
-                                        </span>
+                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                    @php
+                                        $gcGroups = $allocation->projects->filter(fn($p) => $p->gc)->groupBy('gc');
+                                    @endphp
+                                    @if($gcGroups->isNotEmpty())
+                                        <div class="flex flex-col gap-1.5">
+                                            @foreach($gcGroups as $gcName => $gcProjects)
+                                                @php $gcStatusProject = $gcProjects->first(); @endphp
+                                                <div class="flex items-center gap-1.5 whitespace-nowrap">
+                                                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate max-w-[110px]" title="{{ $gcName }}">
+                                                        {{ $gcName }}
+                                                    </span>
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                                        {{ $gcStatusProject->due_date?->format('M d, Y') ?? '—' }}
+                                                    </span>
+                                                    @if($gcStatusProject->statusRecord)
+                                                        <span class="px-1.5 py-0.5 text-xs font-semibold rounded-full" style="background-color: {{ $gcStatusProject->statusRecord->color }}20; color: {{ $gcStatusProject->statusRecord->color }};">
+                                                            {{ $gcStatusProject->status }}
+                                                        </span>
+                                                    @elseif($gcStatusProject->status)
+                                                        <span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                                            {{ $gcStatusProject->status }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
                                     @else
                                         <span class="text-gray-400 text-xs">—</span>
                                     @endif
