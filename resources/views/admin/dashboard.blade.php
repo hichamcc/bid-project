@@ -208,6 +208,43 @@
             </div>
         </div>
 
+        <!-- Scope Review Stats -->
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Scope Review</h3>
+                    <a href="{{ route('scope-review.index') }}" class="text-sm text-indigo-600 hover:text-indigo-800">View all →</a>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+                    <!-- Pending -->
+                    <a href="{{ route('scope-review.index', ['decision' => '__pending__']) }}" class="bg-orange-50 rounded-lg p-4 text-center block hover:bg-orange-100 transition-colors">
+                        <div class="text-2xl font-bold text-orange-700">{{ number_format($scopeReviewPending) }}</div>
+                        <div class="text-sm font-medium text-orange-600 mt-1">Pending</div>
+                    </a>
+                    <!-- RFI Requested -->
+                    <a href="{{ route('scope-review.index', ['decision' => 'rfi_requested']) }}" class="bg-purple-50 rounded-lg p-4 text-center block hover:bg-purple-100 transition-colors">
+                        <div class="text-2xl font-bold text-purple-700">{{ number_format($scopeReviewRfiRequested) }}</div>
+                        <div class="text-sm font-medium text-purple-600 mt-1">RFI Requested</div>
+                    </a>
+                    <!-- Approved -->
+                    <a href="{{ route('scope-review.index', ['decision' => 'approved']) }}" class="bg-green-50 rounded-lg p-4 text-center block hover:bg-green-100 transition-colors">
+                        <div class="text-2xl font-bold text-green-700">{{ number_format($scopeReviewApproved) }}</div>
+                        <div class="text-sm font-medium text-green-600 mt-1">Approved</div>
+                    </a>
+                    <!-- Not In Scope -->
+                    <a href="{{ route('scope-review.index', ['decision' => 'not_in_scope']) }}" class="bg-red-50 rounded-lg p-4 text-center block hover:bg-red-100 transition-colors">
+                        <div class="text-2xl font-bold text-red-700">{{ number_format($scopeReviewNotInScope) }}</div>
+                        <div class="text-sm font-medium text-red-600 mt-1">Not In Scope</div>
+                    </a>
+                    <!-- Skipped -->
+                    <a href="{{ route('scope-review.index', ['decision' => 'skipped']) }}" class="bg-gray-50 rounded-lg p-4 text-center block hover:bg-gray-100 transition-colors">
+                        <div class="text-2xl font-bold text-gray-700">{{ number_format($scopeReviewSkipped) }}</div>
+                        <div class="text-sm font-medium text-gray-600 mt-1">Skipped</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
            <!-- Recent Activities -->
            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
             <div class="p-6">

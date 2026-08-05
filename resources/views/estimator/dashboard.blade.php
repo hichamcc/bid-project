@@ -5,21 +5,21 @@
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- Welcome Header -->
         <div class="bg-gradient-to-r from-blue-600 to-indigo-700 overflow-hidden shadow-lg sm:rounded-lg mb-8">
-            <div class="p-8 text-white">
+            <div class="px-6 py-4 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-3xl font-bold">Welcome back, {{ Auth::user()->name }}</h1>
-                        <p class="mt-2 text-blue-100">Here's what's happening with your projects today.</p>
+                        <h1 class="text-lg font-bold">Welcome back, {{ Auth::user()->name }}</h1>
+                        <p class="mt-0.5 text-sm text-blue-100">Here's what's happening with your projects today.</p>
                     </div>
                     <div class="hidden md:block">
-                        <div class="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                            <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-blue-600 text-xl font-bold">
+                        <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                            <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 text-xs font-bold">
                                 {{ Auth::user()->initials() }}
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="mt-6 text-blue-100 text-sm">
+                <div class="mt-2 text-blue-100 text-xs">
                     Last updated: {{ now()->format('l, F j, Y \a\t g:i A') }}
                 </div>
             </div>
@@ -27,45 +27,58 @@
 
 
         <!-- Performance Stats Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <!-- Total Projects -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-xl">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-2xl font-bold text-gray-900">{{ number_format($totalProjects) }}</p>
-                            <p class="text-sm font-medium text-gray-500">Total Projects</p>
-                        </div>
+            <div class="bg-white rounded-xl border border-gray-100 border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow p-5">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-500">Total Projects</p>
+                    <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-4.5 h-4.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                        </svg>
                     </div>
                 </div>
+                <p class="text-2xl font-bold text-gray-900 mt-3">{{ number_format($totalProjects) }}</p>
             </div>
 
             <!-- Active Projects -->
-            <div class="bg-white overflow-hidden shadow-lg rounded-xl">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="ml-4 flex-1">
-                            <p class="text-2xl font-bold text-gray-900">{{ number_format($inProgressProjects) }}</p>
-                            <p class="text-sm font-medium text-gray-500">In Progress</p>
-                        </div>
+            <div class="bg-white rounded-xl border border-gray-100 border-l-4 border-l-indigo-500 shadow-sm hover:shadow-md transition-shadow p-5">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-500">In Progress</p>
+                    <div class="w-9 h-9 bg-indigo-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-4.5 h-4.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
                     </div>
                 </div>
+                <p class="text-2xl font-bold text-gray-900 mt-3">{{ number_format($inProgressProjects) }}</p>
             </div>
 
+            <!-- Pending Scope Review -->
+            <a href="{{ route('scope-review.index') }}" class="block bg-white rounded-xl border border-gray-100 border-l-4 border-l-orange-500 shadow-sm hover:shadow-md transition-shadow p-5">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-500">Pending Scope Review</p>
+                    <div class="w-9 h-9 bg-orange-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-4.5 h-4.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-2xl font-bold text-gray-900 mt-3">{{ number_format($scopeReviewPending) }}</p>
+            </a>
+
+            <!-- Approved Scope Reviews -->
+            <a href="{{ route('scope-review.index', ['decision' => 'approved']) }}" class="block bg-white rounded-xl border border-gray-100 border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow p-5">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-500">Scope Reviews Approved</p>
+                    <div class="w-9 h-9 bg-green-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-4.5 h-4.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <p class="text-2xl font-bold text-gray-900 mt-3">{{ number_format($scopeReviewApproved) }}</p>
+            </a>
 
         </div>
 
@@ -304,23 +317,62 @@
                         <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
                     </div>
                     <div class="p-6">
-                        @forelse($recentRemarks->take(5) as $remark)
+                        @forelse($recentActivity as $activity)
                             <div class="flex space-x-3 mb-4 {{ !$loop->last ? 'pb-4 border-b border-gray-100' : '' }}">
-                                <div class="flex-shrink-0">
-                                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
-                                        {{ Auth::user()->initials() }}
+                                @if($activity['type'] === 'remark')
+                                    @php $remark = $activity['data']; @endphp
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                                            {{ Auth::user()->initials() }}
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm text-gray-900 font-medium">
-                                        <a href="{{ route('estimator.projects.show', $remark->project) }}" 
-                                           class="hover:text-blue-600">
-                                            {{ $remark->project->name }}
-                                        </a>
-                                    </p>
-                                    <p class="text-sm text-gray-600 mt-1">{{ Str::limit($remark->remark, 60) }}</p>
-                                    <p class="text-xs text-gray-400 mt-1">{{ $remark->created_at->diffForHumans() }}</p>
-                                </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm text-gray-900 font-medium">
+                                            <a href="{{ route('estimator.projects.show', $remark->project) }}"
+                                               class="hover:text-blue-600">
+                                                {{ $remark->project->name }}
+                                            </a>
+                                        </p>
+                                        <p class="text-sm text-gray-600 mt-1">{{ Str::limit($remark->remark, 60) }}</p>
+                                        <p class="text-xs text-gray-400 mt-1">{{ $remark->created_at->diffForHumans() }}</p>
+                                    </div>
+                                @else
+                                    @php
+                                        $scopeReview = $activity['data'];
+                                        $decisionLabels = [
+                                            'approved' => 'Approved',
+                                            'rfi_requested' => 'RFI Requested',
+                                            'not_in_scope' => 'Not In Scope',
+                                            'skipped' => 'Skipped',
+                                        ];
+                                        $decisionColors = [
+                                            'approved' => 'bg-green-500',
+                                            'rfi_requested' => 'bg-yellow-500',
+                                            'not_in_scope' => 'bg-red-500',
+                                            'skipped' => 'bg-gray-500',
+                                        ];
+                                    @endphp
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 {{ $decisionColors[$scopeReview->decision] ?? 'bg-gray-400' }} rounded-full flex items-center justify-center text-white text-xs font-medium">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm text-gray-900 font-medium">
+                                            <a href="{{ route('scope-review.edit', $scopeReview) }}"
+                                               class="hover:text-blue-600">
+                                                {{ $scopeReview->project_name }}
+                                            </a>
+                                        </p>
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            Scope review marked
+                                            <span class="font-medium">{{ $decisionLabels[$scopeReview->decision] ?? $scopeReview->decision }}</span>
+                                        </p>
+                                        <p class="text-xs text-gray-400 mt-1">{{ $scopeReview->reviewed_at->diffForHumans() }}</p>
+                                    </div>
+                                @endif
                             </div>
                         @empty
                             <div class="text-center py-8">

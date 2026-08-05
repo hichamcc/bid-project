@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\ScopeReview;
 use App\Models\Status;
 use App\Models\Type;
 use App\Models\User;
@@ -67,6 +68,13 @@ class DashboardController extends Controller
         $proposalWin     = Proposal::where('result_art', 'win')->count();
         $proposalLoss    = Proposal::where('result_art', 'loss')->count();
         $proposalPending = Proposal::where(fn($q) => $q->whereNull('result_art')->orWhere('result_art', 'pending'))->count();
+
+        // Scope Review Statistics
+        $scopeReviewPending      = ScopeReview::pendingReview()->count();
+        $scopeReviewRfiRequested = ScopeReview::where('decision', 'rfi_requested')->count();
+        $scopeReviewApproved     = ScopeReview::where('decision', 'approved')->count();
+        $scopeReviewNotInScope   = ScopeReview::where('decision', 'not_in_scope')->count();
+        $scopeReviewSkipped      = ScopeReview::where('decision', 'skipped')->count();
 
         // User Statistics
         $totalUsers = User::count();
@@ -150,7 +158,12 @@ class DashboardController extends Controller
             'submittedNonMUThisMonth',
             'proposalWin',
             'proposalLoss',
-            'proposalPending'
+            'proposalPending',
+            'scopeReviewPending',
+            'scopeReviewRfiRequested',
+            'scopeReviewApproved',
+            'scopeReviewNotInScope',
+            'scopeReviewSkipped'
         ));
     }
 

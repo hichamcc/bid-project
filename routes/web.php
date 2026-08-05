@@ -95,6 +95,23 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/workload', [\App\Http\Controllers\Admin\WorkloadController::class, 'index'])->name('workload.index');
 });
 
+// Scope Review — shared between admin and estimator roles (test/beta feature, local-only for now)
+Route::middleware(['auth', 'role:admin,estimator,head_estimator'])->prefix('scope-review')->name('scope-review.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\ScopeReviewController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\ScopeReviewController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\ScopeReviewController::class, 'store'])->name('store');
+
+    Route::prefix('import')->name('import.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ScopeReviewImportController::class, 'create'])->name('create');
+        Route::post('/upload', [\App\Http\Controllers\ScopeReviewImportController::class, 'upload'])->name('upload');
+        Route::get('/review', [\App\Http\Controllers\ScopeReviewImportController::class, 'review'])->name('review');
+        Route::post('/commit', [\App\Http\Controllers\ScopeReviewImportController::class, 'commit'])->name('commit');
+    });
+
+    Route::get('/{scopeReview}/edit', [\App\Http\Controllers\ScopeReviewController::class, 'edit'])->name('edit');
+    Route::put('/{scopeReview}', [\App\Http\Controllers\ScopeReviewController::class, 'update'])->name('update');
+});
+
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/allocation', [AllocationController::class, 'index'])->name('allocation.index');
     Route::post('/allocation', [AllocationController::class, 'store'])->name('allocation.store');

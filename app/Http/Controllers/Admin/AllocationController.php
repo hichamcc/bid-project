@@ -70,6 +70,7 @@ class AllocationController extends Controller
             'other_gc_data'             => 'nullable|array',
             'other_gc_data.*.due_date'  => 'nullable|date',
             'other_gc_data.*.web_link'  => 'nullable|string|max:2048|regex:/^https?:\/\/.+/',
+            'scope_review_id'           => 'nullable|exists:scope_reviews,id',
         ]);
 
         // Check if job number is already allocated
@@ -94,6 +95,12 @@ class AllocationController extends Controller
             'days_required' => $validated['days_required'],
             'job_type'      => $validated['job_type'],
         ]);
+
+        if (!empty($validated['scope_review_id'])) {
+            \App\Models\ScopeReview::where('id', $validated['scope_review_id'])
+                ->whereNull('allocation_id')
+                ->update(['allocation_id' => $allocation->id]);
+        }
 
         // Determine eligible estimators and how many to assign
         if ($validated['job_type'] === 'MU') {

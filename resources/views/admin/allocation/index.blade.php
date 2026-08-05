@@ -41,6 +41,7 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Add New Job</h3>
                 <form method="POST" action="{{ route('admin.allocation.store') }}">
                     @csrf
+                    <input type="hidden" name="scope_review_id" value="{{ old('scope_review_id', request('scope_review_id')) }}">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
                         <!-- Job Number -->
@@ -51,7 +52,7 @@
                             <input type="text"
                                    id="job_number"
                                    name="job_number"
-                                   value="{{ old('job_number') }}"
+                                   value="{{ old('job_number', request('job_number')) }}"
                                    required
                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 @error('job_number') border-red-500 @enderror">
                             @error('job_number')
@@ -67,7 +68,7 @@
                             <input type="date"
                                    id="due_date"
                                    name="due_date"
-                                   value="{{ old('due_date') }}"
+                                   value="{{ old('due_date', request('due_date')) }}"
                                    required
                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 @error('due_date') border-red-500 @enderror">
                             @error('due_date')
@@ -103,8 +104,8 @@
                                     required
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 @error('job_type') border-red-500 @enderror">
                                 <option value="">-- Select --</option>
-                                <option value="MU" {{ old('job_type') === 'MU' ? 'selected' : '' }}>MU (assigned to 3 estimators)</option>
-                                <option value="NON_MU" {{ old('job_type') === 'NON_MU' ? 'selected' : '' }}>NON MU (assigned to 2 estimators)</option>
+                                <option value="MU" {{ old('job_type', request('job_type')) === 'MU' ? 'selected' : '' }}>MU (assigned to 3 estimators)</option>
+                                <option value="NON_MU" {{ old('job_type', request('job_type')) === 'NON_MU' ? 'selected' : '' }}>NON MU (assigned to 2 estimators)</option>
                             </select>
                             @error('job_type')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
@@ -133,7 +134,7 @@
                                     <input type="text"
                                            id="project_name"
                                            name="project_name"
-                                           value="{{ old('project_name') }}"
+                                           value="{{ old('project_name', request('project_name')) }}"
                                            placeholder="e.g. DOWNTOWN TOWER"
                                            oninput="this.value = this.value.toUpperCase()"
                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 @error('project_name') border-red-500 @enderror">
@@ -153,7 +154,7 @@
                                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                         <option value="">-- None --</option>
                                         @foreach($gcs as $gcItem)
-                                            <option value="{{ $gcItem->name }}" {{ old('gc') === $gcItem->name ? 'selected' : '' }}>
+                                            <option value="{{ $gcItem->name }}" {{ old('gc', request('gc')) === $gcItem->name ? 'selected' : '' }}>
                                                 {{ $gcItem->name }}
                                             </option>
                                         @endforeach
@@ -170,7 +171,7 @@
                                             class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                         <option value="">-- None --</option>
                                         @foreach($statuses as $statusItem)
-                                            <option value="{{ $statusItem->name }}" {{ old('project_status') === $statusItem->name ? 'selected' : '' }}>
+                                            <option value="{{ $statusItem->name }}" {{ old('project_status', request('project_status')) === $statusItem->name ? 'selected' : '' }}>
                                                 {{ $statusItem->name }}
                                             </option>
                                         @endforeach
@@ -185,7 +186,7 @@
                                     <input type="url"
                                            id="web_link"
                                            name="web_link"
-                                           value="{{ old('web_link') }}"
+                                           value="{{ old('web_link', request('web_link')) }}"
                                            placeholder="https://example.com"
                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                                 </div>

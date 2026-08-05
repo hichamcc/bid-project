@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Allocation;
 use App\Models\Project;
 use App\Models\ProjectRemark;
+use App\Models\ScopeReview;
 use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -238,6 +239,36 @@ class ProjectController extends Controller
                                      ->limit(10)
                                      ->get();
 
+        // Scope review stats (only this estimator's own)
+        $scopeReviewPending = ScopeReview::pendingReview()
+                                        ->where('assigned_estimator_id', $userId)
+                                        ->count();
+        $scopeReviewApproved = ScopeReview::where('assigned_estimator_id', $userId)
+                                        ->where('decision', 'approved')
+                                        ->count();
+
+        // Recent scope review activity by the estimator (reviewed items)
+        $recentScopeReviews = ScopeReview::where('assigned_estimator_id', $userId)
+                                        ->whereNotNull('reviewed_at')
+                                        ->orderByDesc('reviewed_at')
+                                        ->limit(10)
+                                        ->get();
+
+        // Merge remarks + scope review activity into one recent-activity feed
+        $recentActivity = $recentRemarks->map(fn($remark) => [
+                                'type' => 'remark',
+                                'timestamp' => $remark->created_at,
+                                'data' => $remark,
+                            ])
+                            ->concat($recentScopeReviews->map(fn($scopeReview) => [
+                                'type' => 'scope_review',
+                                'timestamp' => $scopeReview->reviewed_at,
+                                'data' => $scopeReview,
+                            ]))
+                            ->sortByDesc('timestamp')
+                            ->take(5)
+                            ->values();
+
         // Workload distribution data
         $user       = Auth::user();
         $userWeight = $user->weight ?? 1.0;
@@ -266,6 +297,9 @@ class ProjectController extends Controller
             'recentProjects',
             'projectsByStatus',
             'recentRemarks',
+            'scopeReviewPending',
+            'scopeReviewApproved',
+            'recentActivity',
             'currentMonthAllocations',
             'nextMonthAllocations',
             'currentMonthDays',

@@ -111,6 +111,19 @@
                     <x-navlist.item before="phosphor-intersect" href="{{ route('admin.allocation.index') }}" :current="request()->routeIs('admin.allocation.*')">
                         <span x-show="!collapsed" x-cloak>{{ __('Distribution') }}</span>
                     </x-navlist.item>
+                    @php
+                        $scopeReviewReadyCount = \App\Models\ScopeReview::readyForAssignment()->count();
+                    @endphp
+                    <x-navlist.item before="phosphor-magnifying-glass" href="{{ route('scope-review.index') }}" :current="request()->routeIs('scope-review.*')">
+                        <span x-show="!collapsed" x-cloak class="flex items-center justify-between w-full">
+                            {{ __('Scope Review') }}
+                            @if($scopeReviewReadyCount > 0)
+                                <span class="ml-2 px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+                                    {{ $scopeReviewReadyCount }}
+                                </span>
+                            @endif
+                        </span>
+                    </x-navlist.item>
                     <x-navlist.item before="phosphor-calendar-x" href="{{ route('admin.off-days.index') }}" :current="request()->routeIs('admin.off-days.*')">
                         <span x-show="!collapsed" x-cloak>{{ __('Off Days') }}</span>
                     </x-navlist.item>
@@ -147,6 +160,21 @@
                 </x-navlist.item>
                 <x-navlist.item before="phosphor-chart-bar" href="{{ route('estimator.progress.index') }}" :current="request()->routeIs('estimator.progress.*')">
                     <span x-show="!collapsed" x-cloak>{{ __('Progress') }}</span>
+                </x-navlist.item>
+                @php
+                    $scopeReviewPendingCount = \App\Models\ScopeReview::pendingReview()
+                        ->where('assigned_estimator_id', auth()->id())
+                        ->count();
+                @endphp
+                <x-navlist.item before="phosphor-magnifying-glass" href="{{ route('scope-review.index') }}" :current="request()->routeIs('scope-review.*')">
+                    <span x-show="!collapsed" x-cloak class="flex items-center justify-between w-full">
+                        {{ __('Scope Review') }}
+                        @if($scopeReviewPendingCount > 0)
+                            <span class="ml-2 px-1.5 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
+                                {{ $scopeReviewPendingCount }}
+                            </span>
+                        @endif
+                    </span>
                 </x-navlist.item>
                 @php
                     $openJobsCount = \App\Models\Allocation::whereHas('estimators', fn($q) => $q->where('users.id', auth()->id())

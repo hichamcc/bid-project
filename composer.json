@@ -14,6 +14,7 @@
         "codeat3/blade-phosphor-icons": "^2.3",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "maatwebsite/excel": "^3.1",
         "mailersend/laravel-driver": "^3.0",
         "resend/resend-laravel": "^1.3"
     },
