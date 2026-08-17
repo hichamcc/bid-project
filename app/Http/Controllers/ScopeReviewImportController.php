@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 class ScopeReviewImportController extends Controller
 {
     private const STORAGE_DIR = 'scope-review-imports';
+    private const BATCH_SIZE = 500;
 
     public function __construct(private ScopeReviewImportParser $parser)
     {
@@ -67,6 +68,7 @@ class ScopeReviewImportController extends Controller
         $request->validate([
             'token' => 'required|string',
             'sheet' => 'required|string',
+            'batch' => 'nullable|integer|min:1',
         ]);
 
         $path = $this->resolveStoredPath($request->token);
@@ -75,8 +77,17 @@ class ScopeReviewImportController extends Controller
         $columnMapping = $this->parser->autoMapColumns($parsed['header']);
         $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
 
+        // Paginate rows into batches so each commit POST stays small.
+        $totalRows   = count($parsed['rows']);
+        $totalBatches = max(1, (int) ceil($totalRows / self::BATCH_SIZE));
+        $batch = min(max((int) $request->input('batch', 1), 1), $totalBatches);
+        $offset = ($batch - 1) * self::BATCH_SIZE;
+
+        // Preserve original row index as the key so it maps back correctly.
+        $batchRows = array_slice($parsed['rows'], $offset, self::BATCH_SIZE, true);
+
         $previewRows = [];
-        foreach ($parsed['rows'] as $rowIndex => $row) {
+        foreach ($batchRows as $rowIndex => $row) {
             $get = fn($field) => isset($columnMapping[$field]) ? ($row[$columnMapping[$field]] ?? null) : null;
 
             [$decision, $projectType, $statusRecognized] = $this->parser->parseBidStatus($get('bid_status'));
@@ -109,13 +120,18 @@ class ScopeReviewImportController extends Controller
         }
 
         return view('scope-review.import.review', [
-            'token' => $request->token,
-            'sheet' => $request->sheet,
-            'header' => $parsed['header'],
+            'token'         => $request->token,
+            'sheet'         => $request->sheet,
+            'header'        => $parsed['header'],
             'columnMapping' => $columnMapping,
-            'previewRows' => $previewRows,
-            'estimators' => $estimators,
+            'previewRows'   => $previewRows,
+            'estimators'    => $estimators,
             'fieldKeywords' => ScopeReviewImportParser::FIELD_KEYWORDS,
+            'batch'         => $batch,
+            'totalBatches'  => $totalBatches,
+            'totalRows'     => $totalRows,
+            'batchStart'    => $offset + 1,
+            'batchEnd'      => min($offset + self::BATCH_SIZE, $totalRows),
         ]);
     }
 
@@ -127,6 +143,10 @@ class ScopeReviewImportController extends Controller
         $this->authorizeAdmin();
 
         $validated = $request->validate([
+            'token'                      => 'required|string',
+            'sheet'                      => 'nullable|string',
+            'batch'                      => 'nullable|integer|min:1',
+            'total_batches'              => 'nullable|integer|min:1',
             'rows'                       => 'required|array|min:1',
             'rows.*.include'             => 'nullable|boolean',
             'rows.*.source'              => 'nullable|string|max:255',
@@ -181,12 +201,23 @@ class ScopeReviewImportController extends Controller
             }
         });
 
-        if ($request->filled('token')) {
-            Storage::disk('local')->delete(self::STORAGE_DIR . '/' . basename($request->token));
+        $batch        = (int) $request->input('batch', 1);
+        $totalBatches = (int) $request->input('total_batches', 1);
+
+        // More batches to go — advance to the next one.
+        if ($batch < $totalBatches) {
+            return redirect()->route('scope-review.import.review', [
+                'token' => basename($request->token),
+                'sheet' => $request->input('sheet'),
+                'batch' => $batch + 1,
+            ])->with('success', "Imported batch {$batch} of {$totalBatches} ({$imported} row(s) in this batch).");
         }
 
+        // Last batch done — clean up the stored file.
+        Storage::disk('local')->delete(self::STORAGE_DIR . '/' . basename($request->token));
+
         return redirect()->route('scope-review.index')
-            ->with('success', "Imported {$imported} scope review(s).");
+            ->with('success', "Import complete ({$totalBatches} batch(es) processed).");
     }
 
     private function resolveStoredPath(string $token): string

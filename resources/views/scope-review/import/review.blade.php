@@ -9,8 +9,12 @@
                 <div>
                     <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Review Import</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Sheet "{{ $sheet }}" &middot; {{ count($previewRows) }} row(s) parsed.
-                        Nothing has been saved yet — review and correct before importing.
+                        Sheet "{{ $sheet }}" &middot; {{ number_format($totalRows) }} total row(s).
+                        @if($totalBatches > 1)
+                            Showing rows {{ number_format($batchStart) }}–{{ number_format($batchEnd) }}
+                            (batch {{ $batch }} of {{ $totalBatches }}).
+                        @endif
+                        Nothing is saved until you click Import.
                     </p>
                 </div>
                 <a href="{{ route('scope-review.import.create') }}"
@@ -18,6 +22,20 @@
                     Cancel
                 </a>
             </div>
+            @if($totalBatches > 1)
+                <div class="px-6 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-blue-800 dark:text-blue-300 font-medium">
+                            This file is imported in {{ $totalBatches }} batches of up to 500 rows.
+                            Each "Import" button saves the current batch, then loads the next.
+                        </span>
+                        <span class="text-blue-700 dark:text-blue-400">Batch {{ $batch }} / {{ $totalBatches }}</span>
+                    </div>
+                    <div class="mt-2 h-2 w-full rounded-full bg-blue-100 dark:bg-blue-900/40 overflow-hidden">
+                        <div class="h-full bg-blue-600 dark:bg-blue-500 rounded-full" style="width: {{ round(($batch - 1) / $totalBatches * 100) }}%"></div>
+                    </div>
+                </div>
+            @endif
         </div>
 
         <!-- Column mapping summary -->
@@ -49,6 +67,9 @@
         <form method="POST" action="{{ route('scope-review.import.commit') }}">
             @csrf
             <input type="hidden" name="token" value="{{ $token }}">
+            <input type="hidden" name="sheet" value="{{ $sheet }}">
+            <input type="hidden" name="batch" value="{{ $batch }}">
+            <input type="hidden" name="total_batches" value="{{ $totalBatches }}">
 
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="overflow-x-auto">
@@ -166,7 +187,11 @@
                         <span class="inline-block w-3 h-3 bg-red-100 dark:bg-red-900/30 border border-red-300 rounded mr-1"></span> Unrecognized status — set decision manually
                     </p>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
-                        Import {{ count($previewRows) }} Row(s)
+                        @if($totalBatches > 1)
+                            Import Batch {{ $batch }} of {{ $totalBatches }} ({{ count($previewRows) }} rows){{ $batch < $totalBatches ? ' & Next' : '' }}
+                        @else
+                            Import {{ count($previewRows) }} Row(s)
+                        @endif
                     </button>
                 </div>
             </div>
