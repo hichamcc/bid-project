@@ -75,7 +75,15 @@ class ScopeReview extends Model
 
     public function scopeReadyForAssignment($query)
     {
-        return $query->where('decision', 'approved')->whereNull('allocation_id');
+        // Approved, not yet converted to a job, and still actionable by due date
+        // (today/future, or no due date). Past-due approvals are historical and
+        // can no longer be bid, so they don't belong in the assignment queue.
+        return $query->where('decision', 'approved')
+            ->whereNull('allocation_id')
+            ->where(function ($q) {
+                $q->whereNull('due_date')
+                  ->orWhereDate('due_date', '>=', now()->toDateString());
+            });
     }
 
     public function scopePendingReview($query)

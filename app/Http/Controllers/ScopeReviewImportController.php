@@ -136,7 +136,12 @@ class ScopeReviewImportController extends Controller
     }
 
     /**
-     * Step 3: commit the (possibly corrected) rows submitted from the review form.
+     * Step 3: commit one JS-driven sub-chunk of rows (~50 rows) and return JSON.
+     *
+     * The review page slices each 500-row batch into small sub-chunks and POSTs
+     * them one at a time, so no single POST exceeds PHP's max_input_vars (which
+     * would silently truncate rows). The browser orchestrates the sequence and
+     * navigation; this endpoint just saves the given rows and reports back.
      */
     public function commit(Request $request)
     {
@@ -147,6 +152,7 @@ class ScopeReviewImportController extends Controller
             'sheet'                      => 'nullable|string',
             'batch'                      => 'nullable|integer|min:1',
             'total_batches'              => 'nullable|integer|min:1',
+            'is_last_chunk'              => 'nullable|boolean',
             'rows'                       => 'required|array|min:1',
             'rows.*.include'             => 'nullable|boolean',
             'rows.*.source'              => 'nullable|string|max:255',
@@ -203,21 +209,31 @@ class ScopeReviewImportController extends Controller
 
         $batch        = (int) $request->input('batch', 1);
         $totalBatches = (int) $request->input('total_batches', 1);
+        $isLastChunk  = $request->boolean('is_last_chunk');
+        $isLastBatch  = $batch >= $totalBatches;
 
-        // More batches to go — advance to the next one.
-        if ($batch < $totalBatches) {
-            return redirect()->route('scope-review.import.review', [
-                'token' => basename($request->token),
-                'sheet' => $request->input('sheet'),
-                'batch' => $batch + 1,
-            ])->with('success', "Imported batch {$batch} of {$totalBatches} ({$imported} row(s) in this batch).");
+        // The final sub-chunk of the final batch: clean up the uploaded file.
+        if ($isLastChunk && $isLastBatch) {
+            Storage::disk('local')->delete(self::STORAGE_DIR . '/' . basename($request->token));
         }
 
-        // Last batch done — clean up the stored file.
-        Storage::disk('local')->delete(self::STORAGE_DIR . '/' . basename($request->token));
-
-        return redirect()->route('scope-review.index')
-            ->with('success', "Import complete ({$totalBatches} batch(es) processed).");
+        return response()->json([
+            'ok'            => true,
+            'imported'      => $imported,
+            'batch'         => $batch,
+            'total_batches' => $totalBatches,
+            // When this batch is fully committed, tell the browser where to go next.
+            'next_batch_url' => ($isLastChunk && !$isLastBatch)
+                ? route('scope-review.import.review', [
+                    'token' => basename($request->token),
+                    'sheet' => $request->input('sheet'),
+                    'batch' => $batch + 1,
+                  ])
+                : null,
+            'done_url' => ($isLastChunk && $isLastBatch)
+                ? route('scope-review.index')
+                : null,
+        ]);
     }
 
     private function resolveStoredPath(string $token): string

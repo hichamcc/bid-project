@@ -111,6 +111,7 @@ Route::middleware(['auth', 'role:admin,estimator,head_estimator'])->prefix('scop
 
     Route::get('/{scopeReview}/edit', [\App\Http\Controllers\ScopeReviewController::class, 'edit'])->name('edit');
     Route::put('/{scopeReview}', [\App\Http\Controllers\ScopeReviewController::class, 'update'])->name('update');
+    Route::delete('/{scopeReview}', [\App\Http\Controllers\ScopeReviewController::class, 'destroy'])->name('destroy');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

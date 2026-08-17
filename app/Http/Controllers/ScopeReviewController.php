@@ -265,6 +265,22 @@ class ScopeReviewController extends Controller
             ->with('success', $user->isAdmin() ? 'Scope review updated.' : 'Scope review submitted.');
     }
 
+    public function destroy(ScopeReview $scopeReview)
+    {
+        $this->authorizeAdmin();
+
+        // Don't delete an entry that's already been turned into a real job.
+        if ($scopeReview->isConverted()) {
+            return redirect()->route('scope-review.index')
+                ->with('error', 'This scope review has already been assigned to a job and cannot be deleted. Remove the job from Distribution first.');
+        }
+
+        $scopeReview->delete();
+
+        return redirect()->route('scope-review.index')
+            ->with('success', 'Scope review deleted.');
+    }
+
     /**
      * Core update logic (validation + apply), shared by the normal and modal paths.
      */

@@ -10,6 +10,16 @@
             this.panelOpen = true;
         },
 
+        // Delete confirmation
+        deleteOpen: false,
+        deleteId: null,
+        deleteName: '',
+        confirmDelete(id, name) {
+            this.deleteId = id;
+            this.deleteName = name;
+            this.deleteOpen = true;
+        },
+
         // Form modal (Add / Edit)
         formOpen: false,
         formLoading: false,
@@ -95,6 +105,16 @@
         @if(session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
                 {{ session('success') }}
+            </div>
+        @endif
+        @if(request()->boolean('imported'))
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                Import complete.
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {{ session('error') }}
             </div>
         @endif
 
@@ -321,6 +341,14 @@
                                                 <x-phosphor-check-circle width="14" height="14" />
                                                 Assigned
                                             </span>
+                                        @endif
+                                        @if(auth()->user()->isAdmin() && !$scopeReview->isConverted())
+                                            <button type="button"
+                                                    @click="confirmDelete({{ $scopeReview->id }}, @js($scopeReview->project_name))"
+                                                    title="Delete"
+                                                    class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/60">
+                                                <x-phosphor-trash width="16" height="16" />
+                                            </button>
                                         @endif
                                     </div>
                                 </td>
@@ -555,6 +583,61 @@
 
                 <!-- Form body (AJAX-injected) -->
                 <div class="p-6" x-ref="formBody" x-show="!formLoading" :class="formSubmitting ? 'opacity-50 pointer-events-none' : ''"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div x-show="deleteOpen"
+         x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         @keydown.escape.window="deleteOpen = false">
+        <div class="fixed inset-0 bg-black/50"
+             x-show="deleteOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="deleteOpen = false"></div>
+
+        <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6"
+             x-show="deleteOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95">
+
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                    <x-phosphor-trash class="w-5 h-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Delete Scope Review</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Are you sure you want to delete
+                        <span class="font-medium text-gray-700 dark:text-gray-300" x-text="deleteName"></span>?
+                        This cannot be undone.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" @click="deleteOpen = false"
+                        class="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium">
+                    Cancel
+                </button>
+                <form method="POST" :action="`{{ url('scope-review') }}/${deleteId}`">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                            class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
+                        Delete
+                    </button>
+                </form>
             </div>
         </div>
     </div>

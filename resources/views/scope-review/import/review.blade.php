@@ -64,12 +64,40 @@
         </div>
 
         <!-- Row-by-row review -->
-        <form method="POST" action="{{ route('scope-review.import.commit') }}">
+        <form method="POST" action="{{ route('scope-review.import.commit') }}"
+              id="scope-import-form"
+              x-data="scopeImport({
+                  commitUrl: '{{ route('scope-review.import.commit') }}',
+                  token: @js($token),
+                  sheet: @js($sheet),
+                  batch: {{ $batch }},
+                  totalBatches: {{ $totalBatches }},
+                  chunkSize: 50,
+                  csrf: '{{ csrf_token() }}'
+              })"
+              @submit.prevent="run()">
             @csrf
             <input type="hidden" name="token" value="{{ $token }}">
             <input type="hidden" name="sheet" value="{{ $sheet }}">
             <input type="hidden" name="batch" value="{{ $batch }}">
             <input type="hidden" name="total_batches" value="{{ $totalBatches }}">
+
+            <!-- Import progress overlay -->
+            <div x-show="importing" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8 max-w-sm w-full text-center">
+                    <svg class="animate-spin w-8 h-8 mx-auto text-blue-500" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <p class="mt-4 text-sm font-medium text-gray-900 dark:text-gray-100" x-text="progressLabel"></p>
+                    <div class="mt-3 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div class="h-full bg-blue-600 rounded-full transition-all" :style="`width: ${progressPct}%`"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import error -->
+            <div x-show="errorMessage" x-cloak class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" x-text="errorMessage"></div>
 
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="overflow-x-auto">
@@ -186,7 +214,8 @@
                         &nbsp;&nbsp;
                         <span class="inline-block w-3 h-3 bg-red-100 dark:bg-red-900/30 border border-red-300 rounded mr-1"></span> Unrecognized status — set decision manually
                     </p>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
+                    <button type="submit" :disabled="importing"
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded disabled:opacity-50 disabled:cursor-not-allowed">
                         @if($totalBatches > 1)
                             Import Batch {{ $batch }} of {{ $totalBatches }} ({{ count($previewRows) }} rows){{ $batch < $totalBatches ? ' & Next' : '' }}
                         @else
@@ -199,4 +228,102 @@
 
     </div>
 </div>
+
+<script>
+    function scopeImport(config) {
+        return {
+            importing: false,
+            errorMessage: '',
+            progressLabel: '',
+            progressPct: 0,
+
+            async run() {
+                if (this.importing) return;
+                this.errorMessage = '';
+                this.importing = true;
+
+                const form = this.$el;
+
+                // Collect the distinct row indices present in this batch's form.
+                const rowIndices = new Set();
+                form.querySelectorAll('[name^="rows["]').forEach(el => {
+                    const m = el.name.match(/^rows\[(\d+)\]/);
+                    if (m) rowIndices.add(parseInt(m[1], 10));
+                });
+                const indices = Array.from(rowIndices).sort((a, b) => a - b);
+
+                if (indices.length === 0) {
+                    this.importing = false;
+                    this.errorMessage = 'No rows to import.';
+                    return;
+                }
+
+                // Slice into sub-chunks so each POST stays under max_input_vars.
+                const chunks = [];
+                for (let i = 0; i < indices.length; i += config.chunkSize) {
+                    chunks.push(indices.slice(i, i + config.chunkSize));
+                }
+
+                let importedTotal = 0;
+                let lastResponse = null;
+
+                for (let c = 0; c < chunks.length; c++) {
+                    const isLastChunk = (c === chunks.length - 1);
+                    this.progressLabel = `Saving rows ${importedTotal + 1}–${importedTotal + chunks[c].length} of ${indices.length}…`;
+
+                    const fd = new FormData();
+                    fd.append('token', config.token);
+                    fd.append('sheet', config.sheet);
+                    fd.append('batch', config.batch);
+                    fd.append('total_batches', config.totalBatches);
+                    fd.append('is_last_chunk', isLastChunk ? '1' : '0');
+
+                    // Copy every input belonging to the rows in this chunk.
+                    chunks[c].forEach(idx => {
+                        form.querySelectorAll(`[name^="rows[${idx}]"]`).forEach(el => {
+                            if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
+                            fd.append(el.name, el.value);
+                        });
+                    });
+
+                    let res;
+                    try {
+                        res = await fetch(config.commitUrl, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': config.csrf, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                            body: fd,
+                        });
+                    } catch (e) {
+                        this.importing = false;
+                        this.errorMessage = `Network error after importing ${importedTotal} row(s). Imported rows are saved. Re-running the import may create duplicates.`;
+                        return;
+                    }
+
+                    if (!res.ok) {
+                        this.importing = false;
+                        const chunkNo = c + 1;
+                        this.errorMessage = `Import failed at chunk ${chunkNo} after ${importedTotal} row(s) saved. Fix the data and retry — note: already-imported rows may duplicate on a full re-run.`;
+                        return;
+                    }
+
+                    lastResponse = await res.json();
+                    importedTotal += (lastResponse.imported || 0);
+                    this.progressPct = Math.round(((c + 1) / chunks.length) * 100);
+                }
+
+                // Batch fully committed — navigate.
+                if (lastResponse && lastResponse.next_batch_url) {
+                    this.progressLabel = 'Loading next batch…';
+                    window.location = lastResponse.next_batch_url;
+                } else if (lastResponse && lastResponse.done_url) {
+                    this.progressLabel = 'Finishing…';
+                    window.location = lastResponse.done_url + '?imported=1';
+                } else {
+                    // Single batch, no navigation target — go to the list.
+                    window.location = '{{ route('scope-review.index') }}?imported=1';
+                }
+            }
+        }
+    }
+</script>
 @endsection
