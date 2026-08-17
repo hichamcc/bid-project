@@ -98,6 +98,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // Scope Review — shared between admin and estimator roles (test/beta feature, local-only for now)
 Route::middleware(['auth', 'role:admin,estimator,head_estimator'])->prefix('scope-review')->name('scope-review.')->group(function () {
     Route::get('/', [\App\Http\Controllers\ScopeReviewController::class, 'index'])->name('index');
+    Route::get('/stats', [\App\Http\Controllers\ScopeReviewController::class, 'stats'])->name('stats');
     Route::get('/create', [\App\Http\Controllers\ScopeReviewController::class, 'create'])->name('create');
     Route::post('/', [\App\Http\Controllers\ScopeReviewController::class, 'store'])->name('store');
 

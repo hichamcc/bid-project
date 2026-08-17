@@ -52,25 +52,121 @@ class ScopeReviewController extends Controller
 
         $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
 
-        $stats = [
-            'pending_review' => ScopeReview::pendingReview()->count(),
-            'rfi_requested'  => ScopeReview::where('decision', 'rfi_requested')->count(),
-            'approved'       => ScopeReview::where('decision', 'approved')->count(),
-            'not_in_scope'   => ScopeReview::where('decision', 'not_in_scope')->count(),
-            'skipped'        => ScopeReview::where('decision', 'skipped')->count(),
-        ];
-
-        if ($user->isAdmin()) {
-            $stats['ready_for_assignment'] = ScopeReview::readyForAssignment()->count();
-        }
-
         $savedViews = ScopeReviewView::query()
             ->where(fn($q) => $q->sharedDefaults()->orWhere('user_id', $user->id))
             ->orderByDesc('is_default')
             ->orderBy('name')
             ->get();
 
-        return view('scope-review.index', compact('scopeReviews', 'estimators', 'stats', 'savedViews'));
+        return view('scope-review.index', compact('scopeReviews', 'estimators', 'savedViews'));
+    }
+
+    public function stats()
+    {
+        $this->authorizeAdmin();
+
+        // --- Bid Status Summary ---
+        $yesNonMu     = ScopeReview::where('decision', 'approved')->where('project_type', 'NON_MU')->count();
+        $yesMu        = ScopeReview::where('decision', 'approved')->where('project_type', 'MU')->count();
+        $yesNoType    = ScopeReview::where('decision', 'approved')->whereNull('project_type')->count();
+        $no           = ScopeReview::where('decision', 'not_in_scope')->count();
+        $rfiRequested = ScopeReview::where('decision', 'rfi_requested')->count();
+        $skipped      = ScopeReview::where('decision', 'skipped')->count();
+        $notReviewed  = ScopeReview::pendingReview()->count();
+        $totalYes     = ScopeReview::where('decision', 'approved')->count();
+        $totalProjects = ScopeReview::count();
+
+        $bidStatusSummary = [
+            ['label' => 'YES - NON MU',      'count' => $yesNonMu,     'filters' => ['decision' => 'approved', 'project_type' => 'NON_MU']],
+            ['label' => 'YES - MU',          'count' => $yesMu,        'filters' => ['decision' => 'approved', 'project_type' => 'MU']],
+            ['label' => 'YES - No Type',     'count' => $yesNoType,    'filters' => ['decision' => 'approved'], 'hide_if_zero' => true],
+            ['label' => 'NO',                'count' => $no,           'filters' => ['decision' => 'not_in_scope']],
+            ['label' => 'REQUESTED RFI',     'count' => $rfiRequested, 'filters' => ['decision' => 'rfi_requested']],
+            ['label' => 'SKIP',              'count' => $skipped,      'filters' => ['decision' => 'skipped']],
+            ['label' => 'NOT YET REVIEWED',  'count' => $notReviewed,  'filters' => ['decision' => '__pending__']],
+        ];
+
+        // --- Headline stat cards ---
+        $statCards = [
+            [
+                'label' => 'Pending Scope Review', 'value' => $notReviewed,
+                'href' => route('scope-review.index', ['decision' => '__pending__']),
+                'bg' => 'bg-orange-50 dark:bg-orange-900/20', 'icon_bg' => 'bg-orange-100 dark:bg-orange-900/40',
+                'icon_color' => 'text-orange-500 dark:text-orange-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'icon' => 'phosphor-hourglass',
+            ],
+            [
+                'label' => 'RFI Sent', 'value' => $rfiRequested,
+                'href' => route('scope-review.index', ['decision' => 'rfi_requested']),
+                'bg' => 'bg-purple-50 dark:bg-purple-900/20', 'icon_bg' => 'bg-purple-100 dark:bg-purple-900/40',
+                'icon_color' => 'text-purple-500 dark:text-purple-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'icon' => 'phosphor-envelope',
+            ],
+            [
+                'label' => 'Approved', 'value' => $totalYes,
+                'href' => route('scope-review.index', ['decision' => 'approved']),
+                'bg' => 'bg-green-50 dark:bg-green-900/20', 'icon_bg' => 'bg-green-100 dark:bg-green-900/40',
+                'icon_color' => 'text-green-600 dark:text-green-300', 'value_color' => 'text-green-700 dark:text-green-300',
+                'icon' => 'phosphor-check-circle',
+            ],
+            [
+                'label' => 'Not Within Scope', 'value' => $no,
+                'href' => route('scope-review.index', ['decision' => 'not_in_scope']),
+                'bg' => 'bg-blue-50 dark:bg-blue-900/20', 'icon_bg' => 'bg-blue-100 dark:bg-blue-900/40',
+                'icon_color' => 'text-blue-500 dark:text-blue-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'icon' => 'phosphor-x-circle',
+            ],
+            [
+                'label' => 'Skipped', 'value' => $skipped,
+                'href' => route('scope-review.index', ['decision' => 'skipped']),
+                'bg' => 'bg-gray-50 dark:bg-gray-700/40', 'icon_bg' => 'bg-gray-200 dark:bg-gray-600',
+                'icon_color' => 'text-gray-500 dark:text-gray-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'icon' => 'phosphor-prohibit',
+            ],
+        ];
+
+        // --- Platforms Summary (count + yes bids) ---
+        $platformSummary = ScopeReview::selectRaw("
+                platform,
+                COUNT(*) as total,
+                SUM(CASE WHEN decision = 'approved' THEN 1 ELSE 0 END) as yes_bids
+            ")
+            ->whereNotNull('platform')
+            ->where('platform', '!=', '')
+            ->groupBy('platform')
+            ->orderByDesc('total')
+            ->get();
+
+        $platformTotalCount = $platformSummary->sum('total');
+        $platformTotalYes   = $platformSummary->sum('yes_bids');
+
+        // --- Pending Review by Estimator ---
+        $estimatorSummary = User::whereIn('role', ['estimator', 'head_estimator'])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($estimator) {
+                return [
+                    'estimator'      => $estimator,
+                    'pending_review' => ScopeReview::pendingReview()->where('assigned_estimator_id', $estimator->id)->count(),
+                    'total_assigned' => ScopeReview::where('assigned_estimator_id', $estimator->id)->count(),
+                ];
+            });
+
+        $estimatorTotalPending  = $estimatorSummary->sum('pending_review');
+        $estimatorTotalAssigned = $estimatorSummary->sum('total_assigned');
+
+        return view('scope-review.stats', compact(
+            'statCards',
+            'bidStatusSummary',
+            'totalYes',
+            'totalProjects',
+            'platformSummary',
+            'platformTotalCount',
+            'platformTotalYes',
+            'estimatorSummary',
+            'estimatorTotalPending',
+            'estimatorTotalAssigned'
+        ));
     }
 
     public function create()
@@ -97,6 +193,8 @@ class ScopeReviewController extends Controller
             'notes'                  => 'nullable|string',
             'assigned_estimator_id'  => 'nullable|exists:users,id',
         ]);
+
+        $this->assertProjectNameNotDuplicate($validated['project_name']);
 
         ScopeReview::create($validated + ['created_by' => Auth::id()]);
 
@@ -131,6 +229,8 @@ class ScopeReviewController extends Controller
                 'notes'                  => 'nullable|string',
                 'assigned_estimator_id'  => 'nullable|exists:users,id',
             ]);
+
+            $this->assertProjectNameNotDuplicate($validated['project_name'], $scopeReview->id);
 
             $scopeReview->update($validated);
 
@@ -210,6 +310,27 @@ class ScopeReviewController extends Controller
         return $query->whereRaw("{$column} REGEXP '^[0-9]+$'")
             ->orderByRaw("CAST({$column} AS UNSIGNED) DESC")
             ->value($column);
+    }
+
+    /**
+     * Block duplicate project names (case-insensitive, trimmed) to avoid
+     * accidentally logging the same opportunity twice.
+     */
+    private function assertProjectNameNotDuplicate(string $projectName, ?int $ignoreId = null): void
+    {
+        $normalized = strtolower(trim($projectName));
+
+        $query = ScopeReview::whereRaw('LOWER(TRIM(project_name)) = ?', [$normalized]);
+
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        if ($query->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'project_name' => 'This project already exists in Scope Review. Please avoid duplicate entries.',
+            ]);
+        }
     }
 
     private function authorizeAdmin(): void

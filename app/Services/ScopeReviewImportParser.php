@@ -28,6 +28,16 @@ class ScopeReviewImportParser
         'notes'            => ['notes', 'note'],
     ];
 
+    /**
+     * Exact-match header aliases for short/ambiguous columns that would cause
+     * false positives under substring matching (e.g. "OH", "#").
+     * Matched (case-insensitive, trimmed) before the substring keywords above.
+     */
+    public const FIELD_EXACT_ALIASES = [
+        'uploaded_in_oh' => ['oh'],
+        'project_number' => ['#'],
+    ];
+
     public function listSheetNames(string $path): array
     {
         $reader = IOFactory::createReaderForFile($path);
@@ -94,9 +104,28 @@ class ScopeReviewImportParser
     {
         $mapping = [];
 
+        // Pass 1: exact-match aliases for short/ambiguous headers (e.g. "OH", "#").
         foreach ($header as $index => $label) {
             $normalized = strtolower(trim($label));
             if ($normalized === '') {
+                continue;
+            }
+
+            foreach (self::FIELD_EXACT_ALIASES as $field => $aliases) {
+                if (isset($mapping[$field])) {
+                    continue;
+                }
+                if (in_array($normalized, $aliases, true) && !in_array($index, $mapping, true)) {
+                    $mapping[$field] = $index;
+                    break;
+                }
+            }
+        }
+
+        // Pass 2: substring keyword matching for descriptive headers.
+        foreach ($header as $index => $label) {
+            $normalized = strtolower(trim($label));
+            if ($normalized === '' || in_array($index, $mapping, true)) {
                 continue;
             }
 

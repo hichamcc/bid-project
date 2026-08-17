@@ -21,6 +21,11 @@
                 </div>
                 @if(auth()->user()->isAdmin())
                     <div class="flex gap-2">
+                        <a href="{{ route('scope-review.stats') }}"
+                           class="inline-flex items-center gap-1.5 bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900/40 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold py-2 px-4 rounded">
+                            <x-phosphor-chart-bar width="16" height="16" />
+                            Stats
+                        </a>
                         <a href="{{ route('scope-review.import.create') }}"
                            class="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 font-bold py-2 px-4 rounded">
                             Import
@@ -38,84 +43,6 @@
         @if(session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
                 {{ session('success') }}
-            </div>
-        @endif
-
-        <!-- Stats -->
-        @if($stats)
-            @php
-                $statCards = [
-                    [
-                        'label' => 'Pending Scope Review',
-                        'value' => $stats['pending_review'],
-                        'href' => route('scope-review.index', ['decision' => '__pending__']),
-                        'bg' => 'bg-orange-50 dark:bg-orange-900/20',
-                        'icon_bg' => 'bg-orange-100 dark:bg-orange-900/40',
-                        'icon_color' => 'text-orange-500 dark:text-orange-300',
-                        'value_color' => 'text-gray-900 dark:text-gray-100',
-                        'icon' => 'phosphor-hourglass',
-                    ],
-                    [
-                        'label' => 'RFI Sent',
-                        'value' => $stats['rfi_requested'],
-                        'href' => route('scope-review.index', ['decision' => 'rfi_requested']),
-                        'bg' => 'bg-purple-50 dark:bg-purple-900/20',
-                        'icon_bg' => 'bg-purple-100 dark:bg-purple-900/40',
-                        'icon_color' => 'text-purple-500 dark:text-purple-300',
-                        'value_color' => 'text-gray-900 dark:text-gray-100',
-                        'icon' => 'phosphor-envelope',
-                    ],
-                    [
-                        'label' => 'Approved',
-                        'value' => $stats['approved'],
-                        'href' => route('scope-review.index', ['decision' => 'approved']),
-                        'bg' => 'bg-green-50 dark:bg-green-900/20',
-                        'icon_bg' => 'bg-green-100 dark:bg-green-900/40',
-                        'icon_color' => 'text-green-600 dark:text-green-300',
-                        'value_color' => 'text-green-700 dark:text-green-300',
-                        'icon' => 'phosphor-check-circle',
-                    ],
-                    [
-                        'label' => 'Not Within Scope',
-                        'value' => $stats['not_in_scope'],
-                        'href' => route('scope-review.index', ['decision' => 'not_in_scope']),
-                        'bg' => 'bg-blue-50 dark:bg-blue-900/20',
-                        'icon_bg' => 'bg-blue-100 dark:bg-blue-900/40',
-                        'icon_color' => 'text-blue-500 dark:text-blue-300',
-                        'value_color' => 'text-gray-900 dark:text-gray-100',
-                        'icon' => 'phosphor-x-circle',
-                    ],
-                    [
-                        'label' => 'Skipped',
-                        'value' => $stats['skipped'],
-                        'href' => route('scope-review.index', ['decision' => 'skipped']),
-                        'bg' => 'bg-gray-50 dark:bg-gray-700/40',
-                        'icon_bg' => 'bg-gray-200 dark:bg-gray-600',
-                        'icon_color' => 'text-gray-500 dark:text-gray-300',
-                        'value_color' => 'text-gray-900 dark:text-gray-100',
-                        'icon' => 'phosphor-prohibit',
-                    ],
-                ];
-            @endphp
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                @foreach($statCards as $card)
-                    <div class="{{ $card['bg'] }} shadow-sm sm:rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-                        <div class="flex items-start justify-between">
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $card['label'] }}</p>
-                            <span class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center {{ $card['icon_bg'] }}">
-                                <x-dynamic-component :component="$card['icon']" class="w-4 h-4 {{ $card['icon_color'] }}" />
-                            </span>
-                        </div>
-                        <p class="text-3xl font-bold mt-2 {{ $card['value_color'] }}">{{ $card['value'] }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Projects</p>
-                        <a href="{{ $card['href'] }}" class="inline-flex items-center gap-1 mt-3 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                            View all
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                            </svg>
-                        </a>
-                    </div>
-                @endforeach
             </div>
         @endif
 
@@ -209,7 +136,6 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Project Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Days Left</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estimator</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Decision</th>
@@ -242,23 +168,6 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $scopeReview->due_date?->format('M d, Y') ?? '—' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($scopeReview->due_date)
-                                        @php
-                                            $daysLeft = now()->startOfDay()->diffInDays($scopeReview->due_date->copy()->startOfDay(), false);
-                                            $daysLeftColor = $daysLeft <= 5
-                                                ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                                                : ($daysLeft <= 14
-                                                    ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
-                                                    : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200');
-                                        @endphp
-                                        <span class="px-3 py-1 text-xs font-semibold rounded-md {{ $daysLeftColor }}">
-                                            {{ $daysLeft }}
-                                        </span>
-                                    @else
-                                        <span class="text-gray-400 text-xs">—</span>
-                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $scopeReview->assignedEstimator?->name ?? '—' }}
