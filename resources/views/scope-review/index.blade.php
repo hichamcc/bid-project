@@ -8,8 +8,59 @@
         openPanel(scopeReview) {
             this.current = scopeReview;
             this.panelOpen = true;
+        },
+
+        // Form modal (Add / Edit)
+        formOpen: false,
+        formLoading: false,
+        formSubmitting: false,
+        formTitle: '',
+        async openForm(url, title) {
+            this.formTitle = title;
+            this.formOpen = true;
+            this.formLoading = true;
+            this.$refs.formBody.innerHTML = '';
+            try {
+                const res = await fetch(url, { headers: { 'X-Scope-Modal': '1', 'X-Requested-With': 'XMLHttpRequest' } });
+                this.$refs.formBody.innerHTML = await res.text();
+            } catch (e) {
+                this.$refs.formBody.innerHTML = '<p class=\'text-red-600 p-4\'>Failed to load the form. Please try again.</p>';
+            } finally {
+                this.formLoading = false;
+            }
+        },
+        closeForm() {
+            this.formOpen = false;
+            this.$refs.formBody.innerHTML = '';
+        },
+        async submitForm(event) {
+            event.preventDefault();
+            const form = event.target.closest('form[data-scope-form]');
+            if (!form) return;
+            this.formSubmitting = true;
+            try {
+                const res = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Scope-Modal': '1', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                    body: new FormData(form),
+                });
+                if (res.status === 422) {
+                    // Validation errors — re-render the form partial with messages.
+                    this.$refs.formBody.innerHTML = await res.text();
+                } else if (res.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Something went wrong. Please try again.');
+                }
+            } catch (e) {
+                alert('Network error. Please try again.');
+            } finally {
+                this.formSubmitting = false;
+            }
         }
-     }">
+     }"
+     @click="if ($event.target.closest('[data-scope-cancel]')) { $event.preventDefault(); closeForm(); }"
+     @submit="if ($event.target.closest('form[data-scope-form]')) submitForm($event)">
     <div class="max-w-10xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
         <!-- Header -->
@@ -31,7 +82,8 @@
                             Import
                         </a>
                         <a href="{{ route('scope-review.create') }}"
-                           class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                           @click.prevent="openForm('{{ route('scope-review.create') }}', 'Add Opportunity')"
+                           class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
                             Add Opportunity
                         </a>
                     </div>
@@ -238,14 +290,16 @@
                                         </button>
                                         @if(auth()->user()->isAdmin())
                                             <a href="{{ route('scope-review.edit', $scopeReview) }}"
+                                               @click.prevent="openForm('{{ route('scope-review.edit', $scopeReview) }}', @js('Edit: '.$scopeReview->project_name))"
                                                title="Edit"
-                                               class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60">
+                                               class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60 cursor-pointer">
                                                 <x-phosphor-pencil-simple width="16" height="16" />
                                             </a>
                                         @elseif($scopeReview->assigned_estimator_id === auth()->id())
                                             <a href="{{ route('scope-review.edit', $scopeReview) }}"
+                                               @click.prevent="openForm('{{ route('scope-review.edit', $scopeReview) }}', @js('Review: '.$scopeReview->project_name))"
                                                title="Review"
-                                               class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60">
+                                               class="inline-flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 dark:hover:bg-blue-900/60 cursor-pointer">
                                                 <x-phosphor-pencil-simple width="16" height="16" />
                                             </a>
                                         @endif
@@ -449,6 +503,58 @@
                         </template>
                     </ul>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add / Edit Form Modal -->
+    <div x-show="formOpen"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         @keydown.escape.window="closeForm()">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black/50"
+             x-show="formOpen"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="closeForm()"></div>
+
+        <!-- Dialog -->
+        <div class="relative min-h-full flex items-start justify-center p-4 sm:p-8">
+            <div class="relative w-full max-w-4xl bg-white dark:bg-gray-800 rounded-lg shadow-xl"
+                 x-show="formOpen"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 translate-y-4"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 translate-y-4">
+
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate" x-text="formTitle"></h3>
+                    <button type="button" @click="closeForm()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Loading spinner -->
+                <div x-show="formLoading" class="p-10 text-center text-gray-500 dark:text-gray-400">
+                    <svg class="animate-spin w-6 h-6 mx-auto text-blue-500" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <p class="mt-2 text-sm">Loading…</p>
+                </div>
+
+                <!-- Form body (AJAX-injected) -->
+                <div class="p-6" x-ref="formBody" x-show="!formLoading" :class="formSubmitting ? 'opacity-50 pointer-events-none' : ''"></div>
             </div>
         </div>
     </div>

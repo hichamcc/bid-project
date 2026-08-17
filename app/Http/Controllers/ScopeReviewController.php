@@ -169,11 +169,16 @@ class ScopeReviewController extends Controller
         ));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $this->authorizeAdmin();
 
         $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
+
+        // Modal (AJAX) request wants just the form body.
+        if ($this->wantsPartial($request)) {
+            return view('scope-review.partials.create-form', compact('estimators'));
+        }
 
         return view('scope-review.create', compact('estimators'));
     }
@@ -182,7 +187,7 @@ class ScopeReviewController extends Controller
     {
         $this->authorizeAdmin();
 
-        $validated = $request->validate([
+        $rules = [
             'entry_date'             => 'required|date',
             'source'                 => 'nullable|string|max:255',
             'platform'               => 'nullable|string|max:255',
@@ -192,22 +197,39 @@ class ScopeReviewController extends Controller
             'location'               => 'nullable|string|max:255',
             'notes'                  => 'nullable|string',
             'assigned_estimator_id'  => 'nullable|exists:users,id',
-        ]);
+        ];
 
+        if ($this->wantsPartial($request)) {
+            $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
+
+            return $this->handleModalSubmit($request, $rules, 'scope-review.partials.create-form',
+                compact('estimators'),
+                function (array $validated) {
+                    $this->assertProjectNameNotDuplicate($validated['project_name']);
+                    ScopeReview::create($validated + ['created_by' => Auth::id()]);
+                },
+                'Scope review entry created.'
+            );
+        }
+
+        $validated = $request->validate($rules);
         $this->assertProjectNameNotDuplicate($validated['project_name']);
-
         ScopeReview::create($validated + ['created_by' => Auth::id()]);
 
         return redirect()->route('scope-review.index')
             ->with('success', 'Scope review entry created.');
     }
 
-    public function edit(ScopeReview $scopeReview)
+    public function edit(Request $request, ScopeReview $scopeReview)
     {
         $user = Auth::user();
         $this->authorizeView($scopeReview, $user);
 
         $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
+
+        if ($this->wantsPartial($request)) {
+            return view('scope-review.partials.edit-form', compact('scopeReview', 'estimators'));
+        }
 
         return view('scope-review.edit', compact('scopeReview', 'estimators'));
     }
@@ -217,6 +239,37 @@ class ScopeReviewController extends Controller
         $user = Auth::user();
         $this->authorizeView($scopeReview, $user);
 
+        // Modal (AJAX) submit: run the same logic, but re-render the form partial
+        // with errors on failure and return a JSON success signal on success.
+        if ($this->wantsPartial($request)) {
+            try {
+                $this->performUpdate($request, $scopeReview, $user);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
+                $errors = new \Illuminate\Support\ViewErrorBag();
+                $errors->put('default', $e->validator->errors());
+
+                return response()->view('scope-review.partials.edit-form', [
+                    'scopeReview' => $scopeReview->fresh(),
+                    'estimators'  => $estimators,
+                    'errors'      => $errors,
+                ], 422);
+            }
+
+            return response()->json(['ok' => true]);
+        }
+
+        $this->performUpdate($request, $scopeReview, $user);
+
+        return redirect()->route('scope-review.index')
+            ->with('success', $user->isAdmin() ? 'Scope review updated.' : 'Scope review submitted.');
+    }
+
+    /**
+     * Core update logic (validation + apply), shared by the normal and modal paths.
+     */
+    private function performUpdate(Request $request, ScopeReview $scopeReview, User $user): void
+    {
         if ($user->isAdmin()) {
             $validated = $request->validate([
                 'entry_date'             => 'required|date',
@@ -228,13 +281,23 @@ class ScopeReviewController extends Controller
                 'location'               => 'nullable|string|max:255',
                 'notes'                  => 'nullable|string',
                 'assigned_estimator_id'  => 'nullable|exists:users,id',
+                // Admin can also set the review/decision fields. Decision is
+                // optional for admin ('' / null = leave pending).
+                'project_type'           => 'nullable|required_if:decision,approved|in:MU,NON_MU',
+                'decision'               => 'nullable|in:approved,rfi_requested,not_in_scope,skipped',
+                'duration'               => 'nullable|string|max:255',
+                'estimator_notes'        => 'nullable|string',
+                'uploaded_in_oh'         => 'nullable|boolean',
             ]);
 
             $this->assertProjectNameNotDuplicate($validated['project_name'], $scopeReview->id);
 
+            $validated['decision'] = $validated['decision'] ?: null;
+            $this->applyReviewFields($validated, $scopeReview, $user);
+
             $scopeReview->update($validated);
 
-            return redirect()->route('scope-review.index')->with('success', 'Scope review updated.');
+            return;
         }
 
         // Estimator: can only update their own review fields, and only while assigned to them.
@@ -250,18 +313,34 @@ class ScopeReviewController extends Controller
             'uploaded_in_oh'   => 'nullable|boolean',
         ]);
 
-        $validated['uploaded_in_oh'] = $request->boolean('uploaded_in_oh');
-        $validated['reviewed_at'] = now();
+        $this->applyReviewFields($validated, $scopeReview, $user);
 
-        if ($validated['decision'] === 'approved' && !$scopeReview->project_number) {
+        $scopeReview->update($validated);
+    }
+
+    /**
+     * Apply the review-side effects of a decision change (uploaded_in_oh cast,
+     * reviewed_at stamp, project-number generation on approve, and status-history
+     * logging). Mutates $validated in place and writes a history row if the
+     * decision actually changed. Shared by the admin and estimator update paths.
+     */
+    private function applyReviewFields(array &$validated, ScopeReview $scopeReview, User $user): void
+    {
+        $validated['uploaded_in_oh'] = request()->boolean('uploaded_in_oh');
+
+        $decisionChanged = array_key_exists('decision', $validated)
+            && $validated['decision'] !== $scopeReview->decision;
+
+        // Stamp reviewed_at whenever a decision is present on this submission.
+        if (!empty($validated['decision'])) {
+            $validated['reviewed_at'] = now();
+        }
+
+        if (($validated['decision'] ?? null) === 'approved' && !$scopeReview->project_number) {
             $validated['project_number'] = $this->nextProjectNumber();
         }
 
-        $decisionChanged = $validated['decision'] !== $scopeReview->decision;
-
-        $scopeReview->update($validated);
-
-        if ($decisionChanged) {
+        if ($decisionChanged && !empty($validated['decision'])) {
             ScopeReviewStatusHistory::create([
                 'scope_review_id' => $scopeReview->id,
                 'user_id'         => $user->id,
@@ -269,8 +348,6 @@ class ScopeReviewController extends Controller
                 'created_at'      => now(),
             ]);
         }
-
-        return redirect()->route('scope-review.index')->with('success', 'Scope review submitted.');
     }
 
     /**
@@ -331,6 +408,35 @@ class ScopeReviewController extends Controller
                 'project_name' => 'This project already exists in Scope Review. Please avoid duplicate entries.',
             ]);
         }
+    }
+
+    /**
+     * True when the request is the modal (AJAX) variant that wants just the
+     * form partial / JSON, not a full page or redirect.
+     */
+    private function wantsPartial(Request $request): bool
+    {
+        return $request->boolean('modal') || $request->header('X-Scope-Modal') === '1';
+    }
+
+    /**
+     * Run a modal write action: on validation failure re-render the form partial
+     * with errors (422); on success return a JSON signal so the JS closes the
+     * modal and refreshes the list.
+     */
+    private function handleModalSubmit(Request $request, array $rules, string $partial, array $viewData, \Closure $persist, string $successMessage)
+    {
+        try {
+            $validated = $request->validate($rules);
+            $persist($validated);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = new \Illuminate\Support\ViewErrorBag();
+            $errors->put('default', $e->validator->errors());
+
+            return response()->view($partial, array_merge($viewData, ['errors' => $errors]), 422);
+        }
+
+        return response()->json(['ok' => true, 'message' => $successMessage]);
     }
 
     private function authorizeAdmin(): void
