@@ -1,178 +1,169 @@
 @extends('components.layouts.app')
 
+@php
+    // Only use color classes already present in the compiled CSS bundle
+    // (green/red/yellow/gray/purple/blue) so no rebuild is required.
+    $barColors = [
+        'green' => 'bg-green-500', 'red' => 'bg-red-500', 'yellow' => 'bg-yellow-500',
+        'gray' => 'bg-gray-400', 'purple' => 'bg-purple-500', 'blue' => 'bg-blue-500',
+    ];
+    $dotColors = $barColors;
+    $approvalRate = $totalProjects > 0 ? round($totalYes / $totalProjects * 100) : 0;
+@endphp
+
 @section('content')
-<div class="py-12">
-    <div class="max-w-10xl mx-auto sm:px-6 lg:px-8 space-y-6">
+<div class="py-8">
+    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
         <!-- Header -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">Scope Review Stats</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Bid status, platform, and estimator summary.</p>
-                </div>
-                <a href="{{ route('scope-review.index') }}"
-                   class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                    Back
-                </a>
+        <div class="flex justify-between items-center">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Scope Review Analytics</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ number_format($totalProjects) }} total opportunities &middot;
+                    <span class="text-green-600 dark:text-green-300 font-medium">{{ $approvalRate }}% approved</span>
+                </p>
             </div>
+            <a href="{{ route('scope-review.index') }}"
+               class="inline-flex items-center gap-1.5 text-sm bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg shadow-sm">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                Back to List
+            </a>
         </div>
 
         <!-- Headline Stat Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             @foreach($statCards as $card)
-                <div class="{{ $card['bg'] }} shadow-sm sm:rounded-lg border border-gray-200 dark:border-gray-700 p-5">
-                    <div class="flex items-start justify-between">
-                        <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $card['label'] }}</p>
-                        <span class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center {{ $card['icon_bg'] }}">
+                <a href="{{ $card['href'] }}"
+                   class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                    <div class="absolute inset-x-0 top-0 h-1 {{ $card['bg'] }}"></div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="w-9 h-9 rounded-xl flex items-center justify-center {{ $card['icon_bg'] }}">
                             <x-dynamic-component :component="$card['icon']" class="w-4 h-4 {{ $card['icon_color'] }}" />
                         </span>
+                        <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                     </div>
-                    <p class="text-3xl font-bold mt-2 {{ $card['value_color'] }}">{{ $card['value'] }}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Projects</p>
-                    <a href="{{ $card['href'] }}" class="inline-flex items-center gap-1 mt-3 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                        View all
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                        </svg>
-                    </a>
-                </div>
+                    <p class="text-3xl font-extrabold tracking-tight {{ $card['value_color'] }}">{{ $card['value'] }}</p>
+                    <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{{ $card['label'] }}</p>
+                </a>
             @endforeach
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-            <!-- Bid Status Summary -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="bg-blue-800 text-white px-6 py-3">
-                    <h3 class="text-lg font-bold text-center tracking-wide">BID STATUS SUMMARY</h3>
+            <!-- Bid Status Breakdown (with bars) -->
+            <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Bid Status Breakdown</h3>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">of {{ number_format($totalProjects) }} total</span>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-blue-500 text-white">
-                            <tr>
-                                <th class="px-6 py-2 text-left font-semibold">Status</th>
-                                <th class="px-6 py-2 text-right font-semibold">Count</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            @foreach($bidStatusSummary as $row)
-                                @continue(!empty($row['hide_if_zero']) && $row['count'] === 0)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td class="px-6 py-2 text-gray-800 dark:text-gray-200 font-medium">{{ $row['label'] }}</td>
-                                    <td class="px-6 py-2 text-right text-gray-800 dark:text-gray-200">
-                                        <a href="{{ route('scope-review.index', $row['filters']) }}"
-                                           class="text-blue-600 dark:text-blue-400 hover:underline font-semibold">
-                                            {{ number_format($row['count']) }}
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            <tr class="bg-green-100 dark:bg-green-900/30 font-bold">
-                                <td class="px-6 py-2 text-green-900 dark:text-green-200">TOTAL YES</td>
-                                <td class="px-6 py-2 text-right text-green-900 dark:text-green-200">
-                                    <a href="{{ route('scope-review.index', ['decision' => 'approved']) }}" class="hover:underline">
-                                        {{ number_format($totalYes) }}
-                                    </a>
-                                </td>
-                            </tr>
-                            <tr class="bg-gray-100 dark:bg-gray-700 font-bold">
-                                <td class="px-6 py-2 text-gray-900 dark:text-gray-100">TOTAL PROJECTS</td>
-                                <td class="px-6 py-2 text-right text-gray-900 dark:text-gray-100">
-                                    <a href="{{ route('scope-review.index') }}" class="hover:underline">
-                                        {{ number_format($totalProjects) }}
-                                    </a>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <div class="space-y-3.5">
+                    @foreach($bidStatusSummary as $row)
+                        @continue(!empty($row['hide_if_zero']) && $row['count'] === 0)
+                        @php $pct = $totalProjects > 0 ? round($row['count'] / $totalProjects * 100) : 0; @endphp
+                        <a href="{{ route('scope-review.index', $row['filters']) }}" class="block group">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                                    <span class="w-2 h-2 rounded-full {{ $dotColors[$row['color']] ?? 'bg-gray-400' }}"></span>
+                                    {{ $row['label'] }}
+                                </span>
+                                <span class="text-sm font-semibold text-gray-900 dark:text-gray-100 tabular-nums">
+                                    {{ number_format($row['count']) }}
+                                    <span class="text-xs font-normal text-gray-400 ml-1">{{ $pct }}%</span>
+                                </span>
+                            </div>
+                            <div class="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                                <div class="h-full rounded-full {{ $barColors[$row['color']] ?? 'bg-gray-400' }} group-hover:opacity-80 transition-opacity"
+                                     style="width: {{ max($pct, $row['count'] > 0 ? 3 : 0) }}%"></div>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+
+                <!-- Totals footer -->
+                <div class="mt-5 pt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-3">
+                    <a href="{{ route('scope-review.index', ['decision' => 'approved']) }}"
+                       class="rounded-xl bg-green-50 dark:bg-green-900/20 border border-gray-200 dark:border-gray-600 p-3 hover:shadow-sm transition-shadow">
+                        <p class="text-xs font-medium text-green-700 dark:text-green-300">Total Yes</p>
+                        <p class="text-2xl font-extrabold text-green-700 dark:text-green-300">{{ number_format($totalYes) }}</p>
+                    </a>
+                    <a href="{{ route('scope-review.index') }}"
+                       class="rounded-xl bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 p-3 hover:shadow-sm transition-shadow">
+                        <p class="text-xs font-medium text-gray-600 dark:text-gray-300">Total Projects</p>
+                        <p class="text-2xl font-extrabold text-gray-900 dark:text-gray-100">{{ number_format($totalProjects) }}</p>
+                    </a>
                 </div>
             </div>
 
-            <!-- Platforms Summary -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="bg-blue-500 text-white px-6 py-3">
-                    <h3 class="text-lg font-bold text-center tracking-wide">PLATFORMS SUMMARY</h3>
+            <!-- Platforms -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Platforms</h3>
+                    <span class="text-xs text-gray-400 dark:text-gray-500">Count · Yes</span>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-blue-500/90 text-white">
-                            <tr>
-                                <th class="px-6 py-2 text-left font-semibold">Platform</th>
-                                <th class="px-6 py-2 text-right font-semibold">Count</th>
-                                <th class="px-6 py-2 text-right font-semibold">Yes Bids</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            @forelse($platformSummary as $platform)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    <td class="px-6 py-2 text-gray-800 dark:text-gray-200 font-medium">{{ $platform->platform }}</td>
-                                    <td class="px-6 py-2 text-right text-gray-800 dark:text-gray-200">
-                                        <a href="{{ route('scope-review.index', ['platform' => $platform->platform]) }}"
-                                           class="text-blue-600 dark:text-blue-400 hover:underline">
-                                            {{ number_format($platform->total) }}
-                                        </a>
-                                    </td>
-                                    <td class="px-6 py-2 text-right text-gray-800 dark:text-gray-200">
-                                        <a href="{{ route('scope-review.index', ['platform' => $platform->platform, 'decision' => 'approved']) }}"
-                                           class="text-blue-600 dark:text-blue-400 hover:underline">
-                                            {{ number_format($platform->yes_bids) }}
-                                        </a>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="3" class="px-6 py-6 text-center text-gray-500 dark:text-gray-400">No platform data.</td>
-                                </tr>
-                            @endforelse
-                            @if($platformSummary->isNotEmpty())
-                                <tr class="bg-gray-100 dark:bg-gray-700 font-bold">
-                                    <td class="px-6 py-2 text-gray-900 dark:text-gray-100">TOTAL</td>
-                                    <td class="px-6 py-2 text-right text-gray-900 dark:text-gray-100">{{ number_format($platformTotalCount) }}</td>
-                                    <td class="px-6 py-2 text-right text-gray-900 dark:text-gray-100">{{ number_format($platformTotalYes) }}</td>
-                                </tr>
-                            @endif
-                        </tbody>
-                    </table>
+                <div class="space-y-2.5">
+                    @php $maxPlatform = $platformSummary->max('total') ?: 1; @endphp
+                    @forelse($platformSummary as $platform)
+                        <a href="{{ route('scope-review.index', ['platform' => $platform->platform]) }}"
+                           class="block group">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm text-gray-700 dark:text-gray-300 truncate mr-2">{{ $platform->platform }}</span>
+                                <span class="flex items-center gap-1.5 flex-shrink-0 text-sm">
+                                    <span class="font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{{ number_format($platform->total) }}</span>
+                                    @if($platform->yes_bids > 0)
+                                        <span class="px-1.5 py-0.5 rounded-md text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 tabular-nums">{{ number_format($platform->yes_bids) }}</span>
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                                <div class="h-full rounded-full bg-blue-500 group-hover:opacity-80 transition-opacity"
+                                     style="width: {{ round($platform->total / $maxPlatform * 100) }}%"></div>
+                            </div>
+                        </a>
+                    @empty
+                        <p class="text-center text-sm text-gray-400 dark:text-gray-500 py-6">No platform data.</p>
+                    @endforelse
                 </div>
+                @if($platformSummary->isNotEmpty())
+                    <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-sm">
+                        <span class="font-bold text-gray-700 dark:text-gray-300">Total</span>
+                        <span class="flex items-center gap-1.5">
+                            <span class="font-bold text-gray-900 dark:text-gray-100">{{ number_format($platformTotalCount) }}</span>
+                            <span class="px-1.5 py-0.5 rounded-md text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300">{{ number_format($platformTotalYes) }}</span>
+                        </span>
+                    </div>
+                @endif
             </div>
         </div>
 
         <!-- Pending Review by Estimator -->
-        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="bg-blue-500 text-white px-6 py-3">
-                <h3 class="text-lg font-bold text-center tracking-wide">PENDING REVIEW BY ESTIMATOR (No Bid Status)</h3>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Pending Review by Estimator</h3>
+                    <p class="text-xs text-gray-400 dark:text-gray-500">Assigned opportunities with no bid decision yet</p>
+                </div>
+                <span class="px-2.5 py-1 rounded-lg text-sm font-bold {{ $estimatorTotalPending > 0 ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400' }}">
+                    {{ number_format($estimatorTotalPending) }} pending
+                </span>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead class="bg-gray-100 dark:bg-gray-700">
-                        <tr>
-                            <th class="px-6 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Estimator</th>
-                            <th class="px-6 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">Pending Review</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        @foreach($estimatorSummary as $row)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                <td class="px-6 py-2 text-gray-800 dark:text-gray-200 font-medium">{{ $row['estimator']->name }}</td>
-                                <td class="px-6 py-2 text-right {{ $row['pending_review'] > 0 ? 'bg-red-50 dark:bg-red-900/20 font-bold text-red-700 dark:text-red-300' : 'text-gray-800 dark:text-gray-200' }}">
-                                    @if($row['pending_review'] > 0)
-                                        <a href="{{ route('scope-review.index', ['assigned_estimator_id' => $row['estimator']->id, 'decision' => '__pending__']) }}"
-                                           class="hover:underline">
-                                            {{ number_format($row['pending_review']) }}
-                                        </a>
-                                    @else
-                                        {{ number_format($row['pending_review']) }}
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
-                        <tr class="bg-gray-200 dark:bg-gray-700 font-bold">
-                            <td class="px-6 py-2 text-gray-900 dark:text-gray-100">TOTAL</td>
-                            <td class="px-6 py-2 text-right text-gray-900 dark:text-gray-100">{{ number_format($estimatorTotalPending) }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                @foreach($estimatorSummary as $row)
+                    @if($row['pending_review'] > 0)
+                        <a href="{{ route('scope-review.index', ['assigned_estimator_id' => $row['estimator']->id, 'decision' => '__pending__']) }}"
+                           class="flex items-center justify-between rounded-xl border border-red-300 dark:border-gray-600 bg-red-50 dark:bg-red-900/10 px-3 py-2 hover:shadow-sm transition-shadow">
+                            <span class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate mr-2">{{ $row['estimator']->name }}</span>
+                            <span class="flex-shrink-0 w-6 h-6 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">{{ $row['pending_review'] }}</span>
+                        </a>
+                    @else
+                        <div class="flex items-center justify-between rounded-xl border border-gray-100 dark:border-gray-700 px-3 py-2">
+                            <span class="text-sm text-gray-500 dark:text-gray-400 truncate mr-2">{{ $row['estimator']->name }}</span>
+                            <span class="flex-shrink-0 text-xs text-gray-300 dark:text-gray-600">0</span>
+                        </div>
+                    @endif
+                @endforeach
             </div>
         </div>
 

@@ -118,6 +118,26 @@
             </div>
         @endif
 
+        <!-- Headline Stat Cards (admin) -->
+        @if($statCards)
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                @foreach($statCards as $card)
+                    <a href="{{ $card['href'] }}"
+                       class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                        <div class="absolute inset-x-0 top-0 h-1 {{ $card['bg'] }}"></div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="w-9 h-9 rounded-xl flex items-center justify-center {{ $card['icon_bg'] }}">
+                                <x-dynamic-component :component="$card['icon']" class="w-4 h-4 {{ $card['icon_color'] }}" />
+                            </span>
+                            <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                        <p class="text-3xl font-extrabold tracking-tight {{ $card['value_color'] }}">{{ $card['value'] }}</p>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{{ $card['label'] }}</p>
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
         <!-- Saved Views -->
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-2 items-center">
@@ -143,8 +163,18 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Source</label>
-                        <input type="text" name="source" value="{{ request('source') }}"
-                               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        @php $sourceFilterOptions = \App\Models\Source::active()->ordered()->pluck('name')->all(); @endphp
+                        <select name="source"
+                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                            <option value="">All</option>
+                            @foreach($sourceFilterOptions as $sourceOption)
+                                <option value="{{ $sourceOption }}" {{ request('source') === $sourceOption ? 'selected' : '' }}>{{ $sourceOption }}</option>
+                            @endforeach
+                            {{-- Keep a currently-applied filter value even if that source is now inactive. --}}
+                            @if(request('source') && !in_array(request('source'), $sourceFilterOptions, true))
+                                <option value="{{ request('source') }}" selected>{{ request('source') }}</option>
+                            @endif
+                        </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Platform</label>

@@ -58,7 +58,10 @@ class ScopeReviewController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('scope-review.index', compact('scopeReviews', 'estimators', 'savedViews'));
+        // Headline decision cards (admin overview).
+        $statCards = $user->isAdmin() ? $this->buildStatCards() : null;
+
+        return view('scope-review.index', compact('scopeReviews', 'estimators', 'savedViews', 'statCards'));
     }
 
     public function stats()
@@ -77,53 +80,17 @@ class ScopeReviewController extends Controller
         $totalProjects = ScopeReview::count();
 
         $bidStatusSummary = [
-            ['label' => 'YES - NON MU',      'count' => $yesNonMu,     'filters' => ['decision' => 'approved', 'project_type' => 'NON_MU']],
-            ['label' => 'YES - MU',          'count' => $yesMu,        'filters' => ['decision' => 'approved', 'project_type' => 'MU']],
-            ['label' => 'YES - No Type',     'count' => $yesNoType,    'filters' => ['decision' => 'approved'], 'hide_if_zero' => true],
-            ['label' => 'NO',                'count' => $no,           'filters' => ['decision' => 'not_in_scope']],
-            ['label' => 'REQUESTED RFI',     'count' => $rfiRequested, 'filters' => ['decision' => 'rfi_requested']],
-            ['label' => 'SKIP',              'count' => $skipped,      'filters' => ['decision' => 'skipped']],
-            ['label' => 'NOT YET REVIEWED',  'count' => $notReviewed,  'filters' => ['decision' => '__pending__']],
+            ['label' => 'YES - NON MU',      'count' => $yesNonMu,     'color' => 'green',  'filters' => ['decision' => 'approved', 'project_type' => 'NON_MU']],
+            ['label' => 'YES - MU',          'count' => $yesMu,        'color' => 'green',  'filters' => ['decision' => 'approved', 'project_type' => 'MU']],
+            ['label' => 'YES - No Type',     'count' => $yesNoType,    'color' => 'green',  'filters' => ['decision' => 'approved'], 'hide_if_zero' => true],
+            ['label' => 'NO',                'count' => $no,           'color' => 'red',    'filters' => ['decision' => 'not_in_scope']],
+            ['label' => 'REQUESTED RFI',     'count' => $rfiRequested, 'color' => 'yellow', 'filters' => ['decision' => 'rfi_requested']],
+            ['label' => 'SKIP',              'count' => $skipped,      'color' => 'gray',   'filters' => ['decision' => 'skipped']],
+            ['label' => 'NOT YET REVIEWED',  'count' => $notReviewed,  'color' => 'purple', 'filters' => ['decision' => '__pending__']],
         ];
 
         // --- Headline stat cards ---
-        $statCards = [
-            [
-                'label' => 'Pending Scope Review', 'value' => $notReviewed,
-                'href' => route('scope-review.index', ['decision' => '__pending__']),
-                'bg' => 'bg-orange-50 dark:bg-orange-900/20', 'icon_bg' => 'bg-orange-100 dark:bg-orange-900/40',
-                'icon_color' => 'text-orange-500 dark:text-orange-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
-                'icon' => 'phosphor-hourglass',
-            ],
-            [
-                'label' => 'RFI Sent', 'value' => $rfiRequested,
-                'href' => route('scope-review.index', ['decision' => 'rfi_requested']),
-                'bg' => 'bg-purple-50 dark:bg-purple-900/20', 'icon_bg' => 'bg-purple-100 dark:bg-purple-900/40',
-                'icon_color' => 'text-purple-500 dark:text-purple-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
-                'icon' => 'phosphor-envelope',
-            ],
-            [
-                'label' => 'Approved', 'value' => $totalYes,
-                'href' => route('scope-review.index', ['decision' => 'approved']),
-                'bg' => 'bg-green-50 dark:bg-green-900/20', 'icon_bg' => 'bg-green-100 dark:bg-green-900/40',
-                'icon_color' => 'text-green-600 dark:text-green-300', 'value_color' => 'text-green-700 dark:text-green-300',
-                'icon' => 'phosphor-check-circle',
-            ],
-            [
-                'label' => 'Not Within Scope', 'value' => $no,
-                'href' => route('scope-review.index', ['decision' => 'not_in_scope']),
-                'bg' => 'bg-blue-50 dark:bg-blue-900/20', 'icon_bg' => 'bg-blue-100 dark:bg-blue-900/40',
-                'icon_color' => 'text-blue-500 dark:text-blue-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
-                'icon' => 'phosphor-x-circle',
-            ],
-            [
-                'label' => 'Skipped', 'value' => $skipped,
-                'href' => route('scope-review.index', ['decision' => 'skipped']),
-                'bg' => 'bg-gray-50 dark:bg-gray-700/40', 'icon_bg' => 'bg-gray-200 dark:bg-gray-600',
-                'icon_color' => 'text-gray-500 dark:text-gray-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
-                'icon' => 'phosphor-prohibit',
-            ],
-        ];
+        $statCards = $this->buildStatCards();
 
         // --- Platforms Summary (count + yes bids) ---
         $platformSummary = ScopeReview::selectRaw("
@@ -166,6 +133,50 @@ class ScopeReviewController extends Controller
         ));
     }
 
+    /**
+     * The 5 headline decision cards, shared by the index and stats pages.
+     */
+    private function buildStatCards(): array
+    {
+        return [
+            [
+                'label' => 'Pending Scope Review', 'value' => ScopeReview::pendingReview()->count(),
+                'href' => route('scope-review.index', ['decision' => '__pending__']),
+                'bg' => 'bg-orange-50 dark:bg-orange-900/20', 'icon_bg' => 'bg-orange-100 dark:bg-orange-900/40',
+                'icon_color' => 'text-orange-500 dark:text-orange-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'icon' => 'phosphor-hourglass',
+            ],
+            [
+                'label' => 'RFI Sent', 'value' => ScopeReview::where('decision', 'rfi_requested')->count(),
+                'href' => route('scope-review.index', ['decision' => 'rfi_requested']),
+                'bg' => 'bg-purple-50 dark:bg-purple-900/20', 'icon_bg' => 'bg-purple-100 dark:bg-purple-900/40',
+                'icon_color' => 'text-purple-500 dark:text-purple-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'icon' => 'phosphor-envelope',
+            ],
+            [
+                'label' => 'Approved', 'value' => ScopeReview::where('decision', 'approved')->count(),
+                'href' => route('scope-review.index', ['decision' => 'approved']),
+                'bg' => 'bg-green-50 dark:bg-green-900/20', 'icon_bg' => 'bg-green-100 dark:bg-green-900/40',
+                'icon_color' => 'text-green-600 dark:text-green-300', 'value_color' => 'text-green-700 dark:text-green-300',
+                'icon' => 'phosphor-check-circle',
+            ],
+            [
+                'label' => 'Not Within Scope', 'value' => ScopeReview::where('decision', 'not_in_scope')->count(),
+                'href' => route('scope-review.index', ['decision' => 'not_in_scope']),
+                'bg' => 'bg-blue-50 dark:bg-blue-900/20', 'icon_bg' => 'bg-blue-100 dark:bg-blue-900/40',
+                'icon_color' => 'text-blue-500 dark:text-blue-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'icon' => 'phosphor-x-circle',
+            ],
+            [
+                'label' => 'Skipped', 'value' => ScopeReview::where('decision', 'skipped')->count(),
+                'href' => route('scope-review.index', ['decision' => 'skipped']),
+                'bg' => 'bg-gray-50 dark:bg-gray-700/40', 'icon_bg' => 'bg-gray-200 dark:bg-gray-600',
+                'icon_color' => 'text-gray-500 dark:text-gray-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'icon' => 'phosphor-prohibit',
+            ],
+        ];
+    }
+
     public function create(Request $request)
     {
         $this->authorizeAdmin();
@@ -187,7 +198,6 @@ class ScopeReviewController extends Controller
         $rules = [
             'entry_date'             => 'required|date',
             'source'                 => 'nullable|string|max:255',
-            'bid_stage'              => 'nullable|string|max:255',
             'platform'               => 'nullable|string|max:255',
             'project_name'           => 'required|string|max:255',
             'due_date'               => 'nullable|date',
@@ -324,6 +334,7 @@ class ScopeReviewController extends Controller
             'project_type'     => 'nullable|required_if:decision,approved|in:MU,NON_MU',
             'decision'         => 'required|in:approved,rfi_requested,not_in_scope,skipped',
             'duration'         => 'nullable|string|max:255',
+            'bid_stage'        => 'nullable|string|max:255',
             'estimator_notes'  => 'nullable|string',
             'uploaded_in_oh'   => 'nullable|boolean',
         ]);
