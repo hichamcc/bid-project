@@ -47,6 +47,9 @@ class ScopeReviewController extends Controller
         if ($request->filled('ready_for_assignment')) {
             $query->readyForAssignment();
         }
+        if ($request->filled('year')) {
+            $query->whereYear('entry_date', $request->year);
+        }
 
         $scopeReviews = $query->orderByDesc('entry_date')->paginate(25)->withQueryString();
 
@@ -64,36 +67,61 @@ class ScopeReviewController extends Controller
         return view('scope-review.index', compact('scopeReviews', 'estimators', 'savedViews', 'statCards'));
     }
 
-    public function stats()
+    public function stats(Request $request)
     {
         $this->authorizeAdmin();
 
+        // --- Year filter (by entry_date), default to current year ---
+        $availableYears = ScopeReview::selectRaw('YEAR(entry_date) as yr')
+            ->whereNotNull('entry_date')
+            ->distinct()
+            ->orderByDesc('yr')
+            ->pluck('yr')
+            ->filter()
+            ->values()
+            ->all();
+
+        $currentYear = (int) now()->format('Y');
+        if (!in_array($currentYear, $availableYears, true)) {
+            $availableYears = array_values(array_unique(array_merge([$currentYear], $availableYears)));
+            rsort($availableYears);
+        }
+
+        $selectedYear = (int) $request->input('year', $currentYear);
+        if (!in_array($selectedYear, $availableYears, true)) {
+            $selectedYear = $currentYear;
+        }
+
+        // Every stat below is scoped to the selected year.
+        $byYear = fn () => ScopeReview::whereYear('entry_date', $selectedYear);
+        $yearFilters = ['year' => $selectedYear];
+
         // --- Bid Status Summary ---
-        $yesNonMu     = ScopeReview::where('decision', 'approved')->where('project_type', 'NON_MU')->count();
-        $yesMu        = ScopeReview::where('decision', 'approved')->where('project_type', 'MU')->count();
-        $yesNoType    = ScopeReview::where('decision', 'approved')->whereNull('project_type')->count();
-        $no           = ScopeReview::where('decision', 'not_in_scope')->count();
-        $rfiRequested = ScopeReview::where('decision', 'rfi_requested')->count();
-        $skipped      = ScopeReview::where('decision', 'skipped')->count();
-        $notReviewed  = ScopeReview::pendingReview()->count();
-        $totalYes     = ScopeReview::where('decision', 'approved')->count();
-        $totalProjects = ScopeReview::count();
+        $yesNonMu     = (clone $byYear())->where('decision', 'approved')->where('project_type', 'NON_MU')->count();
+        $yesMu        = (clone $byYear())->where('decision', 'approved')->where('project_type', 'MU')->count();
+        $yesNoType    = (clone $byYear())->where('decision', 'approved')->whereNull('project_type')->count();
+        $no           = (clone $byYear())->where('decision', 'not_in_scope')->count();
+        $rfiRequested = (clone $byYear())->where('decision', 'rfi_requested')->count();
+        $skipped      = (clone $byYear())->where('decision', 'skipped')->count();
+        $notReviewed  = (clone $byYear())->pendingReview()->count();
+        $totalYes     = (clone $byYear())->where('decision', 'approved')->count();
+        $totalProjects = (clone $byYear())->count();
 
         $bidStatusSummary = [
-            ['label' => 'YES - NON MU',      'count' => $yesNonMu,     'color' => 'green',  'filters' => ['decision' => 'approved', 'project_type' => 'NON_MU']],
-            ['label' => 'YES - MU',          'count' => $yesMu,        'color' => 'green',  'filters' => ['decision' => 'approved', 'project_type' => 'MU']],
-            ['label' => 'YES - No Type',     'count' => $yesNoType,    'color' => 'green',  'filters' => ['decision' => 'approved'], 'hide_if_zero' => true],
-            ['label' => 'NO',                'count' => $no,           'color' => 'red',    'filters' => ['decision' => 'not_in_scope']],
-            ['label' => 'REQUESTED RFI',     'count' => $rfiRequested, 'color' => 'yellow', 'filters' => ['decision' => 'rfi_requested']],
-            ['label' => 'SKIP',              'count' => $skipped,      'color' => 'gray',   'filters' => ['decision' => 'skipped']],
-            ['label' => 'NOT YET REVIEWED',  'count' => $notReviewed,  'color' => 'purple', 'filters' => ['decision' => '__pending__']],
+            ['label' => 'YES - NON MU',      'count' => $yesNonMu,     'color' => 'green',  'filters' => $yearFilters + ['decision' => 'approved', 'project_type' => 'NON_MU']],
+            ['label' => 'YES - MU',          'count' => $yesMu,        'color' => 'green',  'filters' => $yearFilters + ['decision' => 'approved', 'project_type' => 'MU']],
+            ['label' => 'YES - No Type',     'count' => $yesNoType,    'color' => 'green',  'filters' => $yearFilters + ['decision' => 'approved'], 'hide_if_zero' => true],
+            ['label' => 'NO',                'count' => $no,           'color' => 'red',    'filters' => $yearFilters + ['decision' => 'not_in_scope']],
+            ['label' => 'REQUESTED RFI',     'count' => $rfiRequested, 'color' => 'yellow', 'filters' => $yearFilters + ['decision' => 'rfi_requested']],
+            ['label' => 'SKIP',              'count' => $skipped,      'color' => 'gray',   'filters' => $yearFilters + ['decision' => 'skipped']],
+            ['label' => 'NOT YET REVIEWED',  'count' => $notReviewed,  'color' => 'red',    'filters' => $yearFilters + ['decision' => '__pending__']],
         ];
 
         // --- Headline stat cards ---
         $statCards = $this->buildStatCards();
 
         // --- Platforms Summary (count + yes bids) ---
-        $platformSummary = ScopeReview::selectRaw("
+        $platformSummary = (clone $byYear())->selectRaw("
                 platform,
                 COUNT(*) as total,
                 SUM(CASE WHEN decision = 'approved' THEN 1 ELSE 0 END) as yes_bids
@@ -111,10 +139,10 @@ class ScopeReviewController extends Controller
         $estimatorSummary = User::whereIn('role', ['estimator', 'head_estimator'])
             ->orderBy('name')
             ->get()
-            ->map(function ($estimator) {
+            ->map(function ($estimator) use ($byYear) {
                 return [
                     'estimator'      => $estimator,
-                    'pending_review' => ScopeReview::pendingReview()->where('assigned_estimator_id', $estimator->id)->count(),
+                    'pending_review' => (clone $byYear())->pendingReview()->where('assigned_estimator_id', $estimator->id)->count(),
                 ];
             });
 
@@ -129,7 +157,9 @@ class ScopeReviewController extends Controller
             'platformTotalCount',
             'platformTotalYes',
             'estimatorSummary',
-            'estimatorTotalPending'
+            'estimatorTotalPending',
+            'availableYears',
+            'selectedYear'
         ));
     }
 

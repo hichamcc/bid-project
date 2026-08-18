@@ -84,6 +84,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Bid stages are managed on the same page as Sources, so no separate index.
     Route::resource('bid-stages', \App\Http\Controllers\Admin\BidStageController::class)->except(['index', 'show']);
     Route::post('bid-stages/update-order', [\App\Http\Controllers\Admin\BidStageController::class, 'updateOrder'])->name('bid-stages.update-order');
+
+    // Platforms are managed on the same page as Sources, so no separate index.
+    Route::resource('platforms', \App\Http\Controllers\Admin\PlatformController::class)->except(['index', 'show']);
+    Route::post('platforms/update-order', [\App\Http\Controllers\Admin\PlatformController::class, 'updateOrder'])->name('platforms.update-order');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

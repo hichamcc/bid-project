@@ -178,8 +178,18 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Platform</label>
-                        <input type="text" name="platform" value="{{ request('platform') }}"
-                               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        @php $platformFilterOptions = \App\Models\Platform::active()->ordered()->pluck('name')->all(); @endphp
+                        <select name="platform"
+                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                            <option value="">All</option>
+                            @foreach($platformFilterOptions as $platformOption)
+                                <option value="{{ $platformOption }}" {{ request('platform') === $platformOption ? 'selected' : '' }}>{{ $platformOption }}</option>
+                            @endforeach
+                            {{-- Keep a currently-applied filter value even if that platform is now inactive. --}}
+                            @if(request('platform') && !in_array(request('platform'), $platformFilterOptions, true))
+                                <option value="{{ request('platform') }}" selected>{{ request('platform') }}</option>
+                            @endif
+                        </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Project Type</label>

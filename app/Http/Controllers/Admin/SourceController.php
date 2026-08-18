@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\BidStage;
+use App\Models\Platform;
 use App\Models\ScopeReview;
 use App\Models\Source;
 use Illuminate\Http\Request;
@@ -13,11 +14,12 @@ class SourceController extends Controller
 {
     public function index(Request $request)
     {
-        // One page manages both Sources and Bid Stages (two tables).
+        // One page manages Sources, Platforms and Bid Stages (three tables).
         $sources   = Source::ordered()->get();
+        $platforms = Platform::ordered()->get();
         $bidStages = BidStage::ordered()->get();
 
-        return view('admin.sources.index', compact('sources', 'bidStages'));
+        return view('admin.sources.index', compact('sources', 'platforms', 'bidStages'));
     }
 
     public function create()
