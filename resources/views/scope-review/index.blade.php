@@ -241,6 +241,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estimator</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Decision</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Bid Stage</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -309,6 +310,9 @@
                                         </span>
                                     @endif
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $scopeReview->bid_stage ?? '—' }}
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                                     <div class="flex items-center justify-end gap-3">
                                         <button type="button"
@@ -325,6 +329,7 @@
                                                     'assigned_estimator' => $scopeReview->assignedEstimator ? ['name' => $scopeReview->assignedEstimator->name] : null,
                                                     'decision' => $scopeReview->decision,
                                                     'project_type' => $scopeReview->project_type,
+                                                    'bid_stage' => $scopeReview->bid_stage,
                                                     'duration' => $scopeReview->duration,
                                                     'uploaded_in_oh' => $scopeReview->uploaded_in_oh,
                                                     'estimator_notes' => $scopeReview->estimator_notes,
@@ -385,7 +390,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="11" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     No scope review entries yet.
                                 </td>
                             </tr>
@@ -514,6 +519,10 @@
                                 </dd>
                             </div>
                             <div class="flex justify-between gap-3">
+                                <dt class="text-gray-500 dark:text-gray-400">Bid Stage</dt>
+                                <dd class="text-gray-900 dark:text-gray-100 text-right" x-text="current.bid_stage || '—'"></dd>
+                            </div>
+                            <div class="flex justify-between gap-3">
                                 <dt class="text-gray-500 dark:text-gray-400">Duration</dt>
                                 <dd class="text-gray-900 dark:text-gray-100" x-text="current.duration || '—'"></dd>
                             </div>
@@ -531,7 +540,15 @@
                             </div>
                         </dl>
                     </template>
-                    <p x-show="!current.decision" class="text-sm text-gray-400 italic">Not reviewed yet.</p>
+                    <template x-if="!current.decision">
+                        <div>
+                            <div x-show="current.bid_stage" class="flex justify-between gap-3 text-sm mb-2">
+                                <dt class="text-gray-500 dark:text-gray-400">Bid Stage</dt>
+                                <dd class="text-gray-900 dark:text-gray-100 text-right" x-text="current.bid_stage"></dd>
+                            </div>
+                            <p class="text-sm text-gray-400 italic">Not reviewed yet.</p>
+                        </div>
+                    </template>
                 </div>
 
                 <!-- Status change history -->
