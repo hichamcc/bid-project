@@ -84,7 +84,7 @@
                             <input type="number"
                                    id="days_required"
                                    name="days_required"
-                                   value="{{ old('days_required') }}"
+                                   value="{{ old('days_required', request('days_required')) }}"
                                    step="0.5"
                                    min="0.5"
                                    required

@@ -359,14 +359,19 @@
                                             </a>
                                         @endif
                                         @if(auth()->user()->isAdmin() && $scopeReview->isApproved() && !$scopeReview->isConverted())
-                                            <a href="{{ route('admin.allocation.index', [
+                                            @php
+                                                // Pull the first number out of the free-text duration ("1 DAY" -> 1, "2.5 days" -> 2.5)
+                                                $daysRequired = preg_match('/[0-9]+(?:\.[0-9]+)?/', (string) $scopeReview->duration, $m) ? $m[0] : null;
+                                            @endphp
+                                            <a href="{{ route('admin.allocation.index', array_filter([
                                                     'scope_review_id' => $scopeReview->id,
                                                     'job_number' => $scopeReview->project_number,
                                                     'due_date' => optional($scopeReview->due_date)->format('Y-m-d'),
                                                     'project_name' => $scopeReview->project_name,
                                                     'job_type' => $scopeReview->project_type,
                                                     'web_link' => $scopeReview->project_link,
-                                                ]) . '#job-form' }}"
+                                                    'days_required' => $daysRequired,
+                                                ], fn($v) => $v !== null && $v !== '')) . '#job-form' }}"
                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/60">
                                                 <x-phosphor-user-plus width="14" height="14" />
                                                 Assign
