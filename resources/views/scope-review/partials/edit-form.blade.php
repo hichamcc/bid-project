@@ -25,9 +25,42 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Source</label>
-                                <input type="text" name="source" value="{{ old('source', $scopeReview->source) }}"
-                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('source') border-red-500 @enderror">
+                                @php
+                                    $currentSource = old('source', $scopeReview->source);
+                                    $sourceOptions = \App\Models\Source::active()->ordered()->pluck('name')->all();
+                                @endphp
+                                <select name="source"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('source') border-red-500 @enderror">
+                                    <option value="">-- Select source --</option>
+                                    @foreach($sourceOptions as $sourceOption)
+                                        <option value="{{ $sourceOption }}" {{ $currentSource === $sourceOption ? 'selected' : '' }}>{{ $sourceOption }}</option>
+                                    @endforeach
+                                    {{-- Preserve a value not in the active list (legacy import, or a since-deactivated source) so editing doesn't drop it. --}}
+                                    @if($currentSource && !in_array($currentSource, $sourceOptions, true))
+                                        <option value="{{ $currentSource }}" selected>{{ $currentSource }}</option>
+                                    @endif
+                                </select>
                                 @error('source') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bid Stage</label>
+                                @php
+                                    $currentStage = old('bid_stage', $scopeReview->bid_stage);
+                                    $stageOptions = \App\Models\BidStage::active()->ordered()->pluck('name')->all();
+                                @endphp
+                                <select name="bid_stage"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('bid_stage') border-red-500 @enderror">
+                                    <option value="">-- Select bid stage --</option>
+                                    @foreach($stageOptions as $stageOption)
+                                        <option value="{{ $stageOption }}" {{ $currentStage === $stageOption ? 'selected' : '' }}>{{ $stageOption }}</option>
+                                    @endforeach
+                                    {{-- Preserve a value not in the active list (legacy import / deactivated stage) so editing doesn't drop it. --}}
+                                    @if($currentStage && !in_array($currentStage, $stageOptions, true))
+                                        <option value="{{ $currentStage }}" selected>{{ $currentStage }}</option>
+                                    @endif
+                                </select>
+                                @error('bid_stage') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div>
@@ -163,7 +196,7 @@
                             </div>
 
                             <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estimator Notes</label>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
                                 <textarea name="estimator_notes" rows="3"
                                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('estimator_notes') border-red-500 @enderror">{{ old('estimator_notes', $scopeReview->estimator_notes) }}</textarea>
                                 @error('estimator_notes') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror

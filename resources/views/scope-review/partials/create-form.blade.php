@@ -14,9 +14,26 @@
 
         <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Source</label>
-            <input type="text" name="source" value="{{ old('source') }}" placeholder="e.g. Discovered, Invited"
-                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('source') border-red-500 @enderror">
+            <select name="source"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('source') border-red-500 @enderror">
+                <option value="">-- Select source --</option>
+                @foreach(\App\Models\Source::active()->ordered()->pluck('name') as $sourceOption)
+                    <option value="{{ $sourceOption }}" {{ old('source') === $sourceOption ? 'selected' : '' }}>{{ $sourceOption }}</option>
+                @endforeach
+            </select>
             @error('source') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bid Stage</label>
+            <select name="bid_stage"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('bid_stage') border-red-500 @enderror">
+                <option value="">-- Select bid stage --</option>
+                @foreach(\App\Models\BidStage::active()->ordered()->pluck('name') as $stageOption)
+                    <option value="{{ $stageOption }}" {{ old('bid_stage') === $stageOption ? 'selected' : '' }}>{{ $stageOption }}</option>
+                @endforeach
+            </select>
+            @error('bid_stage') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
         </div>
 
         <div>

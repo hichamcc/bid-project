@@ -149,7 +149,6 @@
                         <tr>
                             <th class="px-6 py-2 text-left font-semibold text-gray-700 dark:text-gray-300">Estimator</th>
                             <th class="px-6 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">Pending Review</th>
-                            <th class="px-6 py-2 text-right font-semibold text-gray-700 dark:text-gray-300">Total Assigned</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
@@ -166,18 +165,11 @@
                                         {{ number_format($row['pending_review']) }}
                                     @endif
                                 </td>
-                                <td class="px-6 py-2 text-right text-gray-800 dark:text-gray-200">
-                                    <a href="{{ route('scope-review.index', ['assigned_estimator_id' => $row['estimator']->id]) }}"
-                                       class="text-blue-600 dark:text-blue-400 hover:underline">
-                                        {{ number_format($row['total_assigned']) }}
-                                    </a>
-                                </td>
                             </tr>
                         @endforeach
                         <tr class="bg-gray-200 dark:bg-gray-700 font-bold">
                             <td class="px-6 py-2 text-gray-900 dark:text-gray-100">TOTAL</td>
                             <td class="px-6 py-2 text-right text-gray-900 dark:text-gray-100">{{ number_format($estimatorTotalPending) }}</td>
-                            <td class="px-6 py-2 text-right text-gray-900 dark:text-gray-100">{{ number_format($estimatorTotalAssigned) }}</td>
                         </tr>
                     </tbody>
                 </table>

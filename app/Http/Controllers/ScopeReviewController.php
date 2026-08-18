@@ -148,12 +148,10 @@ class ScopeReviewController extends Controller
                 return [
                     'estimator'      => $estimator,
                     'pending_review' => ScopeReview::pendingReview()->where('assigned_estimator_id', $estimator->id)->count(),
-                    'total_assigned' => ScopeReview::where('assigned_estimator_id', $estimator->id)->count(),
                 ];
             });
 
-        $estimatorTotalPending  = $estimatorSummary->sum('pending_review');
-        $estimatorTotalAssigned = $estimatorSummary->sum('total_assigned');
+        $estimatorTotalPending = $estimatorSummary->sum('pending_review');
 
         return view('scope-review.stats', compact(
             'statCards',
@@ -164,8 +162,7 @@ class ScopeReviewController extends Controller
             'platformTotalCount',
             'platformTotalYes',
             'estimatorSummary',
-            'estimatorTotalPending',
-            'estimatorTotalAssigned'
+            'estimatorTotalPending'
         ));
     }
 
@@ -190,6 +187,7 @@ class ScopeReviewController extends Controller
         $rules = [
             'entry_date'             => 'required|date',
             'source'                 => 'nullable|string|max:255',
+            'bid_stage'              => 'nullable|string|max:255',
             'platform'               => 'nullable|string|max:255',
             'project_name'           => 'required|string|max:255',
             'due_date'               => 'nullable|date',
@@ -290,6 +288,7 @@ class ScopeReviewController extends Controller
             $validated = $request->validate([
                 'entry_date'             => 'required|date',
                 'source'                 => 'nullable|string|max:255',
+                'bid_stage'              => 'nullable|string|max:255',
                 'platform'               => 'nullable|string|max:255',
                 'project_name'           => 'required|string|max:255',
                 'due_date'               => 'nullable|date',
@@ -308,7 +307,7 @@ class ScopeReviewController extends Controller
 
             $this->assertProjectNameNotDuplicate($validated['project_name'], $scopeReview->id);
 
-            $validated['decision'] = $validated['decision'] ?: null;
+            $validated['decision'] = ($validated['decision'] ?? null) ?: null;
             $this->applyReviewFields($validated, $scopeReview, $user);
 
             $scopeReview->update($validated);

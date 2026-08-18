@@ -78,6 +78,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('sources', \App\Http\Controllers\Admin\SourceController::class)->except('show');
+    Route::post('sources/update-order', [\App\Http\Controllers\Admin\SourceController::class, 'updateOrder'])->name('sources.update-order');
+
+    // Bid stages are managed on the same page as Sources, so no separate index.
+    Route::resource('bid-stages', \App\Http\Controllers\Admin\BidStageController::class)->except(['index', 'show']);
+    Route::post('bid-stages/update-order', [\App\Http\Controllers\Admin\BidStageController::class, 'updateOrder'])->name('bid-stages.update-order');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('gcs', GcController::class);
 });
 

@@ -136,6 +136,9 @@
                     <x-navlist.item before="phosphor-bookmark-simple" href="{{ route('admin.gcs.index') }}" :current="request()->routeIs('admin.gcs.index')">
                         <span x-show="!collapsed" x-cloak>{{ __('GC') }}</span>
                     </x-navlist.item>
+                    <x-navlist.item before="phosphor-bookmark-simple" href="{{ route('admin.sources.index') }}" :current="request()->routeIs('admin.sources.*') || request()->routeIs('admin.bid-stages.*')">
+                        <span x-show="!collapsed" x-cloak>{{ __('Source / Bid Stage') }}</span>
+                    </x-navlist.item>
                 </div>
             @endif
 
