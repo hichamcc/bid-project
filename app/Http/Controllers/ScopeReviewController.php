@@ -170,10 +170,10 @@ class ScopeReviewController extends Controller
     {
         return [
             [
-                'label' => 'Pending Scope Review', 'value' => ScopeReview::pendingReview()->count(),
+                'label' => 'Not Yet Reviewed', 'value' => ScopeReview::pendingReview()->count(),
                 'href' => route('scope-review.index', ['decision' => '__pending__']),
-                'bg' => 'bg-orange-50 dark:bg-orange-900/20', 'icon_bg' => 'bg-orange-100 dark:bg-orange-900/40',
-                'icon_color' => 'text-orange-500 dark:text-orange-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'bg' => 'bg-red-50 dark:bg-red-900/20', 'icon_bg' => 'bg-red-100 dark:bg-red-900/40',
+                'icon_color' => 'text-red-500 dark:text-red-300', 'value_color' => 'text-red-700 dark:text-red-300',
                 'icon' => 'phosphor-hourglass',
             ],
             [
@@ -375,10 +375,22 @@ class ScopeReviewController extends Controller
     }
 
     /**
+     * Fields whose changes are recorded in the status history, with the label
+     * shown in the timeline.
+     */
+    private const TRACKED_HISTORY_FIELDS = [
+        'decision'        => 'Bid Decision',
+        'bid_stage'       => 'Bid Stage',
+        'duration'        => 'Duration',
+        'estimator_notes' => 'Notes',
+        'notes'           => 'Notes',
+    ];
+
+    /**
      * Apply the review-side effects of a decision change (uploaded_in_oh cast,
      * reviewed_at stamp, project-number generation on approve, and status-history
-     * logging). Mutates $validated in place and writes a history row if the
-     * decision actually changed. Shared by the admin and estimator update paths.
+     * logging). Mutates $validated in place and writes a history row for each
+     * tracked field that changed. Shared by the admin and estimator update paths.
      */
     private function applyReviewFields(array &$validated, ScopeReview $scopeReview, User $user): void
     {
@@ -396,12 +408,41 @@ class ScopeReviewController extends Controller
             $validated['project_number'] = $this->nextProjectNumber();
         }
 
-        if ($decisionChanged && !empty($validated['decision'])) {
+        $this->recordHistoryChanges($validated, $scopeReview, $user);
+    }
+
+    /**
+     * Write a status-history row for each tracked field whose value changed on
+     * this submission, each stamped with the current time. Only fields actually
+     * present in $validated are considered.
+     */
+    private function recordHistoryChanges(array $validated, ScopeReview $scopeReview, User $user): void
+    {
+        $now = now();
+
+        foreach (self::TRACKED_HISTORY_FIELDS as $field => $label) {
+            if (!array_key_exists($field, $validated)) {
+                continue;
+            }
+
+            $old = $scopeReview->getOriginal($field);
+            $new = $validated[$field];
+
+            // Normalise empties so '' and null don't register as a change.
+            if (($old ?? '') === ($new ?? '')) {
+                continue;
+            }
+
             ScopeReviewStatusHistory::create([
                 'scope_review_id' => $scopeReview->id,
                 'user_id'         => $user->id,
-                'decision'        => $validated['decision'],
-                'created_at'      => now(),
+                'field'           => $field,
+                'old_value'       => $old,
+                'new_value'       => $new,
+                // Keep populating the legacy `decision` column for decision rows
+                // so older display code and reporting keep working.
+                'decision'        => $field === 'decision' ? $new : null,
+                'created_at'      => $now,
             ]);
         }
     }

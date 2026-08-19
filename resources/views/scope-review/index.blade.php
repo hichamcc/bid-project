@@ -203,7 +203,7 @@
                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Decision</label>
                         <select name="decision" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <option value="">All</option>
-                            <option value="__pending__" {{ request('decision') === '__pending__' ? 'selected' : '' }}>Pending</option>
+                            <option value="__pending__" {{ request('decision') === '__pending__' ? 'selected' : '' }}>Not Yet Reviewed</option>
                             <option value="approved" {{ request('decision') === 'approved' ? 'selected' : '' }}>Approved</option>
                             <option value="rfi_requested" {{ request('decision') === 'rfi_requested' ? 'selected' : '' }}>RFI Requested</option>
                             <option value="not_in_scope" {{ request('decision') === 'not_in_scope' ? 'selected' : '' }}>Not In Scope</option>
@@ -315,8 +315,8 @@
                                             {{ $decisionLabels[$scopeReview->decision] }}
                                         </span>
                                     @else
-                                        <span class="px-3 py-1 text-xs font-semibold rounded-md bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
-                                            Pending
+                                        <span class="px-3 py-1 text-xs font-semibold rounded-md bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                            Not Yet Reviewed
                                         </span>
                                     @endif
                                 </td>
@@ -344,6 +344,9 @@
                                                     'uploaded_in_oh' => $scopeReview->uploaded_in_oh,
                                                     'estimator_notes' => $scopeReview->estimator_notes,
                                                     'status_history' => $scopeReview->statusHistories->map(fn($h) => [
+                                                        'field' => $h->field,
+                                                        'old_value' => $h->old_value,
+                                                        'new_value' => $h->new_value,
                                                         'decision' => $h->decision,
                                                         'user' => $h->user?->name,
                                                         'changed_at' => $h->created_at->format('M d, Y g:i A'),
@@ -550,7 +553,7 @@
                                 </dd>
                             </div>
                             <div x-show="current.estimator_notes">
-                                <dt class="text-gray-500 dark:text-gray-400 mb-1">Estimator Notes</dt>
+                                <dt class="text-gray-500 dark:text-gray-400 mb-1">Notes</dt>
                                 <dd class="text-gray-900 dark:text-gray-100 whitespace-pre-line" x-text="current.estimator_notes"></dd>
                             </div>
                         </dl>
@@ -570,23 +573,44 @@
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700" x-show="current.status_history && current.status_history.length">
                     <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Status History</h4>
                     <ul class="space-y-3">
-                        <template x-for="entry in (current.status_history || [])" :key="entry.changed_at + entry.decision">
-                            <li class="flex items-start gap-3 text-sm">
+                        <template x-for="(entry, i) in (current.status_history || [])" :key="i">
+                            <li class="flex items-start gap-3 text-sm"
+                                x-data="{
+                                    decisionLabels: {approved: 'Approved', rfi_requested: 'RFI Requested', not_in_scope: 'Not In Scope', skipped: 'Skipped'},
+                                    fieldLabels: {decision: 'Bid Decision', bid_stage: 'Bid Stage', duration: 'Duration', estimator_notes: 'Notes', notes: 'Notes'},
+                                    get isDecision() { return entry.field === 'decision' || (!entry.field && entry.decision); },
+                                    get fieldLabel() { return this.fieldLabels[entry.field] || 'Status'; },
+                                    get newDisplay() {
+                                        if (this.isDecision) return this.decisionLabels[entry.new_value || entry.decision] || (entry.new_value || entry.decision);
+                                        return entry.new_value;
+                                    }
+                                }">
                                 <span class="mt-1.5 w-2 h-2 rounded-full flex-shrink-0"
                                       :class="{
-                                          'bg-green-500': entry.decision === 'approved',
-                                          'bg-yellow-500': entry.decision === 'rfi_requested',
-                                          'bg-red-500': entry.decision === 'not_in_scope',
-                                          'bg-gray-500': entry.decision === 'skipped'
+                                          'bg-green-500': isDecision && (entry.new_value || entry.decision) === 'approved',
+                                          'bg-yellow-500': isDecision && (entry.new_value || entry.decision) === 'rfi_requested',
+                                          'bg-red-500': isDecision && (entry.new_value || entry.decision) === 'not_in_scope',
+                                          'bg-gray-500': isDecision && (entry.new_value || entry.decision) === 'skipped',
+                                          'bg-blue-500': !isDecision
                                       }"></span>
                                 <div class="min-w-0">
-                                    <p class="text-gray-900 dark:text-gray-100">
-                                        Marked
-                                        <span class="font-medium" x-text="({approved: 'Approved', rfi_requested: 'RFI Requested', not_in_scope: 'Not In Scope', skipped: 'Skipped'})[entry.decision]"></span>
-                                        <template x-if="entry.user">
-                                            <span> by <span x-text="entry.user"></span></span>
-                                        </template>
-                                    </p>
+                                    {{-- Decision changes read "Marked X"; other fields read "Field updated to Y" --}}
+                                    <template x-if="isDecision">
+                                        <p class="text-gray-900 dark:text-gray-100">
+                                            Marked <span class="font-medium" x-text="newDisplay"></span>
+                                            <template x-if="entry.user"><span> by <span x-text="entry.user"></span></span></template>
+                                        </p>
+                                    </template>
+                                    <template x-if="!isDecision">
+                                        <p class="text-gray-900 dark:text-gray-100">
+                                            <span class="font-medium" x-text="fieldLabel"></span>
+                                            <template x-if="newDisplay">
+                                                <span> updated to <span class="font-medium" x-text="newDisplay"></span></span>
+                                            </template>
+                                            <template x-if="!newDisplay"><span> cleared</span></template>
+                                            <template x-if="entry.user"><span> by <span x-text="entry.user"></span></span></template>
+                                        </p>
+                                    </template>
                                     <p class="text-xs text-gray-400" x-text="entry.changed_at"></p>
                                 </div>
                             </li>

@@ -12,6 +12,9 @@ class ScopeReviewStatusHistory extends Model
     protected $fillable = [
         'scope_review_id',
         'user_id',
+        'field',
+        'old_value',
+        'new_value',
         'decision',
         'created_at',
     ];

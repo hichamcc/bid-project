@@ -167,9 +167,9 @@
                                 <input type="hidden" name="decision" :value="decision">
                                 <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
                                     <button type="button" @click="decision = ''"
-                                            :class="decision === '' ? 'bg-gray-500 text-white border-gray-500' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
+                                            :class="decision === '' ? 'bg-red-600 text-white border-red-600' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
                                             class="px-4 py-2 rounded-md border text-sm font-medium">
-                                        Pending
+                                        Not Yet Reviewed
                                     </button>
                                     <button type="button" @click="decision = 'approved'"
                                             :class="decision === 'approved' ? 'bg-green-600 text-white border-green-600' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
