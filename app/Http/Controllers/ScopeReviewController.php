@@ -38,6 +38,10 @@ class ScopeReviewController extends Controller
         if ($request->filled('assigned_estimator_id')) {
             $query->where('assigned_estimator_id', $request->assigned_estimator_id);
         }
+        // "Assigned to me" toggle (any user, primarily for estimators).
+        if ($request->filled('mine')) {
+            $query->where('assigned_estimator_id', $user->id);
+        }
         if ($request->filled('location')) {
             $query->where('location', 'like', '%' . $request->location . '%');
         }
@@ -47,11 +51,38 @@ class ScopeReviewController extends Controller
         if ($request->filled('ready_for_assignment')) {
             $query->readyForAssignment();
         }
+        // Approved but not yet assigned to an allocation ("To Assign").
+        if ($request->filled('unassigned')) {
+            $query->where('decision', 'approved')->whereNull('allocation_id');
+        }
         if ($request->filled('year')) {
             $query->whereYear('entry_date', $request->year);
         }
 
-        $scopeReviews = $query->orderByDesc('entry_date')->paginate(25)->withQueryString();
+        // Sorting: whitelist of sortable columns (map header -> DB column).
+        $sortable = [
+            'project_number' => 'project_number',
+            'source'         => 'source',
+            'platform'       => 'platform',
+            'project_name'   => 'project_name',
+            'location'       => 'location',
+            'due_date'       => 'due_date',
+            'type'           => 'project_type',
+            'decision'       => 'decision',
+            'bid_stage'      => 'bid_stage',
+        ];
+
+        $sort = $request->input('sort');
+        $direction = strtolower($request->input('direction')) === 'asc' ? 'asc' : 'desc';
+
+        if ($sort && isset($sortable[$sort])) {
+            $query->orderBy($sortable[$sort], $direction)->orderByDesc('entry_date');
+        } else {
+            // Default ordering (most recent first).
+            $query->orderByDesc('entry_date');
+        }
+
+        $scopeReviews = $query->paginate(25)->withQueryString();
 
         $estimators = User::whereIn('role', ['estimator', 'head_estimator'])->orderBy('name')->get();
 
@@ -103,6 +134,7 @@ class ScopeReviewController extends Controller
         $no           = (clone $byYear())->where('decision', 'not_in_scope')->count();
         $rfiRequested = (clone $byYear())->where('decision', 'rfi_requested')->count();
         $skipped      = (clone $byYear())->where('decision', 'skipped')->count();
+        $pending      = (clone $byYear())->where('decision', 'pending')->count();
         $notReviewed  = (clone $byYear())->pendingReview()->count();
         $totalYes     = (clone $byYear())->where('decision', 'approved')->count();
         $totalProjects = (clone $byYear())->count();
@@ -114,6 +146,7 @@ class ScopeReviewController extends Controller
             ['label' => 'NO',                'count' => $no,           'color' => 'red',    'filters' => $yearFilters + ['decision' => 'not_in_scope']],
             ['label' => 'REQUESTED RFI',     'count' => $rfiRequested, 'color' => 'yellow', 'filters' => $yearFilters + ['decision' => 'rfi_requested']],
             ['label' => 'SKIP',              'count' => $skipped,      'color' => 'gray',   'filters' => $yearFilters + ['decision' => 'skipped']],
+            ['label' => 'PENDING',           'count' => $pending,      'color' => 'blue',   'filters' => $yearFilters + ['decision' => 'pending'], 'hide_if_zero' => true],
             ['label' => 'NOT YET REVIEWED',  'count' => $notReviewed,  'color' => 'red',    'filters' => $yearFilters + ['decision' => '__pending__']],
         ];
 
@@ -184,8 +217,8 @@ class ScopeReviewController extends Controller
                 'icon' => 'phosphor-envelope',
             ],
             [
-                'label' => 'Approved', 'value' => ScopeReview::where('decision', 'approved')->count(),
-                'href' => route('scope-review.index', ['decision' => 'approved']),
+                'label' => 'To Assign', 'value' => ScopeReview::where('decision', 'approved')->whereNull('allocation_id')->count(),
+                'href' => route('scope-review.index', ['unassigned' => 1]),
                 'bg' => 'bg-green-50 dark:bg-green-900/20', 'icon_bg' => 'bg-green-100 dark:bg-green-900/40',
                 'icon_color' => 'text-green-600 dark:text-green-300', 'value_color' => 'text-green-700 dark:text-green-300',
                 'icon' => 'phosphor-check-circle',
@@ -320,6 +353,43 @@ class ScopeReviewController extends Controller
     }
 
     /**
+     * Delete multiple scope reviews at once (admin only). Entries already
+     * converted to a job are skipped and reported rather than deleted.
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $this->authorizeAdmin();
+
+        $validated = $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer|exists:scope_reviews,id',
+        ]);
+
+        $reviews = ScopeReview::whereIn('id', $validated['ids'])->get();
+
+        $deletable = $reviews->reject(fn ($r) => $r->isConverted());
+        $skipped   = $reviews->count() - $deletable->count();
+
+        if ($deletable->isNotEmpty()) {
+            ScopeReview::whereIn('id', $deletable->pluck('id'))->delete();
+        }
+
+        $deletedCount = $deletable->count();
+
+        if ($deletedCount === 0) {
+            return redirect()->route('scope-review.index')
+                ->with('error', 'Nothing deleted. Selected entries are already assigned to a job. Remove them from Distribution first.');
+        }
+
+        $message = $deletedCount . ' scope review' . ($deletedCount === 1 ? '' : 's') . ' deleted.';
+        if ($skipped > 0) {
+            $message .= ' ' . $skipped . ' skipped (already assigned to a job).';
+        }
+
+        return redirect()->route('scope-review.index')->with('success', $message);
+    }
+
+    /**
      * Core update logic (validation + apply), shared by the normal and modal paths.
      */
     private function performUpdate(Request $request, ScopeReview $scopeReview, User $user): void
@@ -339,7 +409,7 @@ class ScopeReviewController extends Controller
                 // Admin can also set the review/decision fields. Decision is
                 // optional for admin ('' / null = leave pending).
                 'project_type'           => 'nullable|required_if:decision,approved|in:MU,NON_MU',
-                'decision'               => 'nullable|in:approved,rfi_requested,not_in_scope,skipped',
+                'decision'               => 'nullable|in:approved,rfi_requested,not_in_scope,skipped,pending',
                 'duration'               => 'nullable|string|max:255',
                 'estimator_notes'        => 'nullable|string',
                 'uploaded_in_oh'         => 'nullable|boolean',
@@ -362,7 +432,7 @@ class ScopeReviewController extends Controller
 
         $validated = $request->validate([
             'project_type'     => 'nullable|required_if:decision,approved|in:MU,NON_MU',
-            'decision'         => 'required|in:approved,rfi_requested,not_in_scope,skipped',
+            'decision'         => 'required|in:approved,rfi_requested,not_in_scope,skipped,pending',
             'duration'         => 'nullable|string|max:255',
             'bid_stage'        => 'nullable|string|max:255',
             'estimator_notes'  => 'nullable|string',

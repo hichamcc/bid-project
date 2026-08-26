@@ -20,6 +20,21 @@
             this.deleteOpen = true;
         },
 
+        // Bulk selection + delete
+        selected: [],
+        toggleAll(event) {
+            if (event.target.checked) {
+                this.selected = Array.from(document.querySelectorAll('[data-row-checkbox]')).map(cb => cb.value);
+            } else {
+                this.selected = [];
+            }
+        },
+        get allSelected() {
+            const boxes = document.querySelectorAll('[data-row-checkbox]');
+            return boxes.length > 0 && this.selected.length === boxes.length;
+        },
+        bulkDeleteOpen: false,
+
         // Form modal (Add / Edit)
         formOpen: false,
         formLoading: false,
@@ -95,6 +110,19 @@
                            @click.prevent="openForm('{{ route('scope-review.create') }}', 'Add Opportunity')"
                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer">
                             Add Opportunity
+                        </a>
+                    </div>
+                @else
+                    {{-- Estimator: toggle between everything and only what's assigned to them --}}
+                    @php $mineActive = request()->filled('mine'); @endphp
+                    <div class="inline-flex rounded-md overflow-hidden border border-gray-300 dark:border-gray-600">
+                        <a href="{{ route('scope-review.index', array_merge(array_diff_key(request()->query(), ['mine' => '', 'page' => '']), [])) }}"
+                           class="px-4 py-2 text-sm font-medium {{ $mineActive ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700' : 'bg-blue-600 text-white' }}">
+                            All
+                        </a>
+                        <a href="{{ route('scope-review.index', array_merge(array_diff_key(request()->query(), ['page' => '']), ['mine' => 1])) }}"
+                           class="px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-600 {{ $mineActive ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700' }}">
+                            Assigned to me
                         </a>
                     </div>
                 @endif
@@ -204,6 +232,7 @@
                         <select name="decision" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <option value="">All</option>
                             <option value="__pending__" {{ request('decision') === '__pending__' ? 'selected' : '' }}>Not Yet Reviewed</option>
+                            <option value="pending" {{ request('decision') === 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="approved" {{ request('decision') === 'approved' ? 'selected' : '' }}>Approved</option>
                             <option value="rfi_requested" {{ request('decision') === 'rfi_requested' ? 'selected' : '' }}>RFI Requested</option>
                             <option value="not_in_scope" {{ request('decision') === 'not_in_scope' ? 'selected' : '' }}>Not In Scope</option>
@@ -227,7 +256,7 @@
                         <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
                             Filter
                         </button>
-                        @if(request()->hasAny(['search', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment']))
+                        @if(request()->hasAny(['search', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine']))
                             <a href="{{ route('scope-review.index') }}"
                                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md">
                                 Clear
@@ -238,26 +267,119 @@
             </div>
 
             <!-- List -->
+            @php
+                $currentSort = request('sort');
+                $currentDir  = strtolower(request('direction')) === 'asc' ? 'asc' : 'desc';
+                // Build a sortable-header link: clicking toggles asc/desc, preserving other query params.
+                $sortLink = function (string $key) use ($currentSort, $currentDir) {
+                    $isActive = $currentSort === $key;
+                    $nextDir  = ($isActive && $currentDir === 'asc') ? 'desc' : 'asc';
+                    $query    = array_merge(request()->query(), ['sort' => $key, 'direction' => $nextDir]);
+                    unset($query['page']); // reset pagination when re-sorting
+                    return [
+                        'url'      => route('scope-review.index') . '?' . http_build_query($query),
+                        'active'   => $isActive,
+                        'dir'      => $currentDir,
+                    ];
+                };
+            @endphp
+
+            @if(auth()->user()->isAdmin())
+                <!-- Bulk action toolbar -->
+                <div x-show="selected.length > 0" x-cloak
+                     x-transition:enter="transition ease-out duration-150"
+                     x-transition:enter-start="opacity-0 -translate-y-1"
+                     x-transition:enter-end="opacity-100 translate-y-0"
+                     class="flex items-center justify-between gap-4 px-6 py-3 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-900/40">
+                    <span class="text-sm font-medium text-red-800 dark:text-red-200">
+                        <span x-text="selected.length"></span> selected
+                    </span>
+                    <div class="flex items-center gap-3">
+                        <button type="button" @click="selected = []"
+                                class="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+                            Clear
+                        </button>
+                        <button type="button" @click="bulkDeleteOpen = true"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
+                            <x-phosphor-trash width="16" height="16" />
+                            Delete Selected
+                        </button>
+                    </div>
+                </div>
+            @endif
+
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Project #</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Source</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Platform</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Project Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Due</th>
+                            @if(auth()->user()->isAdmin())
+                                <th class="px-4 py-3 w-10">
+                                    <input type="checkbox" @change="toggleAll($event)" :checked="allSelected"
+                                           title="Select all"
+                                           class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500">
+                                </th>
+                            @endif
+                            @php
+                                $sortableHeaders = [
+                                    'project_number' => 'Project #',
+                                    'source'         => 'Source',
+                                    'platform'       => 'Platform',
+                                    'project_name'   => 'Project Name',
+                                    'location'       => 'Location',
+                                    'due_date'       => 'Due',
+                                ];
+                            @endphp
+                            @foreach($sortableHeaders as $key => $label)
+                                @php $h = $sortLink($key); @endphp
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <a href="{{ $h['url'] }}" class="group inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-100">
+                                        <span>{{ $label }}</span>
+                                        @if($h['active'])
+                                            @if($h['dir'] === 'asc')
+                                                <x-phosphor-caret-up width="12" height="12" class="text-gray-700 dark:text-gray-100" />
+                                            @else
+                                                <x-phosphor-caret-down width="12" height="12" class="text-gray-700 dark:text-gray-100" />
+                                            @endif
+                                        @else
+                                            <x-phosphor-caret-up-down width="12" height="12" class="text-gray-300 dark:text-gray-500 group-hover:text-gray-400" />
+                                        @endif
+                                    </a>
+                                </th>
+                            @endforeach
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estimator</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Type</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Decision</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Bid Stage</th>
+                            @foreach(['type' => 'Type', 'decision' => 'Decision', 'bid_stage' => 'Bid Stage'] as $key => $label)
+                                @php $h = $sortLink($key); @endphp
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    <a href="{{ $h['url'] }}" class="group inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-100">
+                                        <span>{{ $label }}</span>
+                                        @if($h['active'])
+                                            @if($h['dir'] === 'asc')
+                                                <x-phosphor-caret-up width="12" height="12" class="text-gray-700 dark:text-gray-100" />
+                                            @else
+                                                <x-phosphor-caret-down width="12" height="12" class="text-gray-700 dark:text-gray-100" />
+                                            @endif
+                                        @else
+                                            <x-phosphor-caret-up-down width="12" height="12" class="text-gray-300 dark:text-gray-500 group-hover:text-gray-400" />
+                                        @endif
+                                    </a>
+                                </th>
+                            @endforeach
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse($scopeReviews as $scopeReview)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700"
+                                :class="selected.includes('{{ $scopeReview->id }}') ? 'bg-red-50 dark:bg-red-900/10' : ''">
+                                @if(auth()->user()->isAdmin())
+                                    <td class="px-4 py-4 w-10">
+                                        @unless($scopeReview->isConverted())
+                                            <input type="checkbox" data-row-checkbox value="{{ $scopeReview->id }}"
+                                                   x-model="selected"
+                                                   class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500">
+                                        @endunless
+                                    </td>
+                                @endif
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {{ $scopeReview->project_number ?? '—' }}
                                 </td>
@@ -302,12 +424,14 @@
                                             'rfi_requested' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
                                             'not_in_scope' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
                                             'skipped' => 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-200',
+                                            'pending' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
                                         ];
                                         $decisionLabels = [
                                             'approved' => 'Approved',
                                             'rfi_requested' => 'RFI Requested',
                                             'not_in_scope' => 'Not In Scope',
                                             'skipped' => 'Skipped',
+                                            'pending' => 'Pending',
                                         ];
                                     @endphp
                                     @if($scopeReview->decision)
@@ -380,10 +504,11 @@
                                                     'scope_review_id' => $scopeReview->id,
                                                     'job_number' => $scopeReview->project_number,
                                                     'due_date' => optional($scopeReview->due_date)->format('Y-m-d'),
-                                                    'project_name' => $scopeReview->project_name,
+                                                    'project_name' => mb_strtoupper($scopeReview->project_name),
                                                     'job_type' => $scopeReview->project_type,
                                                     'web_link' => $scopeReview->project_link,
                                                     'days_required' => $daysRequired,
+                                                    'project_status' => 'RECEIVED',
                                                 ], fn($v) => $v !== null && $v !== '')) . '#job-form' }}"
                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-300 dark:hover:bg-green-900/60">
                                                 <x-phosphor-user-plus width="14" height="14" />
@@ -408,7 +533,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="{{ auth()->user()->isAdmin() ? 12 : 11 }}" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     No scope review entries yet.
                                 </td>
                             </tr>
@@ -520,9 +645,10 @@
                                               'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': current.decision === 'approved',
                                               'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': current.decision === 'rfi_requested',
                                               'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': current.decision === 'not_in_scope',
-                                              'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-200': current.decision === 'skipped'
+                                              'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-200': current.decision === 'skipped',
+                                              'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': current.decision === 'pending'
                                           }"
-                                          x-text="({approved: 'Approved', rfi_requested: 'RFI Requested', not_in_scope: 'Not In Scope', skipped: 'Skipped'})[current.decision]"></span>
+                                          x-text="({approved: 'Approved', rfi_requested: 'RFI Requested', not_in_scope: 'Not In Scope', skipped: 'Skipped', pending: 'Pending'})[current.decision]"></span>
                                 </dd>
                             </div>
                             <div class="flex justify-between items-center gap-3">
@@ -576,7 +702,7 @@
                         <template x-for="(entry, i) in (current.status_history || [])" :key="i">
                             <li class="flex items-start gap-3 text-sm"
                                 x-data="{
-                                    decisionLabels: {approved: 'Approved', rfi_requested: 'RFI Requested', not_in_scope: 'Not In Scope', skipped: 'Skipped'},
+                                    decisionLabels: {approved: 'Approved', rfi_requested: 'RFI Requested', not_in_scope: 'Not In Scope', skipped: 'Skipped', pending: 'Pending'},
                                     fieldLabels: {decision: 'Bid Decision', bid_stage: 'Bid Stage', duration: 'Duration', estimator_notes: 'Notes', notes: 'Notes'},
                                     get isDecision() { return entry.field === 'decision' || (!entry.field && entry.decision); },
                                     get fieldLabel() { return this.fieldLabels[entry.field] || 'Status'; },
@@ -591,6 +717,7 @@
                                           'bg-yellow-500': isDecision && (entry.new_value || entry.decision) === 'rfi_requested',
                                           'bg-red-500': isDecision && (entry.new_value || entry.decision) === 'not_in_scope',
                                           'bg-gray-500': isDecision && (entry.new_value || entry.decision) === 'skipped',
+                                          'bg-blue-500': isDecision && (entry.new_value || entry.decision) === 'pending',
                                           'bg-blue-500': !isDecision
                                       }"></span>
                                 <div class="min-w-0">
@@ -727,5 +854,55 @@
             </div>
         </div>
     </div>
+
+    @if(auth()->user()->isAdmin())
+        <!-- Bulk delete confirmation modal -->
+        <div x-show="bulkDeleteOpen" x-cloak
+             class="fixed inset-0 z-50 flex items-center justify-center p-4"
+             x-transition.opacity>
+            <div class="absolute inset-0 bg-black/50" @click="bulkDeleteOpen = false"></div>
+
+            <div class="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6"
+                 x-show="bulkDeleteOpen"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 scale-95"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95">
+
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                        <x-phosphor-trash class="w-5 h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Delete Selected</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            Are you sure you want to delete
+                            <span class="font-medium text-gray-700 dark:text-gray-300"><span x-text="selected.length"></span> scope review<span x-show="selected.length !== 1">s</span></span>?
+                            This cannot be undone.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" @click="bulkDeleteOpen = false"
+                            class="px-4 py-2 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium">
+                        Cancel
+                    </button>
+                    <form method="POST" action="{{ route('scope-review.bulk-destroy') }}">
+                        @csrf
+                        <template x-for="id in selected" :key="id">
+                            <input type="hidden" name="ids[]" :value="id">
+                        </template>
+                        <button type="submit"
+                                class="px-4 py-2 rounded-md bg-red-600 hover:bg-red-700 text-white text-sm font-medium">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 @endsection

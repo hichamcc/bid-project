@@ -165,11 +165,16 @@
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bid Decision</label>
                                 <input type="hidden" name="decision" :value="decision">
-                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                     <button type="button" @click="decision = ''"
                                             :class="decision === '' ? 'bg-red-600 text-white border-red-600' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
                                             class="px-4 py-2 rounded-md border text-sm font-medium">
                                         Not Yet Reviewed
+                                    </button>
+                                    <button type="button" @click="decision = 'pending'"
+                                            :class="decision === 'pending' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
+                                            class="px-4 py-2 rounded-md border text-sm font-medium">
+                                        Pending
                                     </button>
                                     <button type="button" @click="decision = 'approved'"
                                             :class="decision === 'approved' ? 'bg-green-600 text-white border-green-600' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
@@ -279,7 +284,12 @@
                                     Bid Decision <span class="text-red-500">*</span>
                                 </label>
                                 <input type="hidden" name="decision" :value="decision">
-                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                    <button type="button" @click="decision = 'pending'"
+                                            :class="decision === 'pending' ? 'bg-blue-500 text-white border-blue-500' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
+                                            class="px-4 py-2 rounded-md border text-sm font-medium">
+                                        Pending
+                                    </button>
                                     <button type="button" @click="decision = 'approved'"
                                             :class="decision === 'approved' ? 'bg-green-600 text-white border-green-600' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'"
                                             class="px-4 py-2 rounded-md border text-sm font-medium">

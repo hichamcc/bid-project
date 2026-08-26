@@ -122,12 +122,18 @@ Route::middleware(['auth', 'role:admin,estimator,head_estimator'])->prefix('scop
         Route::post('/commit', [\App\Http\Controllers\ScopeReviewImportController::class, 'commit'])->name('commit');
     });
 
+    Route::post('/bulk-destroy', [\App\Http\Controllers\ScopeReviewController::class, 'bulkDestroy'])->name('bulk-destroy');
     Route::get('/{scopeReview}/edit', [\App\Http\Controllers\ScopeReviewController::class, 'edit'])->name('edit');
     Route::put('/{scopeReview}', [\App\Http\Controllers\ScopeReviewController::class, 'update'])->name('update');
     Route::delete('/{scopeReview}', [\App\Http\Controllers\ScopeReviewController::class, 'destroy'])->name('destroy');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Hidden (link-only) tool to reconcile imported scope reviews with allocations
+    // by matching project_number to job_number. Not linked from any menu.
+    Route::get('/scope-reconcile', [\App\Http\Controllers\Admin\ScopeReconcileController::class, 'index'])->name('scope-reconcile.index');
+    Route::post('/scope-reconcile/approve', [\App\Http\Controllers\Admin\ScopeReconcileController::class, 'approve'])->name('scope-reconcile.approve');
+
     Route::get('/allocation', [AllocationController::class, 'index'])->name('allocation.index');
     Route::post('/allocation', [AllocationController::class, 'store'])->name('allocation.store');
     Route::get('/allocation/monthly', [AllocationController::class, 'monthly'])->name('allocation.monthly');
