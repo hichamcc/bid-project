@@ -68,6 +68,26 @@ class ScopeReview extends Model
         return $this->allocation_id !== null;
     }
 
+    /**
+     * Whether the due date has already passed (before today). Rows with no due
+     * date are not considered past due. Mirrors the readyForAssignment scope's
+     * due-date rule.
+     */
+    public function isPastDue(): bool
+    {
+        return $this->due_date !== null
+            && $this->due_date->lt(now()->startOfDay());
+    }
+
+    /**
+     * Whether this row can still be assigned to an allocation: approved, not
+     * already converted, and not past its due date.
+     */
+    public function isAssignable(): bool
+    {
+        return $this->isApproved() && !$this->isConverted() && !$this->isPastDue();
+    }
+
     public function scopeApproved($query)
     {
         return $query->where('decision', 'approved');

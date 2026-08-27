@@ -510,7 +510,7 @@
                                                 <x-phosphor-pencil-simple width="16" height="16" />
                                             </a>
                                         @endif
-                                        @if(auth()->user()->isAdmin() && $scopeReview->isApproved() && !$scopeReview->isConverted())
+                                        @if(auth()->user()->isAdmin() && $scopeReview->isAssignable())
                                             @php
                                                 // Pull the first number out of the free-text duration ("1 DAY" -> 1, "2.5 days" -> 2.5)
                                                 $daysRequired = preg_match('/[0-9]+(?:\.[0-9]+)?/', (string) $scopeReview->duration, $m) ? $m[0] : null;

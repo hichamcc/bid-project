@@ -54,9 +54,9 @@ class ScopeReviewController extends Controller
         if ($request->filled('ready_for_assignment')) {
             $query->readyForAssignment();
         }
-        // Approved but not yet assigned to an allocation ("To Assign").
+        // Approved, not yet assigned, and still actionable by due date ("To Assign").
         if ($request->filled('unassigned')) {
-            $query->where('decision', 'approved')->whereNull('allocation_id');
+            $query->readyForAssignment();
         }
         if ($request->filled('year')) {
             $query->whereYear('entry_date', $request->year);
@@ -220,7 +220,7 @@ class ScopeReviewController extends Controller
                 'icon' => 'phosphor-envelope',
             ],
             [
-                'label' => 'To Assign', 'value' => ScopeReview::where('decision', 'approved')->whereNull('allocation_id')->count(),
+                'label' => 'To Assign', 'value' => ScopeReview::readyForAssignment()->count(),
                 'href' => route('scope-review.index', ['unassigned' => 1]),
                 'bg' => 'bg-green-50 dark:bg-green-900/20', 'icon_bg' => 'bg-green-100 dark:bg-green-900/40',
                 'icon_color' => 'text-green-600 dark:text-green-300', 'value_color' => 'text-green-700 dark:text-green-300',
