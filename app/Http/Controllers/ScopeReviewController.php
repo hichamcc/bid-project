@@ -48,12 +48,11 @@ class ScopeReviewController extends Controller
         if ($request->filled('location')) {
             $query->where('location', 'like', '%' . $request->location . '%');
         }
-        if ($request->filled('search')) {
-            $term = '%' . $request->search . '%';
-            $query->where(function ($q) use ($term) {
-                $q->where('project_name', 'like', $term)
-                  ->orWhere('project_number', 'like', $term);
-            });
+        if ($request->filled('project_name')) {
+            $query->where('project_name', 'like', '%' . $request->project_name . '%');
+        }
+        if ($request->filled('project_number')) {
+            $query->where('project_number', 'like', '%' . $request->project_number . '%');
         }
         if ($request->filled('ready_for_assignment')) {
             $query->readyForAssignment();
@@ -64,6 +63,13 @@ class ScopeReviewController extends Controller
         }
         if ($request->filled('year')) {
             $query->whereYear('entry_date', $request->year);
+        }
+        // Entry date range (either bound optional).
+        if ($request->filled('entry_from')) {
+            $query->whereDate('entry_date', '>=', $request->entry_from);
+        }
+        if ($request->filled('entry_to')) {
+            $query->whereDate('entry_date', '<=', $request->entry_to);
         }
 
         // Sorting: whitelist of sortable columns (map header -> DB column).
@@ -204,7 +210,7 @@ class ScopeReviewController extends Controller
     }
 
     /**
-     * The 5 headline decision cards, shared by the index and stats pages.
+     * The headline decision cards, shared by the index and stats pages.
      */
     private function buildStatCards(): array
     {
@@ -215,6 +221,13 @@ class ScopeReviewController extends Controller
                 'bg' => 'bg-red-50 dark:bg-red-900/20', 'icon_bg' => 'bg-red-100 dark:bg-red-900/40',
                 'icon_color' => 'text-red-500 dark:text-red-300', 'value_color' => 'text-red-700 dark:text-red-300',
                 'icon' => 'phosphor-hourglass',
+            ],
+            [
+                'label' => 'Pending', 'value' => ScopeReview::where('decision', 'pending')->count(),
+                'href' => route('scope-review.index', ['decision' => 'pending']),
+                'bg' => 'bg-blue-50 dark:bg-blue-900/20', 'icon_bg' => 'bg-blue-100 dark:bg-blue-900/40',
+                'icon_color' => 'text-blue-500 dark:text-blue-300', 'value_color' => 'text-blue-700 dark:text-blue-300',
+                'icon' => 'phosphor-clock',
             ],
             [
                 'label' => 'RFI Sent', 'value' => ScopeReview::where('decision', 'rfi_requested')->count(),

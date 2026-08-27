@@ -284,6 +284,13 @@
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
+                    <div class="flex-1 min-w-36">
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Job Name</label>
+                        <input type="text" name="job_name" value="{{ request('job_name') }}"
+                               placeholder="Search..."
+                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
                     <div>
                         <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type</label>
                         <select name="job_type"
@@ -333,7 +340,7 @@
                                 class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
                             Filter
                         </button>
-                        @if(request()->hasAny(['job_number', 'job_type', 'estimator_id', 'date_from', 'date_to', 'sort']))
+                        @if(request()->hasAny(['job_number', 'job_name', 'job_type', 'estimator_id', 'date_from', 'date_to', 'sort']))
                             <a href="{{ route('admin.allocation.index') }}"
                                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md">
                                 Clear

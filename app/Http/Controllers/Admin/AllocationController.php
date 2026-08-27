@@ -28,6 +28,11 @@ class AllocationController extends Controller
             $query->where('job_number', 'like', '%' . $request->job_number . '%');
         }
 
+        if ($request->filled('job_name')) {
+            // Job name lives on the child projects (e.g. "26015A. Yvette Hinton").
+            $query->whereHas('projects', fn($q) => $q->where('name', 'like', '%' . $request->job_name . '%'));
+        }
+
         if ($request->filled('job_type')) {
             $query->where('job_type', $request->job_type);
         }
