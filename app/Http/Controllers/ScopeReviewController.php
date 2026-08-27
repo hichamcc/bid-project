@@ -64,12 +64,12 @@ class ScopeReviewController extends Controller
         if ($request->filled('year')) {
             $query->whereYear('entry_date', $request->year);
         }
-        // Entry date range (either bound optional).
-        if ($request->filled('entry_from')) {
-            $query->whereDate('entry_date', '>=', $request->entry_from);
+        // Single-date filters.
+        if ($request->filled('entry_date')) {
+            $query->whereDate('entry_date', $request->entry_date);
         }
-        if ($request->filled('entry_to')) {
-            $query->whereDate('entry_date', '<=', $request->entry_to);
+        if ($request->filled('due_date')) {
+            $query->whereDate('due_date', $request->due_date);
         }
 
         // Sorting: whitelist of sortable columns (map header -> DB column).

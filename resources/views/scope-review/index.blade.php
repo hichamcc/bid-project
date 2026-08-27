@@ -148,19 +148,23 @@
 
         <!-- Headline Stat Cards (admin) -->
         @if($statCards)
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            {{-- One row of compact cards. grid-cols-6 isn't in the compiled bundle,
+                 so the large-screen 6-column layout is done via a scoped media query. --}}
+            <style>
+                .stat-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+                @media (min-width: 640px)  { .stat-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+                @media (min-width: 1024px) { .stat-cards { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; } }
+            </style>
+            <div class="stat-cards">
                 @foreach($statCards as $card)
                     <a href="{{ $card['href'] }}"
-                       class="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
+                       class="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                         <div class="absolute inset-x-0 top-0 h-1 {{ $card['bg'] }}"></div>
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="w-9 h-9 rounded-xl flex items-center justify-center {{ $card['icon_bg'] }}">
-                                <x-dynamic-component :component="$card['icon']" class="w-4 h-4 {{ $card['icon_color'] }}" />
-                            </span>
-                            <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-                        </div>
-                        <p class="text-3xl font-extrabold tracking-tight {{ $card['value_color'] }}">{{ $card['value'] }}</p>
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">{{ $card['label'] }}</p>
+                        <span class="w-7 h-7 rounded-lg flex items-center justify-center mb-1.5 {{ $card['icon_bg'] }}">
+                            <x-dynamic-component :component="$card['icon']" class="w-4 h-4 {{ $card['icon_color'] }}" />
+                        </span>
+                        <p class="text-2xl font-extrabold tracking-tight leading-none {{ $card['value_color'] }}">{{ $card['value'] }}</p>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 leading-tight">{{ $card['label'] }}</p>
                     </a>
                 @endforeach
             </div>
@@ -280,20 +284,20 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Entry From</label>
-                        <input type="date" name="entry_from" value="{{ request('entry_from') }}"
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Entry Date</label>
+                        <input type="date" name="entry_date" value="{{ request('entry_date') }}"
                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Entry To</label>
-                        <input type="date" name="entry_to" value="{{ request('entry_to') }}"
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Due Date</label>
+                        <input type="date" name="due_date" value="{{ request('due_date') }}"
                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
                     <div class="flex gap-2">
                         <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
                             Filter
                         </button>
-                        @if(request()->hasAny(['project_name', 'project_number', 'location', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine', 'reason_to_ignore', 'entry_from', 'entry_to']))
+                        @if(request()->hasAny(['project_name', 'project_number', 'location', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine', 'reason_to_ignore', 'entry_date', 'due_date']))
                             <a href="{{ route('scope-review.index') }}"
                                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md">
                                 Clear
