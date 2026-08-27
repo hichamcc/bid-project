@@ -167,6 +167,59 @@
             </div>
         @endif
 
+        {{-- ============ SKIP PROJECT NUMBERS ============ --}}
+        @if(count($skips))
+            <form method="POST" action="{{ route('admin.scope-reconcile.approve-skips') }}"
+                  x-data="{ count: {{ count($skips) }} }"
+                  onsubmit="return confirm('Clear the project number and mark these scope reviews as Skipped?');">
+                @csrf
+                <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Skip Project Numbers ({{ count($skips) }})</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Project number is the placeholder text "skip". Confirm to clear the number and set the decision to <span class="font-medium">Skipped</span>.</p>
+                        </div>
+                        <button type="submit"
+                                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-gray-700 hover:bg-gray-800 text-white text-sm font-medium"
+                                x-bind:disabled="count === 0">
+                            Confirm &amp; Skip (<span x-text="count"></span>)
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th class="px-4 py-2 w-10">
+                                        <input type="checkbox" checked
+                                               @change="$root.querySelectorAll('[data-skip-cb]').forEach(cb => cb.checked = $event.target.checked); count = $root.querySelectorAll('[data-skip-cb]:checked').length"
+                                               class="rounded border-gray-300 dark:border-gray-600 text-gray-700 focus:ring-gray-500">
+                                    </th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-300">Scope Review</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-300">Current Project #</th>
+                                    <th class="px-4 py-2 text-left font-medium text-gray-500 dark:text-gray-300">Current Decision</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach($skips as $sr)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                        <td class="px-4 py-2">
+                                            <input type="checkbox" data-skip-cb checked
+                                                   name="ids[]" value="{{ $sr->id }}"
+                                                   @change="count = $root.querySelectorAll('[data-skip-cb]:checked').length"
+                                                   class="rounded border-gray-300 dark:border-gray-600 text-gray-700 focus:ring-gray-500">
+                                        </td>
+                                        <td class="px-4 py-2 text-gray-700 dark:text-gray-300">{{ $sr->project_name }}</td>
+                                        <td class="px-4 py-2 font-medium text-gray-900 dark:text-gray-100">{{ $sr->project_number }}</td>
+                                        <td class="px-4 py-2 text-gray-500 dark:text-gray-400">{{ $sr->decision ?? '—' }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </form>
+        @endif
+
     </div>
 </div>
 @endsection

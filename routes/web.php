@@ -139,6 +139,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // by matching project_number to job_number. Not linked from any menu.
     Route::get('/scope-reconcile', [\App\Http\Controllers\Admin\ScopeReconcileController::class, 'index'])->name('scope-reconcile.index');
     Route::post('/scope-reconcile/approve', [\App\Http\Controllers\Admin\ScopeReconcileController::class, 'approve'])->name('scope-reconcile.approve');
+    Route::post('/scope-reconcile/approve-skips', [\App\Http\Controllers\Admin\ScopeReconcileController::class, 'approveSkips'])->name('scope-reconcile.approve-skips');
 
     Route::get('/allocation', [AllocationController::class, 'index'])->name('allocation.index');
     Route::post('/allocation', [AllocationController::class, 'store'])->name('allocation.store');
