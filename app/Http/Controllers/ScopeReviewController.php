@@ -49,7 +49,11 @@ class ScopeReviewController extends Controller
             $query->where('location', 'like', '%' . $request->location . '%');
         }
         if ($request->filled('search')) {
-            $query->where('project_name', 'like', '%' . $request->search . '%');
+            $term = '%' . $request->search . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('project_name', 'like', $term)
+                  ->orWhere('project_number', 'like', $term);
+            });
         }
         if ($request->filled('ready_for_assignment')) {
             $query->readyForAssignment();
