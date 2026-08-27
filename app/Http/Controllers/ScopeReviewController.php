@@ -25,6 +25,9 @@ class ScopeReviewController extends Controller
         if ($request->filled('platform')) {
             $query->where('platform', $request->platform);
         }
+        if ($request->filled('reason_to_ignore')) {
+            $query->where('reason_to_ignore', $request->reason_to_ignore);
+        }
         if ($request->filled('project_type')) {
             $query->where('project_type', $request->project_type);
         }
@@ -411,6 +414,7 @@ class ScopeReviewController extends Controller
                 'project_type'           => 'nullable|required_if:decision,approved|in:MU,NON_MU',
                 'decision'               => 'nullable|in:approved,rfi_requested,not_in_scope,skipped,pending',
                 'duration'               => 'nullable|string|max:255',
+                'reason_to_ignore'       => 'nullable|string|max:255',
                 'estimator_notes'        => 'nullable|string',
                 'uploaded_in_oh'         => 'nullable|boolean',
             ]);
@@ -435,6 +439,7 @@ class ScopeReviewController extends Controller
             'decision'         => 'required|in:approved,rfi_requested,not_in_scope,skipped,pending',
             'duration'         => 'nullable|string|max:255',
             'bid_stage'        => 'nullable|string|max:255',
+            'reason_to_ignore' => 'nullable|string|max:255',
             'estimator_notes'  => 'nullable|string',
             'uploaded_in_oh'   => 'nullable|boolean',
         ]);
@@ -449,11 +454,12 @@ class ScopeReviewController extends Controller
      * shown in the timeline.
      */
     private const TRACKED_HISTORY_FIELDS = [
-        'decision'        => 'Bid Decision',
-        'bid_stage'       => 'Bid Stage',
-        'duration'        => 'Duration',
-        'estimator_notes' => 'Notes',
-        'notes'           => 'Notes',
+        'decision'         => 'Bid Decision',
+        'bid_stage'        => 'Bid Stage',
+        'reason_to_ignore' => 'Reason to Ignore',
+        'duration'         => 'Duration',
+        'estimator_notes'  => 'Notes',
+        'notes'            => 'Notes',
     ];
 
     /**

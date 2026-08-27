@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BidStage;
 use App\Models\Platform;
+use App\Models\ReasonToIgnore;
 use App\Models\ScopeReview;
 use App\Models\Source;
 use Illuminate\Http\Request;
@@ -14,12 +15,13 @@ class SourceController extends Controller
 {
     public function index(Request $request)
     {
-        // One page manages Sources, Platforms and Bid Stages (three tables).
-        $sources   = Source::ordered()->get();
-        $platforms = Platform::ordered()->get();
-        $bidStages = BidStage::ordered()->get();
+        // One page manages Sources, Platforms, Bid Stages and Reasons to Ignore (four tables).
+        $sources         = Source::ordered()->get();
+        $platforms       = Platform::ordered()->get();
+        $bidStages       = BidStage::ordered()->get();
+        $reasonsToIgnore = ReasonToIgnore::ordered()->get();
 
-        return view('admin.sources.index', compact('sources', 'platforms', 'bidStages'));
+        return view('admin.sources.index', compact('sources', 'platforms', 'bidStages', 'reasonsToIgnore'));
     }
 
     public function create()

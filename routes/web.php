@@ -88,6 +88,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Platforms are managed on the same page as Sources, so no separate index.
     Route::resource('platforms', \App\Http\Controllers\Admin\PlatformController::class)->except(['index', 'show']);
     Route::post('platforms/update-order', [\App\Http\Controllers\Admin\PlatformController::class, 'updateOrder'])->name('platforms.update-order');
+
+    // Reasons to ignore are managed on the same page as Sources, so no separate index.
+    Route::post('reason-to-ignore/update-order', [\App\Http\Controllers\Admin\ReasonToIgnoreController::class, 'updateOrder'])->name('reason-to-ignore.update-order');
+    Route::resource('reason-to-ignore', \App\Http\Controllers\Admin\ReasonToIgnoreController::class)
+        ->parameters(['reason-to-ignore' => 'reasonToIgnore'])
+        ->except(['index', 'show']);
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

@@ -239,6 +239,20 @@
                             <option value="skipped" {{ request('decision') === 'skipped' ? 'selected' : '' }}>Skipped</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Reason to Ignore</label>
+                        @php $reasonFilterOptions = \App\Models\ReasonToIgnore::active()->ordered()->pluck('name')->all(); @endphp
+                        <select name="reason_to_ignore" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                            <option value="">All</option>
+                            @foreach($reasonFilterOptions as $reasonOption)
+                                <option value="{{ $reasonOption }}" {{ request('reason_to_ignore') === $reasonOption ? 'selected' : '' }}>{{ $reasonOption }}</option>
+                            @endforeach
+                            {{-- Keep a currently-applied filter value even if that reason is now inactive. --}}
+                            @if(request('reason_to_ignore') && !in_array(request('reason_to_ignore'), $reasonFilterOptions, true))
+                                <option value="{{ request('reason_to_ignore') }}" selected>{{ request('reason_to_ignore') }}</option>
+                            @endif
+                        </select>
+                    </div>
                     @if(auth()->user()->isAdmin())
                         <div>
                             <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Estimator</label>
@@ -256,7 +270,7 @@
                         <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
                             Filter
                         </button>
-                        @if(request()->hasAny(['search', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine']))
+                        @if(request()->hasAny(['search', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine', 'reason_to_ignore']))
                             <a href="{{ route('scope-review.index') }}"
                                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md">
                                 Clear
@@ -464,6 +478,7 @@
                                                     'decision' => $scopeReview->decision,
                                                     'project_type' => $scopeReview->project_type,
                                                     'bid_stage' => $scopeReview->bid_stage,
+                                                    'reason_to_ignore' => $scopeReview->reason_to_ignore,
                                                     'duration' => $scopeReview->duration,
                                                     'uploaded_in_oh' => $scopeReview->uploaded_in_oh,
                                                     'estimator_notes' => $scopeReview->estimator_notes,
@@ -666,6 +681,10 @@
                                 <dt class="text-gray-500 dark:text-gray-400">Bid Stage</dt>
                                 <dd class="text-gray-900 dark:text-gray-100 text-right" x-text="current.bid_stage || '—'"></dd>
                             </div>
+                            <div x-show="current.reason_to_ignore" class="flex justify-between gap-3">
+                                <dt class="text-gray-500 dark:text-gray-400">Reason to Ignore</dt>
+                                <dd class="text-gray-900 dark:text-gray-100 text-right" x-text="current.reason_to_ignore"></dd>
+                            </div>
                             <div class="flex justify-between gap-3">
                                 <dt class="text-gray-500 dark:text-gray-400">Duration</dt>
                                 <dd class="text-gray-900 dark:text-gray-100" x-text="current.duration || '—'"></dd>
@@ -690,6 +709,10 @@
                                 <dt class="text-gray-500 dark:text-gray-400">Bid Stage</dt>
                                 <dd class="text-gray-900 dark:text-gray-100 text-right" x-text="current.bid_stage"></dd>
                             </div>
+                            <div x-show="current.reason_to_ignore" class="flex justify-between gap-3 text-sm mb-2">
+                                <dt class="text-gray-500 dark:text-gray-400">Reason to Ignore</dt>
+                                <dd class="text-gray-900 dark:text-gray-100 text-right" x-text="current.reason_to_ignore"></dd>
+                            </div>
                             <p class="text-sm text-gray-400 italic">Not reviewed yet.</p>
                         </div>
                     </template>
@@ -703,7 +726,7 @@
                             <li class="flex items-start gap-3 text-sm"
                                 x-data="{
                                     decisionLabels: {approved: 'Approved', rfi_requested: 'RFI Requested', not_in_scope: 'Not In Scope', skipped: 'Skipped', pending: 'Pending'},
-                                    fieldLabels: {decision: 'Bid Decision', bid_stage: 'Bid Stage', duration: 'Duration', estimator_notes: 'Notes', notes: 'Notes'},
+                                    fieldLabels: {decision: 'Bid Decision', bid_stage: 'Bid Stage', reason_to_ignore: 'Reason to Ignore', duration: 'Duration', estimator_notes: 'Notes', notes: 'Notes'},
                                     get isDecision() { return entry.field === 'decision' || (!entry.field && entry.decision); },
                                     get fieldLabel() { return this.fieldLabels[entry.field] || 'Status'; },
                                     get newDisplay() {

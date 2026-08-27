@@ -163,6 +163,25 @@
                             </div>
 
                             <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason to Ignore</label>
+                                @php
+                                    $currentReason = old('reason_to_ignore', $scopeReview->reason_to_ignore);
+                                    $reasonOptions = \App\Models\ReasonToIgnore::active()->ordered()->pluck('name')->all();
+                                @endphp
+                                <select name="reason_to_ignore"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('reason_to_ignore') border-red-500 @enderror">
+                                    <option value="">-- Select reason --</option>
+                                    @foreach($reasonOptions as $reasonOption)
+                                        <option value="{{ $reasonOption }}" {{ $currentReason === $reasonOption ? 'selected' : '' }}>{{ $reasonOption }}</option>
+                                    @endforeach
+                                    @if($currentReason && !in_array($currentReason, $reasonOptions, true))
+                                        <option value="{{ $currentReason }}" selected>{{ $currentReason }}</option>
+                                    @endif
+                                </select>
+                                @error('reason_to_ignore') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Bid Decision</label>
                                 <input type="hidden" name="decision" :value="decision">
                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -277,6 +296,25 @@
                                     @endif
                                 </select>
                                 @error('bid_stage') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Reason to Ignore</label>
+                                @php
+                                    $currentReason = old('reason_to_ignore', $scopeReview->reason_to_ignore);
+                                    $reasonOptions = \App\Models\ReasonToIgnore::active()->ordered()->pluck('name')->all();
+                                @endphp
+                                <select name="reason_to_ignore"
+                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('reason_to_ignore') border-red-500 @enderror">
+                                    <option value="">-- Select reason --</option>
+                                    @foreach($reasonOptions as $reasonOption)
+                                        <option value="{{ $reasonOption }}" {{ $currentReason === $reasonOption ? 'selected' : '' }}>{{ $reasonOption }}</option>
+                                    @endforeach
+                                    @if($currentReason && !in_array($currentReason, $reasonOptions, true))
+                                        <option value="{{ $currentReason }}" selected>{{ $currentReason }}</option>
+                                    @endif
+                                </select>
+                                @error('reason_to_ignore') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
 
                             <div class="md:col-span-2">
