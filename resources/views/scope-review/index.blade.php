@@ -164,7 +164,7 @@
                             <x-dynamic-component :component="$card['icon']" class="w-4 h-4 {{ $card['icon_color'] }}" />
                         </span>
                         <p class="text-2xl font-extrabold tracking-tight leading-none {{ $card['value_color'] }}">{{ $card['value'] }}</p>
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 leading-tight">{{ $card['label'] }}</p>
+                        <p class="text-xs font-bold text-gray-600 dark:text-gray-300 mt-1 leading-tight">{{ $card['label'] }}</p>
                     </a>
                 @endforeach
             </div>
@@ -188,16 +188,22 @@
             <div class="p-4 border-b border-gray-200 dark:border-gray-700">
                 <form method="GET" action="{{ route('scope-review.index') }}" class="flex flex-wrap gap-3 items-end">
                     {{-- Filters ordered to match the table columns:
-                         Project # · Source · Platform · Project Name · Location · Estimator · Type · Decision,
-                         followed by extra filters with no column (Reason to Ignore, Entry date range). --}}
+                         Project # · Project Name · Source · Platform · Location · Estimator · Type · Decision,
+                         followed by extra filters with no column (Reason to Ignore, Entry/Due date). --}}
                     <div class="min-w-32">
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Project #</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Project #</label>
                         <input type="text" name="project_number" value="{{ request('project_number') }}"
                                placeholder="Search number..."
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
+                    <div class="flex-1 min-w-40">
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Project Name</label>
+                        <input type="text" name="project_name" value="{{ request('project_name') }}"
+                               placeholder="Search name..."
+                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Source</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Source</label>
                         @php $sourceFilterOptions = \App\Models\Source::active()->ordered()->pluck('name')->all(); @endphp
                         <select name="source"
                                 class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
@@ -212,7 +218,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Platform</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Platform</label>
                         @php $platformFilterOptions = \App\Models\Platform::active()->ordered()->pluck('name')->all(); @endphp
                         <select name="platform"
                                 class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
@@ -226,20 +232,14 @@
                             @endif
                         </select>
                     </div>
-                    <div class="flex-1 min-w-40">
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Project Name</label>
-                        <input type="text" name="project_name" value="{{ request('project_name') }}"
-                               placeholder="Search name..."
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    </div>
                     <div class="flex-1 min-w-36">
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Location</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Location</label>
                         <input type="text" name="location" value="{{ request('location') }}"
                                placeholder="Search location..."
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Estimator</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Estimator</label>
                         <select name="assigned_estimator_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <option value="">All</option>
                             @foreach($estimators as $estimator)
@@ -250,7 +250,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Project Type</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Project Type</label>
                         <select name="project_type" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <option value="">All</option>
                             <option value="MU" {{ request('project_type') === 'MU' ? 'selected' : '' }}>MU</option>
@@ -258,7 +258,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Decision</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Decision</label>
                         <select name="decision" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <option value="">All</option>
                             <option value="__pending__" {{ request('decision') === '__pending__' ? 'selected' : '' }}>Not Yet Reviewed</option>
@@ -270,7 +270,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Reason to Ignore</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Reason to Ignore</label>
                         @php $reasonFilterOptions = \App\Models\ReasonToIgnore::active()->ordered()->pluck('name')->all(); @endphp
                         <select name="reason_to_ignore" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                             <option value="">All</option>
@@ -284,12 +284,12 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Entry Date</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Entry Date</label>
                         <input type="date" name="entry_date" value="{{ request('entry_date') }}"
                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Due Date</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Due Date</label>
                         <input type="date" name="due_date" value="{{ request('due_date') }}"
                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
@@ -363,9 +363,9 @@
                             @php
                                 $sortableHeaders = [
                                     'project_number' => 'Project #',
+                                    'project_name'   => 'Project Name',
                                     'source'         => 'Source',
                                     'platform'       => 'Platform',
-                                    'project_name'   => 'Project Name',
                                     'location'       => 'Location',
                                     'due_date'       => 'Due',
                                 ];
@@ -388,7 +388,7 @@
                                 </th>
                             @endforeach
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Estimator</th>
-                            @foreach(['type' => 'Type', 'decision' => 'Decision', 'bid_stage' => 'Bid Stage'] as $key => $label)
+                            @foreach(['type' => 'Type', 'decision' => 'Decision', 'reason_to_ignore' => 'Reason to Ignore', 'bid_stage' => 'Bid Stage'] as $key => $label)
                                 @php $h = $sortLink($key); @endphp
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                     <a href="{{ $h['url'] }}" class="group inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-100">
@@ -424,12 +424,6 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {{ $scopeReview->project_number ?? '—' }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $scopeReview->source ?? '—' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                    {{ $scopeReview->platform ?? '—' }}
-                                </td>
                                 <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                                     @if($scopeReview->project_link)
                                         <a href="{{ $scopeReview->project_link }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">
@@ -438,6 +432,12 @@
                                     @else
                                         {{ $scopeReview->project_name }}
                                     @endif
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $scopeReview->source ?? '—' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $scopeReview->platform ?? '—' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $scopeReview->location ?? '—' }}
@@ -486,6 +486,9 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $scopeReview->reason_to_ignore ?? '—' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                     {{ $scopeReview->bid_stage ?? '—' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -515,7 +518,7 @@
                                                         'new_value' => $h->new_value,
                                                         'decision' => $h->decision,
                                                         'user' => $h->user?->name,
-                                                        'changed_at' => $h->created_at->format('M d, Y g:i A'),
+                                                        'changed_at' => $h->created_at->copy()->setTimezone('America/New_York')->format('M d, Y g:i A') . ' EST',
                                                     ]),
                                                 ]) }})"
                                                 title="View"
@@ -575,7 +578,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ auth()->user()->isAdmin() ? 12 : 11 }}" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="{{ auth()->user()->isAdmin() ? 13 : 12 }}" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     No scope review entries yet.
                                 </td>
                             </tr>
@@ -747,7 +750,7 @@
 
                 <!-- Status change history -->
                 <div class="p-6 border-t border-gray-200 dark:border-gray-700" x-show="current.status_history && current.status_history.length">
-                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Status History</h4>
+                    <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Activities</h4>
                     <ul class="space-y-3">
                         <template x-for="(entry, i) in (current.status_history || [])" :key="i">
                             <li class="flex items-start gap-3 text-sm"

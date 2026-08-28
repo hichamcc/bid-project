@@ -80,9 +80,10 @@ class ScopeReviewController extends Controller
             'project_name'   => 'project_name',
             'location'       => 'location',
             'due_date'       => 'due_date',
-            'type'           => 'project_type',
-            'decision'       => 'decision',
-            'bid_stage'      => 'bid_stage',
+            'type'             => 'project_type',
+            'decision'         => 'decision',
+            'reason_to_ignore' => 'reason_to_ignore',
+            'bid_stage'        => 'bid_stage',
         ];
 
         $sort = $request->input('sort');
