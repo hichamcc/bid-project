@@ -349,12 +349,31 @@
                 </div>
             @endif
 
+            @php $isAdminView = auth()->user()->isAdmin(); @endphp
+            {{-- Freeze the first columns (checkbox + Project # + Project Name) while scrolling horizontally.
+                 Sticky cells need an opaque background, so they don't show the row hover/selected tint. --}}
+            <style>
+                .sr-table th.sticky-col, .sr-table td.sticky-col { position: sticky; z-index: 1; background: #fff; }
+                .dark .sr-table th.sticky-col, .dark .sr-table td.sticky-col { background: #1f2937; } /* gray-800 */
+                .sr-table thead th.sticky-col { z-index: 3; background: #f9fafb; }                    /* gray-50 */
+                .dark .sr-table thead th.sticky-col { background: #374151; }                          /* gray-700 */
+                @if($isAdminView)
+                    .sr-table .sticky-col-0 { left: 0;      width: 48px;  min-width: 48px; }
+                    .sr-table .sticky-col-1 { left: 48px;   width: 110px; min-width: 110px; }
+                    .sr-table .sticky-col-2 { left: 158px;  width: 240px; min-width: 240px; }
+                    .sr-table .sticky-col-2 { box-shadow: 6px 0 6px -4px rgba(0,0,0,0.12); }
+                @else
+                    .sr-table .sticky-col-1 { left: 0;      width: 110px; min-width: 110px; }
+                    .sr-table .sticky-col-2 { left: 110px;  width: 240px; min-width: 240px; }
+                    .sr-table .sticky-col-2 { box-shadow: 6px 0 6px -4px rgba(0,0,0,0.12); }
+                @endif
+            </style>
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <table class="sr-table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            @if(auth()->user()->isAdmin())
-                                <th class="px-4 py-3 w-10">
+                            @if($isAdminView)
+                                <th class="sticky-col sticky-col-0 px-4 py-3">
                                     <input type="checkbox" @change="toggleAll($event)" :checked="allSelected"
                                            title="Select all"
                                            class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500">
@@ -370,9 +389,10 @@
                                     'due_date'       => 'Due',
                                 ];
                             @endphp
+                            @php $stickyHeaderClass = ['project_number' => 'sticky-col sticky-col-1', 'project_name' => 'sticky-col sticky-col-2']; @endphp
                             @foreach($sortableHeaders as $key => $label)
                                 @php $h = $sortLink($key); @endphp
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <th class="{{ $stickyHeaderClass[$key] ?? '' }} px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                     <a href="{{ $h['url'] }}" class="group inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-100">
                                         <span>{{ $label }}</span>
                                         @if($h['active'])
@@ -412,8 +432,8 @@
                         @forelse($scopeReviews as $scopeReview)
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700"
                                 :class="selected.includes('{{ $scopeReview->id }}') ? 'bg-red-50 dark:bg-red-900/10' : ''">
-                                @if(auth()->user()->isAdmin())
-                                    <td class="px-4 py-4 w-10">
+                                @if($isAdminView)
+                                    <td class="sticky-col sticky-col-0 px-4 py-4">
                                         @unless($scopeReview->isConverted())
                                             <input type="checkbox" data-row-checkbox value="{{ $scopeReview->id }}"
                                                    x-model="selected"
@@ -421,10 +441,10 @@
                                         @endunless
                                     </td>
                                 @endif
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                <td class="sticky-col sticky-col-1 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {{ $scopeReview->project_number ?? '—' }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                                <td class="sticky-col sticky-col-2 px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
                                     @if($scopeReview->project_link)
                                         <a href="{{ $scopeReview->project_link }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">
                                             {{ $scopeReview->project_name }}
