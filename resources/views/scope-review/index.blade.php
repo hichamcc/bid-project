@@ -164,7 +164,7 @@
                             <x-dynamic-component :component="$card['icon']" class="w-4 h-4 {{ $card['icon_color'] }}" />
                         </span>
                         <p class="text-2xl font-extrabold tracking-tight leading-none {{ $card['value_color'] }}">{{ $card['value'] }}</p>
-                        <p class="text-xs font-bold text-gray-600 dark:text-gray-300 mt-1 leading-tight">{{ $card['label'] }}</p>
+                        <p class="text-sm font-bold text-gray-600 dark:text-gray-300 mt-1 leading-tight">{{ $card['label'] }}</p>
                     </a>
                 @endforeach
             </div>
