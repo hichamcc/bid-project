@@ -129,6 +129,12 @@ Route::middleware(['auth', 'role:admin,estimator,head_estimator'])->prefix('scop
     });
 
     Route::post('/bulk-destroy', [\App\Http\Controllers\ScopeReviewController::class, 'bulkDestroy'])->name('bulk-destroy');
+
+    // Append-able notes on a scope review (separate from the legacy single-note fields).
+    Route::post('/{scopeReview}/notes', [\App\Http\Controllers\ScopeReviewNoteController::class, 'store'])->name('notes.store');
+    Route::put('/{scopeReview}/notes/{note}', [\App\Http\Controllers\ScopeReviewNoteController::class, 'update'])->name('notes.update');
+    Route::delete('/{scopeReview}/notes/{note}', [\App\Http\Controllers\ScopeReviewNoteController::class, 'destroy'])->name('notes.destroy');
+
     Route::get('/{scopeReview}/edit', [\App\Http\Controllers\ScopeReviewController::class, 'edit'])->name('edit');
     Route::put('/{scopeReview}', [\App\Http\Controllers\ScopeReviewController::class, 'update'])->name('update');
     Route::delete('/{scopeReview}', [\App\Http\Controllers\ScopeReviewController::class, 'destroy'])->name('destroy');

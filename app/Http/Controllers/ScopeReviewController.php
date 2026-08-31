@@ -17,7 +17,7 @@ class ScopeReviewController extends Controller
     {
         $user = Auth::user();
 
-        $query = ScopeReview::with(['assignedEstimator', 'creator', 'statusHistories.user']);
+        $query = ScopeReview::with(['assignedEstimator', 'creator', 'statusHistories.user', 'noteEntries.user']);
 
         if ($request->filled('source')) {
             $query->where('source', $request->source);
@@ -70,6 +70,9 @@ class ScopeReviewController extends Controller
         }
         if ($request->filled('due_date')) {
             $query->whereDate('due_date', $request->due_date);
+        }
+        if ($request->filled('uploaded_in_oh')) {
+            $query->where('uploaded_in_oh', true);
         }
 
         // Sorting: whitelist of sortable columns (map header -> DB column).
@@ -257,6 +260,13 @@ class ScopeReviewController extends Controller
                 'bg' => 'bg-gray-50 dark:bg-gray-700/40', 'icon_bg' => 'bg-gray-200 dark:bg-gray-600',
                 'icon_color' => 'text-gray-500 dark:text-gray-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
                 'icon' => 'phosphor-prohibit',
+            ],
+            [
+                'label' => 'Uploaded in OH', 'value' => ScopeReview::where('uploaded_in_oh', true)->count(),
+                'href' => route('scope-review.index', ['uploaded_in_oh' => 1]),
+                'bg' => 'bg-purple-50 dark:bg-purple-900/20', 'icon_bg' => 'bg-purple-100 dark:bg-purple-900/40',
+                'icon_color' => 'text-purple-500 dark:text-purple-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
+                'icon' => 'phosphor-cloud-arrow-up',
             ],
         ];
     }

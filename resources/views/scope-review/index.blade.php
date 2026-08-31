@@ -1,6 +1,65 @@
 @extends('components.layouts.app')
 
 @section('content')
+{{-- Notes-thread Alpine component defined globally on page load, because the
+     partial's markup is injected into the modal via innerHTML (where an inline
+     <script> would never execute). --}}
+<script>
+    // Plain-JS notes controller (no Alpine) so buttons can't double-bind when the
+    // notes partial is injected into the modal via innerHTML. Each button passes
+    // `this`; we walk up to the enclosing .sr-notes widget for its data attributes.
+    window.srNotes = {
+        root(el) { return el.closest('.sr-notes'); },
+        async send(el, url, method, body) {
+            const widget = this.root(el);
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        'X-Scope-Modal': '1',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': widget.dataset.csrf,
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/html',
+                    },
+                    body: body ? JSON.stringify(body) : null,
+                });
+                if (!res.ok) throw new Error('bad status ' + res.status);
+                widget.outerHTML = await res.text();
+            } catch (e) {
+                alert('Could not save the note. Please try again.');
+            }
+        },
+        add(el) {
+            const widget = this.root(el);
+            const ta = widget.querySelector('[data-note-new]');
+            const body = (ta.value || '').trim();
+            if (!body) return;
+            this.send(el, widget.dataset.storeUrl, 'POST', { body });
+        },
+        startEdit(el, id) {
+            const widget = this.root(el);
+            widget.querySelector('[data-note-read="' + id + '"]').classList.add('hidden');
+            widget.querySelector('[data-note-edit="' + id + '"]').classList.remove('hidden');
+        },
+        cancelEdit(el, id) {
+            const widget = this.root(el);
+            widget.querySelector('[data-note-edit="' + id + '"]').classList.add('hidden');
+            widget.querySelector('[data-note-read="' + id + '"]').classList.remove('hidden');
+        },
+        saveEdit(el, id) {
+            const widget = this.root(el);
+            const body = (widget.querySelector('[data-note-edit-input="' + id + '"]').value || '').trim();
+            if (!body) return;
+            this.send(el, widget.dataset.baseUrl + '/' + id, 'PUT', { body });
+        },
+        destroy(el, id) {
+            if (!confirm('Delete this note?')) return;
+            const widget = this.root(el);
+            this.send(el, widget.dataset.baseUrl + '/' + id, 'DELETE', null);
+        },
+    };
+</script>
 <div class="py-12"
      x-data="{
         panelOpen: false,
@@ -40,6 +99,12 @@
         formLoading: false,
         formSubmitting: false,
         formTitle: '',
+        // Alpine's mutation observer (v3) auto-initialises x-data nodes added via
+        // innerHTML, so we just set the HTML — no manual initTree (that would
+        // double-initialise and cross-bind click handlers).
+        setBody(html) {
+            this.$refs.formBody.innerHTML = html;
+        },
         async openForm(url, title) {
             this.formTitle = title;
             this.formOpen = true;
@@ -47,7 +112,7 @@
             this.$refs.formBody.innerHTML = '';
             try {
                 const res = await fetch(url, { headers: { 'X-Scope-Modal': '1', 'X-Requested-With': 'XMLHttpRequest' } });
-                this.$refs.formBody.innerHTML = await res.text();
+                this.setBody(await res.text());
             } catch (e) {
                 this.$refs.formBody.innerHTML = '<p class=\'text-red-600 p-4\'>Failed to load the form. Please try again.</p>';
             } finally {
@@ -71,7 +136,7 @@
                 });
                 if (res.status === 422) {
                     // Validation errors — re-render the form partial with messages.
-                    this.$refs.formBody.innerHTML = await res.text();
+                    this.setBody(await res.text());
                 } else if (res.ok) {
                     window.location.reload();
                 } else {
@@ -148,12 +213,12 @@
 
         <!-- Headline Stat Cards (admin) -->
         @if($statCards)
-            {{-- One row of compact cards. grid-cols-6 isn't in the compiled bundle,
-                 so the large-screen 6-column layout is done via a scoped media query. --}}
+            {{-- One row of compact cards. grid-cols-7 isn't in the compiled bundle,
+                 so the large-screen layout is done via a scoped media query. --}}
             <style>
                 .stat-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
-                @media (min-width: 640px)  { .stat-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-                @media (min-width: 1024px) { .stat-cards { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; } }
+                @media (min-width: 640px)  { .stat-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+                @media (min-width: 1024px) { .stat-cards { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.6rem; } }
             </style>
             <div class="stat-cards">
                 @foreach($statCards as $card)
@@ -297,7 +362,7 @@
                         <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
                             Filter
                         </button>
-                        @if(request()->hasAny(['project_name', 'project_number', 'location', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine', 'reason_to_ignore', 'entry_date', 'due_date']))
+                        @if(request()->hasAny(['project_name', 'project_number', 'location', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine', 'reason_to_ignore', 'entry_date', 'due_date', 'uploaded_in_oh']))
                             <a href="{{ route('scope-review.index') }}"
                                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md">
                                 Clear
@@ -532,6 +597,13 @@
                                                     'duration' => $scopeReview->duration,
                                                     'uploaded_in_oh' => $scopeReview->uploaded_in_oh,
                                                     'estimator_notes' => $scopeReview->estimator_notes,
+                                                    'additional_notes' => $scopeReview->noteEntries->map(fn($n) => [
+                                                        'user' => $n->user?->name ?? 'Unknown',
+                                                        'context' => $n->context,
+                                                        'body' => $n->body,
+                                                        'at' => $n->created_at->copy()->setTimezone('America/New_York')->format('M d, Y g:i A') . ' EST',
+                                                        'edited' => $n->updated_at->gt($n->created_at),
+                                                    ]),
                                                     'status_history' => $scopeReview->statusHistories->map(fn($h) => [
                                                         'field' => $h->field,
                                                         'old_value' => $h->old_value,
@@ -751,6 +823,11 @@
                                 <dt class="text-gray-500 dark:text-gray-400 mb-1">Notes</dt>
                                 <dd class="text-gray-900 dark:text-gray-100 whitespace-pre-line" x-text="current.estimator_notes"></dd>
                             </div>
+                            <div x-show="current.additional_notes && current.additional_notes.length" class="space-y-1.5">
+                                <template x-for="(note, i) in (current.additional_notes || [])" :key="i">
+                                    <p class="text-gray-900 dark:text-gray-100 whitespace-pre-line border-l-2 border-gray-300 dark:border-gray-600 pl-2" x-text="note.body"></p>
+                                </template>
+                            </div>
                         </dl>
                     </template>
                     <template x-if="!current.decision">
@@ -777,8 +854,12 @@
                                 x-data="{
                                     decisionLabels: {approved: 'Approved', rfi_requested: 'RFI Requested', not_in_scope: 'Not In Scope', skipped: 'Skipped', pending: 'Pending'},
                                     fieldLabels: {decision: 'Bid Decision', bid_stage: 'Bid Stage', reason_to_ignore: 'Reason to Ignore', duration: 'Duration', estimator_notes: 'Notes', notes: 'Notes'},
+                                    noteVerbs: {note_added: 'added', note_edited: 'edited', note_deleted: 'deleted'},
+                                    get isNote() { return ['note_added','note_edited','note_deleted'].includes(entry.field); },
                                     get isDecision() { return entry.field === 'decision' || (!entry.field && entry.decision); },
                                     get fieldLabel() { return this.fieldLabels[entry.field] || 'Status'; },
+                                    get noteVerb() { return this.noteVerbs[entry.field] || 'changed'; },
+                                    get noteText() { return entry.field === 'note_deleted' ? entry.old_value : entry.new_value; },
                                     get newDisplay() {
                                         if (this.isDecision) return this.decisionLabels[entry.new_value || entry.decision] || (entry.new_value || entry.decision);
                                         return entry.new_value;
@@ -788,20 +869,29 @@
                                       :class="{
                                           'bg-green-500': isDecision && (entry.new_value || entry.decision) === 'approved',
                                           'bg-yellow-500': isDecision && (entry.new_value || entry.decision) === 'rfi_requested',
-                                          'bg-red-500': isDecision && (entry.new_value || entry.decision) === 'not_in_scope',
+                                          'bg-red-500': (isDecision && (entry.new_value || entry.decision) === 'not_in_scope') || entry.field === 'note_deleted',
                                           'bg-gray-500': isDecision && (entry.new_value || entry.decision) === 'skipped',
-                                          'bg-blue-500': isDecision && (entry.new_value || entry.decision) === 'pending',
-                                          'bg-blue-500': !isDecision
+                                          'bg-blue-500': (isDecision && (entry.new_value || entry.decision) === 'pending') || (!isDecision && !isNote),
+                                          'bg-purple-500': isNote && entry.field !== 'note_deleted'
                                       }"></span>
                                 <div class="min-w-0">
-                                    {{-- Decision changes read "Marked X"; other fields read "Field updated to Y" --}}
-                                    <template x-if="isDecision">
+                                    {{-- Note events read "Note added/edited/deleted by X" with a quote; decision changes read "Marked X"; other fields read "Field updated to Y". --}}
+                                    <template x-if="isNote">
+                                        <div>
+                                            <p class="text-gray-900 dark:text-gray-100">
+                                                Note <span class="font-medium" x-text="noteVerb"></span>
+                                                <template x-if="entry.user"><span> by <span x-text="entry.user"></span></span></template>
+                                            </p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 whitespace-pre-line border-l-2 border-gray-200 dark:border-gray-600 pl-2" x-text="noteText"></p>
+                                        </div>
+                                    </template>
+                                    <template x-if="!isNote && isDecision">
                                         <p class="text-gray-900 dark:text-gray-100">
                                             Marked <span class="font-medium" x-text="newDisplay"></span>
                                             <template x-if="entry.user"><span> by <span x-text="entry.user"></span></span></template>
                                         </p>
                                     </template>
-                                    <template x-if="!isDecision">
+                                    <template x-if="!isNote && !isDecision">
                                         <p class="text-gray-900 dark:text-gray-100">
                                             <span class="font-medium" x-text="fieldLabel"></span>
                                             <template x-if="newDisplay">

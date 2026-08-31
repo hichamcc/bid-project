@@ -386,3 +386,13 @@
                 </button>
             </div>
         </form>
+
+        {{-- Append-able notes thread (separate from the single Notes fields above).
+             Kept OUTSIDE the form so its own controls never submit the main form.
+             Shown only once a legacy note field (notes / estimator_notes) has content. --}}
+        @if(trim((string) $scopeReview->notes) !== '' || trim((string) $scopeReview->estimator_notes) !== '')
+            <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">Additional Notes</h3>
+                @include('scope-review.partials.notes-thread', ['scopeReview' => $scopeReview])
+            </div>
+        @endif

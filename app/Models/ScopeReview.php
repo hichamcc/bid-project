@@ -58,6 +58,13 @@ class ScopeReview extends Model
         return $this->hasMany(ScopeReviewStatusHistory::class)->orderByDesc('created_at');
     }
 
+    // Named noteEntries (not notes) to avoid clashing with the legacy `notes`
+    // text column, which would otherwise shadow this relation.
+    public function noteEntries(): HasMany
+    {
+        return $this->hasMany(ScopeReviewNote::class)->orderBy('created_at');
+    }
+
     public function isApproved(): bool
     {
         return $this->decision === 'approved';
