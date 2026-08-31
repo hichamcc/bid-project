@@ -362,7 +362,7 @@
                         <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
                             Filter
                         </button>
-                        @if(request()->hasAny(['project_name', 'project_number', 'location', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine', 'reason_to_ignore', 'entry_date', 'due_date', 'uploaded_in_oh']))
+                        @if(request()->hasAny(['project_name', 'project_number', 'location', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine', 'reason_to_ignore', 'entry_date', 'due_date', 'uploaded_in_oh', 'not_uploaded']))
                             <a href="{{ route('scope-review.index') }}"
                                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md">
                                 Clear
@@ -762,10 +762,6 @@
                             <dt class="text-gray-500 dark:text-gray-400">Assigned Estimator</dt>
                             <dd class="text-gray-900 dark:text-gray-100" x-text="current.assigned_estimator?.name || '—'"></dd>
                         </div>
-                        <div x-show="current.notes">
-                            <dt class="text-gray-500 dark:text-gray-400 mb-1">Notes</dt>
-                            <dd class="text-gray-900 dark:text-gray-100 whitespace-pre-line" x-text="current.notes"></dd>
-                        </div>
                     </dl>
                 </div>
 
@@ -818,15 +814,6 @@
                                           :class="current.uploaded_in_oh ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'"
                                           x-text="current.uploaded_in_oh ? 'Yes' : 'No'"></span>
                                 </dd>
-                            </div>
-                            <div x-show="current.estimator_notes">
-                                <dt class="text-gray-500 dark:text-gray-400 mb-1">Notes</dt>
-                                <dd class="text-gray-900 dark:text-gray-100 whitespace-pre-line" x-text="current.estimator_notes"></dd>
-                            </div>
-                            <div x-show="current.additional_notes && current.additional_notes.length" class="space-y-1.5">
-                                <template x-for="(note, i) in (current.additional_notes || [])" :key="i">
-                                    <p class="text-gray-900 dark:text-gray-100 whitespace-pre-line border-l-2 border-gray-300 dark:border-gray-600 pl-2" x-text="note.body"></p>
-                                </template>
                             </div>
                         </dl>
                     </template>

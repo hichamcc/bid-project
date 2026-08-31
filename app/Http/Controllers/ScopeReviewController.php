@@ -74,6 +74,10 @@ class ScopeReviewController extends Controller
         if ($request->filled('uploaded_in_oh')) {
             $query->where('uploaded_in_oh', true);
         }
+        // Approved but not yet uploaded to One Hub.
+        if ($request->filled('not_uploaded')) {
+            $query->where('decision', 'approved')->where('uploaded_in_oh', false);
+        }
 
         // Sorting: whitelist of sortable columns (map header -> DB column).
         $sortable = [
@@ -262,8 +266,8 @@ class ScopeReviewController extends Controller
                 'icon' => 'phosphor-prohibit',
             ],
             [
-                'label' => 'Uploaded in OH', 'value' => ScopeReview::where('uploaded_in_oh', true)->count(),
-                'href' => route('scope-review.index', ['uploaded_in_oh' => 1]),
+                'label' => 'Not Uploaded in OH', 'value' => ScopeReview::where('decision', 'approved')->where('uploaded_in_oh', false)->count(),
+                'href' => route('scope-review.index', ['not_uploaded' => 1]),
                 'bg' => 'bg-purple-50 dark:bg-purple-900/20', 'icon_bg' => 'bg-purple-100 dark:bg-purple-900/40',
                 'icon_color' => 'text-purple-500 dark:text-purple-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
                 'icon' => 'phosphor-cloud-arrow-up',

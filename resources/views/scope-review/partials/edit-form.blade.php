@@ -113,6 +113,7 @@
                                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('notes') border-red-500 @enderror">{{ old('notes', $scopeReview->notes) }}</textarea>
                                 @error('notes') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -231,12 +232,6 @@
                                 </label>
                             </div>
 
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
-                                <textarea name="estimator_notes" rows="3"
-                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('estimator_notes') border-red-500 @enderror">{{ old('estimator_notes', $scopeReview->estimator_notes) }}</textarea>
-                                @error('estimator_notes') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -252,9 +247,6 @@
                             <p><strong>Bid Due:</strong> {{ optional($scopeReview->due_date)->format('M d, Y') ?? '—' }}</p>
                             @if($scopeReview->project_link)
                                 <p><a href="{{ $scopeReview->project_link }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">View Project Link</a></p>
-                            @endif
-                            @if($scopeReview->notes)
-                                <p><strong>Admin Notes:</strong> {{ $scopeReview->notes }}</p>
                             @endif
                         </div>
 
@@ -365,12 +357,6 @@
                                 </label>
                             </div>
 
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notes</label>
-                                <textarea name="estimator_notes" rows="3"
-                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 @error('estimator_notes') border-red-500 @enderror">{{ old('estimator_notes', $scopeReview->estimator_notes) }}</textarea>
-                                @error('estimator_notes') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -387,12 +373,9 @@
             </div>
         </form>
 
-        {{-- Append-able notes thread (separate from the single Notes fields above).
-             Kept OUTSIDE the form so its own controls never submit the main form.
-             Shown only once a legacy note field (notes / estimator_notes) has content. --}}
-        @if(trim((string) $scopeReview->notes) !== '' || trim((string) $scopeReview->estimator_notes) !== '')
-            <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">Additional Notes</h3>
-                @include('scope-review.partials.notes-thread', ['scopeReview' => $scopeReview])
-            </div>
-        @endif
+        {{-- Append-able notes thread. Kept OUTSIDE the form so its own controls
+             never submit the main form. This is now the only notes UI. --}}
+        <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">Note</h3>
+            @include('scope-review.partials.notes-thread', ['scopeReview' => $scopeReview])
+        </div>
