@@ -40,7 +40,7 @@ class GCController extends Controller
          WHERE projects.gc = gcs.name AND projects.type = 'MULTIUNIT') as mu_count,
         (SELECT COUNT(DISTINCT REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1'))
          FROM projects
-         WHERE projects.gc = gcs.name AND projects.type = 'NON MU') as non_mu_count")
+         WHERE projects.gc = gcs.name AND (projects.type = 'NON MU' OR projects.type IS NULL)) as non_mu_count")
     ->ordered()
     ->paginate(15);
 
