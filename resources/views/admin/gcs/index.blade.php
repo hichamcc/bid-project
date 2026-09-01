@@ -83,6 +83,12 @@
                                 Projects
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                MU
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                NON MU
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Created
                             </th>
                             <th scope="col" class="relative px-6 py-3">
@@ -147,11 +153,17 @@
                                     @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    @if(method_exists($gc, 'primaryProjects'))
-                                        {{ $gc->primaryProjects()->count() }} projects
-                                    @else
-                                        -
-                                    @endif
+                                    {{ $gc->projects_count ?? 0 }} projects
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-md bg-purple-100 text-purple-800">
+                                        {{ $gc->mu_count ?? 0 }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-800">
+                                        {{ $gc->non_mu_count ?? 0 }}
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <div class="flex flex-col">
@@ -179,7 +191,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+                                <td colspan="8" class="px-6 py-4 text-center text-gray-500">
                                     No GCs found.
                                 </td>
                             </tr>

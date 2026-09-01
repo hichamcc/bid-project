@@ -34,7 +34,13 @@ class GCController extends Controller
         $gcs = $query->selectRaw("gcs.*,
         (SELECT COUNT(DISTINCT REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1'))
          FROM projects
-         WHERE projects.gc = gcs.name) as projects_count")
+         WHERE projects.gc = gcs.name) as projects_count,
+        (SELECT COUNT(DISTINCT REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1'))
+         FROM projects
+         WHERE projects.gc = gcs.name AND projects.type = 'MULTIUNIT') as mu_count,
+        (SELECT COUNT(DISTINCT REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1'))
+         FROM projects
+         WHERE projects.gc = gcs.name AND projects.type = 'NON MU') as non_mu_count")
     ->ordered()
     ->paginate(15);
 
