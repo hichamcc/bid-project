@@ -40,9 +40,20 @@ class GCController extends Controller
          WHERE projects.gc = gcs.name AND projects.type = 'MULTIUNIT') as mu_count,
         (SELECT COUNT(DISTINCT REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1'))
          FROM projects
-         WHERE projects.gc = gcs.name AND (projects.type = 'NON MU' OR projects.type IS NULL)) as non_mu_count")
-    ->ordered()
-    ->paginate(15);
+         WHERE projects.gc = gcs.name AND (projects.type = 'NON MU' OR projects.type IS NULL)) as non_mu_count");
+
+        // Sortable columns (header key => SQL column/alias). Default: name.
+        $sortable = ['mu' => 'mu_count', 'non_mu' => 'non_mu_count'];
+        $sort = $request->input('sort');
+        $direction = strtolower($request->input('direction')) === 'asc' ? 'asc' : 'desc';
+
+        if ($sort && isset($sortable[$sort])) {
+            $query->orderBy($sortable[$sort], $direction)->orderBy('name');
+        } else {
+            $query->ordered();
+        }
+
+        $gcs = $query->paginate(15)->withQueryString();
 
         return view('admin.gcs.index', compact('gcs'));
     }
