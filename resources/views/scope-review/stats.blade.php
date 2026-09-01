@@ -43,7 +43,6 @@
                         <tr class="bg-gray-50 dark:bg-gray-700">
                             <th class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-left font-medium text-gray-600 dark:text-gray-300">Status</th>
                             <th class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-right font-medium text-gray-600 dark:text-gray-300">Count</th>
-                            <th class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-right font-medium text-gray-600 dark:text-gray-300">%</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -56,24 +55,20 @@
                         @endphp
                         @foreach($bidStatusSummary as $row)
                             @continue(!empty($row['hide_if_zero']) && $row['count'] === 0)
-                            @php $pct = $totalProjects > 0 ? round($row['count'] / $totalProjects * 100) : 0; @endphp
                             <tr class="{{ $rowTints[$row['label']] ?? 'hover:bg-gray-50 dark:hover:bg-gray-700/50' }}">
                                 <td class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-gray-700 dark:text-gray-300">
                                     <a href="{{ route('scope-review.index', $row['filters']) }}" class="hover:underline">{{ $row['label'] }}</a>
                                 </td>
                                 <td class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($row['count']) }}</td>
-                                <td class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-right tabular-nums text-gray-500 dark:text-gray-400">{{ $pct }}%</td>
                             </tr>
                         @endforeach
                         <tr class="bg-green-50 dark:bg-green-900/20 font-semibold">
                             <td class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-green-800 dark:text-green-300">Total Yes</td>
                             <td class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-right tabular-nums text-green-800 dark:text-green-300">{{ number_format($totalYes) }}</td>
-                            <td class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-right tabular-nums text-green-700 dark:text-green-400">{{ $approvalRate }}%</td>
                         </tr>
                         <tr class="bg-gray-50 dark:bg-gray-700 font-semibold">
                             <td class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-gray-900 dark:text-gray-100">Total Projects</td>
                             <td class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-right tabular-nums text-gray-900 dark:text-gray-100">{{ number_format($totalProjects) }}</td>
-                            <td class="border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-right tabular-nums text-gray-500 dark:text-gray-400">100%</td>
                         </tr>
                     </tbody>
                 </table>
