@@ -252,7 +252,7 @@ class ScopeReviewController extends Controller
                 'icon' => 'phosphor-check-circle',
             ],
             [
-                'label' => 'Not Within Scope', 'value' => ScopeReview::where('decision', 'not_in_scope')->count(),
+                'label' => 'Not Bidding', 'value' => ScopeReview::where('decision', 'not_in_scope')->count(),
                 'href' => route('scope-review.index', ['decision' => 'not_in_scope']),
                 'bg' => 'bg-blue-50 dark:bg-blue-900/20', 'icon_bg' => 'bg-blue-100 dark:bg-blue-900/40',
                 'icon_color' => 'text-blue-500 dark:text-blue-300', 'value_color' => 'text-gray-900 dark:text-gray-100',
@@ -449,6 +449,8 @@ class ScopeReviewController extends Controller
                 'reason_to_ignore'       => 'nullable|string|max:255',
                 'estimator_notes'        => 'nullable|string',
                 'uploaded_in_oh'         => 'nullable|boolean',
+                'intention_to_bid_email_sent' => 'nullable|boolean',
+                'not_bidding_email_sent'      => 'nullable|boolean',
             ]);
 
             $this->assertProjectNameNotDuplicate($validated['project_name'], $scopeReview->id);
@@ -474,6 +476,8 @@ class ScopeReviewController extends Controller
             'reason_to_ignore' => 'nullable|string|max:255',
             'estimator_notes'  => 'nullable|string',
             'uploaded_in_oh'   => 'nullable|boolean',
+            'intention_to_bid_email_sent' => 'nullable|boolean',
+            'not_bidding_email_sent'      => 'nullable|boolean',
         ]);
 
         $this->applyReviewFields($validated, $scopeReview, $user);
@@ -503,6 +507,8 @@ class ScopeReviewController extends Controller
     private function applyReviewFields(array &$validated, ScopeReview $scopeReview, User $user): void
     {
         $validated['uploaded_in_oh'] = request()->boolean('uploaded_in_oh');
+        $validated['intention_to_bid_email_sent'] = request()->boolean('intention_to_bid_email_sent');
+        $validated['not_bidding_email_sent'] = request()->boolean('not_bidding_email_sent');
 
         $decisionChanged = array_key_exists('decision', $validated)
             && $validated['decision'] !== $scopeReview->decision;

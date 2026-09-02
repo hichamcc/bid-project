@@ -223,12 +223,24 @@
                                 @endif
                             </div>
 
-                            <div class="md:col-span-2">
+                            <div class="md:col-span-2 space-y-2">
                                 <label class="flex items-center gap-2">
                                     <input type="hidden" name="uploaded_in_oh" value="0">
                                     <input type="checkbox" name="uploaded_in_oh" value="1" {{ old('uploaded_in_oh', $scopeReview->uploaded_in_oh) ? 'checked' : '' }}
                                            class="rounded border-gray-300 dark:border-gray-600">
                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Uploaded in OH</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input type="hidden" name="intention_to_bid_email_sent" value="0">
+                                    <input type="checkbox" name="intention_to_bid_email_sent" value="1" {{ old('intention_to_bid_email_sent', $scopeReview->intention_to_bid_email_sent) ? 'checked' : '' }}
+                                           class="rounded border-gray-300 dark:border-gray-600">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Intention to Bid Email Sent</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input type="hidden" name="not_bidding_email_sent" value="0">
+                                    <input type="checkbox" name="not_bidding_email_sent" value="1" {{ old('not_bidding_email_sent', $scopeReview->not_bidding_email_sent) ? 'checked' : '' }}
+                                           class="rounded border-gray-300 dark:border-gray-600">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Not Bidding Email Sent</span>
                                 </label>
                             </div>
 
@@ -348,12 +360,24 @@
                                 <p x-show="decision === 'skipped'" class="mt-1 text-xs text-gray-500 dark:text-gray-400">Use this if the project was approved but you're no longer pursuing it. Add a note below explaining why.</p>
                             </div>
 
-                            <div class="md:col-span-2">
+                            <div class="md:col-span-2 space-y-2">
                                 <label class="flex items-center gap-2">
                                     <input type="hidden" name="uploaded_in_oh" value="0">
                                     <input type="checkbox" name="uploaded_in_oh" value="1" {{ old('uploaded_in_oh', $scopeReview->uploaded_in_oh) ? 'checked' : '' }}
                                            class="rounded border-gray-300 dark:border-gray-600">
                                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Uploaded in OH</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input type="hidden" name="intention_to_bid_email_sent" value="0">
+                                    <input type="checkbox" name="intention_to_bid_email_sent" value="1" {{ old('intention_to_bid_email_sent', $scopeReview->intention_to_bid_email_sent) ? 'checked' : '' }}
+                                           class="rounded border-gray-300 dark:border-gray-600">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Intention to Bid Email Sent</span>
+                                </label>
+                                <label class="flex items-center gap-2">
+                                    <input type="hidden" name="not_bidding_email_sent" value="0">
+                                    <input type="checkbox" name="not_bidding_email_sent" value="1" {{ old('not_bidding_email_sent', $scopeReview->not_bidding_email_sent) ? 'checked' : '' }}
+                                           class="rounded border-gray-300 dark:border-gray-600">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Not Bidding Email Sent</span>
                                 </label>
                             </div>
 

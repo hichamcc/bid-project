@@ -229,7 +229,7 @@
                             <x-dynamic-component :component="$card['icon']" class="w-4 h-4 {{ $card['icon_color'] }}" />
                         </span>
                         <p class="text-2xl font-extrabold tracking-tight leading-none {{ $card['value_color'] }}">{{ $card['value'] }}</p>
-                        <p class="text-sm font-bold text-gray-600 dark:text-gray-300 mt-1 leading-tight">{{ $card['label'] }}</p>
+                        <p class="text-sm font-bold uppercase text-gray-600 dark:text-gray-300 mt-1 leading-tight">{{ $card['label'] }}</p>
                     </a>
                 @endforeach
             </div>
@@ -596,6 +596,8 @@
                                                     'reason_to_ignore' => $scopeReview->reason_to_ignore,
                                                     'duration' => $scopeReview->duration,
                                                     'uploaded_in_oh' => $scopeReview->uploaded_in_oh,
+                                                    'intention_to_bid_email_sent' => $scopeReview->intention_to_bid_email_sent,
+                                                    'not_bidding_email_sent' => $scopeReview->not_bidding_email_sent,
                                                     'estimator_notes' => $scopeReview->estimator_notes,
                                                     'additional_notes' => $scopeReview->noteEntries->map(fn($n) => [
                                                         'user' => $n->user?->name ?? 'Unknown',
@@ -813,6 +815,22 @@
                                     <span class="px-2 py-1 text-xs font-semibold rounded-full"
                                           :class="current.uploaded_in_oh ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'"
                                           x-text="current.uploaded_in_oh ? 'Yes' : 'No'"></span>
+                                </dd>
+                            </div>
+                            <div class="flex justify-between items-center gap-3">
+                                <dt class="text-gray-500 dark:text-gray-400">Intention to Bid Email Sent</dt>
+                                <dd>
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full"
+                                          :class="current.intention_to_bid_email_sent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'"
+                                          x-text="current.intention_to_bid_email_sent ? 'Yes' : 'No'"></span>
+                                </dd>
+                            </div>
+                            <div class="flex justify-between items-center gap-3">
+                                <dt class="text-gray-500 dark:text-gray-400">Not Bidding Email Sent</dt>
+                                <dd>
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full"
+                                          :class="current.not_bidding_email_sent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'"
+                                          x-text="current.not_bidding_email_sent ? 'Yes' : 'No'"></span>
                                 </dd>
                             </div>
                         </dl>

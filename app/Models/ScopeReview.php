@@ -25,6 +25,8 @@ class ScopeReview extends Model
         'duration',
         'estimator_notes',
         'uploaded_in_oh',
+        'intention_to_bid_email_sent',
+        'not_bidding_email_sent',
         'reviewed_at',
         'project_number',
         'allocation_id',
@@ -36,6 +38,8 @@ class ScopeReview extends Model
         'due_date' => 'date',
         'reviewed_at' => 'datetime',
         'uploaded_in_oh' => 'boolean',
+        'intention_to_bid_email_sent' => 'boolean',
+        'not_bidding_email_sent' => 'boolean',
     ];
 
     public function assignedEstimator(): BelongsTo
