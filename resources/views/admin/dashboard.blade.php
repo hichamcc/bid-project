@@ -525,12 +525,16 @@ function openProposalsModal(result) {
                 body.innerHTML = '<p class="text-gray-500 text-sm">No proposals found.</p>';
                 return;
             }
-            body.innerHTML = items.map((name, i) =>
-                `<div class="flex items-start gap-3 py-2 border-b border-gray-100">
+            body.innerHTML = items.map((item, i) => {
+                const badge = item.type === 'MU'
+                    ? '<span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-md bg-purple-100 text-purple-800 flex-shrink-0">MU</span>'
+                    : '<span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-md bg-blue-100 text-blue-800 flex-shrink-0">NON MU</span>';
+                return `<div class="flex items-start gap-3 py-2 border-b border-gray-100">
                     <span class="text-xs font-semibold text-gray-400 w-6 text-right flex-shrink-0">${i + 1}</span>
-                    <span class="text-sm text-gray-800">${name}</span>
-                </div>`
-            ).join('');
+                    <span class="text-sm text-gray-800 flex-1">${item.label}</span>
+                    ${badge}
+                </div>`;
+            }).join('');
         })
         .catch(() => {
             body.innerHTML = '<p class="text-red-500 text-sm">Failed to load proposals.</p>';

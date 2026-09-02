@@ -179,7 +179,15 @@ class DashboardController extends Controller
             $query->where('result_art', $result);
         }
 
-        $proposals = $query->get()->map(fn($p) => $p->job_number . ($p->project ? ' — ' . $p->project->name : ''));
+        $proposals = $query->get()->map(function ($p) {
+            // MU when the project type is MULTIUNIT; everything else (incl. untyped) is NON MU.
+            $type = optional($p->project)->type === 'MULTIUNIT' ? 'MU' : 'NON MU';
+
+            return [
+                'label' => $p->job_number . ($p->project ? ' — ' . $p->project->name : ''),
+                'type'  => $type,
+            ];
+        });
 
         return response()->json($proposals);
     }

@@ -117,6 +117,9 @@
                                 </a>
                             </th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ART
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Created
                             </th>
                             <th scope="col" class="relative px-6 py-3">
@@ -193,6 +196,28 @@
                                         {{ $gc->non_mu_count ?? 0 }}
                                     </span>
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    @php
+                                        $artPending = (int) ($gc->art_pending ?? 0);
+                                        $artWon     = (int) ($gc->art_won ?? 0);
+                                        $artLoss    = (int) ($gc->art_loss ?? 0);
+                                    @endphp
+                                    @if($artPending || $artWon || $artLoss)
+                                        <div class="flex flex-col gap-1 items-start">
+                                            @if($artPending)
+                                                <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-md bg-yellow-100 text-yellow-800">Pending: {{ $artPending }}</span>
+                                            @endif
+                                            @if($artWon)
+                                                <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-md bg-green-100 text-green-800">Won: {{ $artWon }}</span>
+                                            @endif
+                                            @if($artLoss)
+                                                <span class="inline-flex px-2 py-0.5 text-xs font-semibold rounded-md bg-red-100 text-red-800">Loss: {{ $artLoss }}</span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400">—</span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     <div class="flex flex-col">
                                         <span>{{ $gc->created_at->format('M d, Y') }}</span>
@@ -219,7 +244,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                                <td colspan="9" class="px-6 py-4 text-center text-gray-500">
                                     No GCs found.
                                 </td>
                             </tr>

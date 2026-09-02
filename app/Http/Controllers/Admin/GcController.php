@@ -40,12 +40,18 @@ class GCController extends Controller
          WHERE projects.gc = gcs.name AND projects.type = 'MULTIUNIT') as mu_count,
         (SELECT COUNT(DISTINCT REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1'))
          FROM projects
-         WHERE projects.gc = gcs.name AND (projects.type = 'NON MU' OR projects.type IS NULL)) as non_mu_count");
+         WHERE projects.gc = gcs.name AND (projects.type = 'NON MU' OR projects.type IS NULL)) as non_mu_count,
+        (SELECT COUNT(*) FROM proposals p JOIN projects pr ON pr.id = p.project_id
+         WHERE pr.gc = gcs.name AND (p.result_art IS NULL OR p.result_art = 'pending')) as art_pending,
+        (SELECT COUNT(*) FROM proposals p JOIN projects pr ON pr.id = p.project_id
+         WHERE pr.gc = gcs.name AND p.result_art = 'win') as art_won,
+        (SELECT COUNT(*) FROM proposals p JOIN projects pr ON pr.id = p.project_id
+         WHERE pr.gc = gcs.name AND p.result_art = 'loss') as art_loss");
 
         // Sortable columns (header key => SQL column/alias). Default: name.
         $sortable = ['mu' => 'mu_count', 'non_mu' => 'non_mu_count'];
         $sort = $request->input('sort');
-        $direction = strtolower($request->input('direction')) === 'asc' ? 'asc' : 'desc';
+        $direction = strtolower((string) $request->input('direction')) === 'asc' ? 'asc' : 'desc';
 
         if ($sort && isset($sortable[$sort])) {
             $query->orderBy($sortable[$sort], $direction)->orderBy('name');
