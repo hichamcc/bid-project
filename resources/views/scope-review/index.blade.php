@@ -817,20 +817,16 @@
                                           x-text="current.uploaded_in_oh ? 'Yes' : 'No'"></span>
                                 </dd>
                             </div>
-                            <div class="flex justify-between items-center gap-3">
+                            <div class="flex justify-between items-center gap-3" x-show="current.intention_to_bid_email_sent">
                                 <dt class="text-gray-500 dark:text-gray-400">Intention to Bid Email Sent</dt>
                                 <dd>
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full"
-                                          :class="current.intention_to_bid_email_sent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'"
-                                          x-text="current.intention_to_bid_email_sent ? 'Yes' : 'No'"></span>
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Yes</span>
                                 </dd>
                             </div>
-                            <div class="flex justify-between items-center gap-3">
+                            <div class="flex justify-between items-center gap-3" x-show="current.not_bidding_email_sent">
                                 <dt class="text-gray-500 dark:text-gray-400">Not Bidding Email Sent</dt>
                                 <dd>
-                                    <span class="px-2 py-1 text-xs font-semibold rounded-full"
-                                          :class="current.not_bidding_email_sent ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'"
-                                          x-text="current.not_bidding_email_sent ? 'Yes' : 'No'"></span>
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Yes</span>
                                 </dd>
                             </div>
                         </dl>
