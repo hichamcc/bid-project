@@ -81,6 +81,7 @@ class ScopeReviewController extends Controller
 
         // Sorting: whitelist of sortable columns (map header -> DB column).
         $sortable = [
+            'entry_date'     => 'entry_date',
             'project_number' => 'project_number',
             'source'         => 'source',
             'platform'       => 'platform',

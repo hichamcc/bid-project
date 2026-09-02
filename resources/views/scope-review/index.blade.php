@@ -444,6 +444,21 @@
                                            class="rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500">
                                 </th>
                             @endif
+                            @php $entryH = $sortLink('entry_date'); @endphp
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <a href="{{ $entryH['url'] }}" class="group inline-flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-100">
+                                    <span>Entry Date</span>
+                                    @if($entryH['active'])
+                                        @if($entryH['dir'] === 'asc')
+                                            <x-phosphor-caret-up width="12" height="12" class="text-gray-700 dark:text-gray-100" />
+                                        @else
+                                            <x-phosphor-caret-down width="12" height="12" class="text-gray-700 dark:text-gray-100" />
+                                        @endif
+                                    @else
+                                        <x-phosphor-caret-up-down width="12" height="12" class="text-gray-300 dark:text-gray-500 group-hover:text-gray-400" />
+                                    @endif
+                                </a>
+                            </th>
                             @php
                                 $sortableHeaders = [
                                     'project_number' => 'Project #',
@@ -506,6 +521,9 @@
                                         @endunless
                                     </td>
                                 @endif
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $scopeReview->entry_date?->format('M d, Y') ?? '—' }}
+                                </td>
                                 <td class="sticky-col sticky-col-1 px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
                                     {{ $scopeReview->project_number ?? '—' }}
                                 </td>
@@ -672,7 +690,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ auth()->user()->isAdmin() ? 13 : 12 }}" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td colspan="{{ auth()->user()->isAdmin() ? 14 : 13 }}" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                     No scope review entries yet.
                                 </td>
                             </tr>
