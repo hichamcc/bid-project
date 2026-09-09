@@ -117,7 +117,18 @@ class ScopeReviewController extends Controller
         // Headline decision cards (admin overview).
         $statCards = $user->isAdmin() ? $this->buildStatCards() : null;
 
-        return view('scope-review.index', compact('scopeReviews', 'estimators', 'savedViews', 'statCards'));
+        // Approved breakdown card (total + MU / NON MU), admin only.
+        $approvedStats = null;
+        if ($user->isAdmin()) {
+            $approvedBase = ScopeReview::where('decision', 'approved');
+            $approvedStats = [
+                'total'  => (clone $approvedBase)->count(),
+                'mu'     => (clone $approvedBase)->where('project_type', 'MU')->count(),
+                'non_mu' => (clone $approvedBase)->where('project_type', 'NON_MU')->count(),
+            ];
+        }
+
+        return view('scope-review.index', compact('scopeReviews', 'estimators', 'savedViews', 'statCards', 'approvedStats'));
     }
 
     public function stats(Request $request)

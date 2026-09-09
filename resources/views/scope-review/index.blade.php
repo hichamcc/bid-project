@@ -235,6 +235,31 @@
             </div>
         @endif
 
+        @if(!empty($approvedStats))
+            <!-- Approved breakdown (total + MU / NON MU) -->
+            <div class="mt-3">
+                <div class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden max-w-md">
+                    <div class="flex items-stretch">
+                        <a href="{{ route('scope-review.index', ['decision' => 'approved']) }}"
+                           class="flex-1 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <p class="text-2xl font-extrabold tracking-tight leading-none text-green-700 dark:text-green-300">{{ number_format($approvedStats['total']) }}</p>
+                            <p class="text-sm font-bold uppercase text-gray-600 dark:text-gray-300 mt-1 leading-tight">Total Approved</p>
+                        </a>
+                        <a href="{{ route('scope-review.index', ['decision' => 'approved', 'project_type' => 'MU']) }}"
+                           class="px-4 py-3 text-center border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <p class="text-xl font-extrabold leading-none text-purple-700 dark:text-purple-300">{{ number_format($approvedStats['mu']) }}</p>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mt-1">MU</p>
+                        </a>
+                        <a href="{{ route('scope-review.index', ['decision' => 'approved', 'project_type' => 'NON_MU']) }}"
+                           class="px-4 py-3 text-center border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                            <p class="text-xl font-extrabold leading-none text-blue-700 dark:text-blue-300">{{ number_format($approvedStats['non_mu']) }}</p>
+                            <p class="text-xs font-bold uppercase text-gray-500 dark:text-gray-400 mt-1">NON MU</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Saved Views -->
         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
             <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex flex-wrap gap-2 items-center">
