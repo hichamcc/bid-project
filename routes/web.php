@@ -96,6 +96,31 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         ->except(['index', 'show']);
 });
 
+// Reference section: Log Ins, Skipped GCs, Infos (admin-only). Each is a managed
+// table with an Excel import; Infos also has an editable free-text Reminders panel.
+Route::middleware(['auth', 'admin'])->prefix('admin/reference')->name('admin.reference.')->group(function () {
+    // Shared import flow, parameterised by type.
+    Route::get('{type}/import', [\App\Http\Controllers\Admin\Reference\ImportController::class, 'create'])
+        ->whereIn('type', ['logins', 'skipped-gcs', 'infos'])->name('import.create');
+    Route::post('{type}/import', [\App\Http\Controllers\Admin\Reference\ImportController::class, 'upload'])
+        ->whereIn('type', ['logins', 'skipped-gcs', 'infos'])->name('import.upload');
+    Route::post('{type}/import/commit', [\App\Http\Controllers\Admin\Reference\ImportController::class, 'commit'])
+        ->whereIn('type', ['logins', 'skipped-gcs', 'infos'])->name('import.commit');
+
+    Route::resource('logins', \App\Http\Controllers\Admin\Reference\LoginController::class)
+        ->parameters(['logins' => 'login'])->except('show');
+
+    Route::resource('skipped-gcs', \App\Http\Controllers\Admin\Reference\SkippedGcController::class)
+        ->parameters(['skipped-gcs' => 'skippedGc'])->except('show');
+
+    // Comment-style reminders on the Infos page.
+    Route::post('infos/reminders', [\App\Http\Controllers\Admin\Reference\InfoController::class, 'storeReminder'])->name('infos.reminders.store');
+    Route::put('infos/reminders/{reminder}', [\App\Http\Controllers\Admin\Reference\InfoController::class, 'updateReminder'])->name('infos.reminders.update');
+    Route::delete('infos/reminders/{reminder}', [\App\Http\Controllers\Admin\Reference\InfoController::class, 'destroyReminder'])->name('infos.reminders.destroy');
+    Route::resource('infos', \App\Http\Controllers\Admin\Reference\InfoController::class)
+        ->parameters(['infos' => 'info'])->except('show');
+});
+
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('gcs', GcController::class);
 });

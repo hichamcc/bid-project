@@ -124,6 +124,22 @@
                             @endif
                         </span>
                     </x-navlist.item>
+
+                    {{-- Reference: collapsible group (Log Ins / Skipped GCs / Infos). Hidden when the sidebar is collapsed. --}}
+                    <div x-show="!collapsed" x-cloak>
+                        <x-navlist.group expandable heading="Reference" :expanded="request()->routeIs('admin.reference.*')">
+                            <x-navlist.item before="phosphor-key" href="{{ route('admin.reference.logins.index') }}" :current="request()->routeIs('admin.reference.logins.*')">
+                                {{ __('Log Ins') }}
+                            </x-navlist.item>
+                            <x-navlist.item before="phosphor-prohibit-inset" href="{{ route('admin.reference.skipped-gcs.index') }}" :current="request()->routeIs('admin.reference.skipped-gcs.*')">
+                                {{ __('Skipped GCs') }}
+                            </x-navlist.item>
+                            <x-navlist.item before="phosphor-info" href="{{ route('admin.reference.infos.index') }}" :current="request()->routeIs('admin.reference.infos.*')">
+                                {{ __('Infos') }}
+                            </x-navlist.item>
+                        </x-navlist.group>
+                    </div>
+
                     <x-navlist.item before="phosphor-calendar-x" href="{{ route('admin.off-days.index') }}" :current="request()->routeIs('admin.off-days.*')">
                         <span x-show="!collapsed" x-cloak>{{ __('Off Days') }}</span>
                     </x-navlist.item>
