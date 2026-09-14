@@ -5,7 +5,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('scope-review.update', $scopeReview) }}" data-scope-form>
+        <form id="scope-edit-form" method="POST" action="{{ route('scope-review.update', $scopeReview) }}" data-scope-form>
             @csrf
             @method('PUT')
 
@@ -385,16 +385,6 @@
                     </div>
                 </div>
             @endif
-
-            <div class="mt-6 flex justify-end space-x-4">
-                <a href="{{ route('scope-review.index') }}" data-scope-cancel
-                   class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
-                    Cancel
-                </a>
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Save
-                </button>
-            </div>
         </form>
 
         {{-- Append-able notes thread. Kept OUTSIDE the form so its own controls
@@ -402,4 +392,16 @@
         <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
             <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">Note</h3>
             @include('scope-review.partials.notes-thread', ['scopeReview' => $scopeReview])
+        </div>
+
+        {{-- Review Save / Cancel at the very bottom (after the notes). The buttons
+             live outside <form> but submit it via the form="scope-edit-form" attribute. --}}
+        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-4">
+            <a href="{{ route('scope-review.index') }}" data-scope-cancel
+               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                Cancel
+            </a>
+            <button type="submit" form="scope-edit-form" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                Save
+            </button>
         </div>
