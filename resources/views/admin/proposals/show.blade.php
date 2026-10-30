@@ -129,7 +129,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-600">Responded</label>
+                            <label class="block text-sm font-medium text-gray-600">GC Confirmed Receipt</label>
                             @if($proposal->responded === 'yes')
                                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                                     Yes
@@ -140,17 +140,6 @@
                                 </span>
                             @else
                                 <span class="text-gray-400">Not set</span>
-                            @endif
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-600">GC Received Proposal</label>
-                            @if($proposal->gc_received_date)
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                    {{ $proposal->gc_received_date->format('M d, Y') }}
-                                </span>
-                            @else
-                                <span class="text-gray-400">Not yet confirmed</span>
                             @endif
                         </div>
 

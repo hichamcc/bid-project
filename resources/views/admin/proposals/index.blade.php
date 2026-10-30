@@ -30,8 +30,8 @@
         @endif
 
         @php
-            $filterParams = ['search', 'job_type', 'submission_date', 'status', 'project', 'gc', 'other_gc', 'estimator_id',
-                             'gc_received', 'first_follow_up', 'second_follow_up', 'third_follow_up', 'fourth_follow_up',
+            $filterParams = ['search', 'job_type', 'submission_date', 'status', 'project', 'gc', 'other_gc',
+                             'first_follow_up', 'second_follow_up', 'third_follow_up', 'fourth_follow_up',
                              'result_gc', 'result_art', 'notes', 'responded'];
             $followUps = ['first' => 'Follow-Up 1', 'second' => 'Follow-Up 2', 'third' => 'Follow-Up 3', 'fourth' => 'Follow-Up 4'];
         @endphp
@@ -112,11 +112,9 @@
                             <th class="px-3 py-3">Type</th>
                             <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'gc', 'label' => 'GC'])</th>
                             <th class="px-3 py-3">Other GCs</th>
-                            <th class="px-3 py-3">Estimator</th>
                             <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'price_original', 'label' => 'ARTELYE Price'])</th>
                             <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'price_ve', 'label' => 'ARTELYE VE Price'])</th>
                             <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'gc_price', 'label' => 'GC Price'])</th>
-                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'gc_received_date', 'label' => 'GC Received Proposal'])</th>
                             @foreach($followUps as $nth => $label)
                                 <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => "{$nth}_follow_up_date", 'label' => $label])</th>
                             @endforeach
@@ -128,7 +126,14 @@
                         {{-- Column filters: text inputs submit on Enter, selects/dates on change. --}}
                         <tr class="col-filter bg-gray-100">
                             <th class="px-3 py-2">
-                                <input type="date" name="submission_date" form="proposalFilters" value="{{ request('submission_date') }}" onchange="this.form.submit()">
+                                <div style="display: flex; gap: 0.25rem;">
+                                    <input type="date" name="submission_date" form="proposalFilters" value="{{ request('submission_date') }}" onchange="this.form.submit()">
+                                    <select name="responded" form="proposalFilters" onchange="this.form.submit()" title="GC confirmed receipt" style="min-width: 5.5rem;">
+                                        <option value="">All</option>
+                                        <option value="yes" {{ request('responded') === 'yes' ? 'selected' : '' }}>Confirmed</option>
+                                        <option value="no" {{ request('responded') === 'no' ? 'selected' : '' }}>Not confirmed</option>
+                                    </select>
+                                </div>
                             </th>
                             <th class="px-3 py-2">
                                 <select name="status" form="proposalFilters" onchange="this.form.submit()">
@@ -165,24 +170,9 @@
                                     @endforeach
                                 </select>
                             </th>
-                            <th class="px-3 py-2">
-                                <select name="estimator_id" form="proposalFilters" onchange="this.form.submit()">
-                                    <option value="">All</option>
-                                    @foreach($estimators as $estimator)
-                                        <option value="{{ $estimator->id }}" {{ request('estimator_id') == $estimator->id ? 'selected' : '' }}>{{ $estimator->name }}</option>
-                                    @endforeach
-                                </select>
-                            </th>
                             <th class="px-3 py-2"></th>
                             <th class="px-3 py-2"></th>
                             <th class="px-3 py-2"></th>
-                            <th class="px-3 py-2">
-                                <select name="gc_received" form="proposalFilters" onchange="this.form.submit()">
-                                    <option value="">All</option>
-                                    <option value="yes" {{ request('gc_received') === 'yes' ? 'selected' : '' }}>Received</option>
-                                    <option value="no" {{ request('gc_received') === 'no' ? 'selected' : '' }}>Not received</option>
-                                </select>
-                            </th>
                             @foreach($followUps as $nth => $label)
                                 <th class="px-3 py-2">
                                     <select name="{{ $nth }}_follow_up" form="proposalFilters" onchange="this.form.submit()">
@@ -217,7 +207,15 @@
                             @endphp
                             <tr class="hover:bg-gray-50">
                                 <td class="px-3 py-2">
-                                    {{ $proposal->submission_date?->format('M d, Y') ?? '-' }}
+                                    {{-- Green = GC confirmed they received the proposal, red = not confirmed yet. --}}
+                                    @if($proposal->submission_date)
+                                        <span class="px-2 py-0.5 text-xs rounded {{ $proposal->responded === 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}"
+                                              title="{{ $proposal->responded === 'yes' ? 'GC confirmed receipt' : 'GC has not confirmed receipt' }}">
+                                            {{ $proposal->submission_date->format('M d, Y') }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400">-</span>
+                                    @endif
                                 </td>
                                 <td class="px-3 py-2">
                                     @include('admin.proposals.partials.status-badge', ['status' => $proposal->status])
@@ -244,9 +242,6 @@
                                     </span>
                                 </td>
                                 <td class="px-3 py-2">
-                                    {{ $project->assignedTo?->name ?? '-' }}
-                                </td>
-                                <td class="px-3 py-2">
                                     {{ $proposal->price_original ? '$' . number_format($proposal->price_original, 2) : '-' }}
                                 </td>
                                 <td class="px-3 py-2">
@@ -254,17 +249,6 @@
                                 </td>
                                 <td class="px-3 py-2">
                                     {{ $proposal->gc_price ? '$' . number_format($proposal->gc_price, 2) : '-' }}
-                                </td>
-                                <td class="px-3 py-2">
-                                    @if($proposal->gc_received_date)
-                                        <span class="px-2 py-0.5 text-xs rounded bg-green-100 text-green-800">
-                                            {{ $proposal->gc_received_date->format('M d, Y') }}
-                                        </span>
-                                    @elseif($proposal->submission_date)
-                                        <span class="px-2 py-0.5 text-xs rounded bg-red-100 text-red-800">Awaiting</span>
-                                    @else
-                                        <span class="text-gray-400">-</span>
-                                    @endif
                                 </td>
                                 @foreach($followUps as $nth => $label)
                                     <td class="px-3 py-2">
@@ -324,7 +308,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="20" class="px-6 py-4 text-center text-gray-500">
+                                <td colspan="18" class="px-6 py-4 text-center text-gray-500">
                                     No proposals found.
                                 </td>
                             </tr>

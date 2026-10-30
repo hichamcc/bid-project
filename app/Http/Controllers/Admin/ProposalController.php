@@ -61,12 +61,6 @@ class ProposalController extends Controller
             });
         }
 
-        if ($request->filled('gc_received')) {
-            $request->gc_received === 'yes'
-                ? $query->whereNotNull('proposals.gc_received_date')
-                : $query->whereNull('proposals.gc_received_date');
-        }
-
         foreach (['first', 'second', 'third', 'fourth'] as $nth) {
             $value = $request->input("{$nth}_follow_up");
             if ($value === 'none') {
@@ -85,7 +79,10 @@ class ProposalController extends Controller
 
         // Filter by responded status
         if ($request->filled('responded')) {
-            $query->where('responded', $request->responded);
+            // "Not confirmed" also covers older rows where it was never set.
+            $request->responded === 'yes'
+                ? $query->where('proposals.responded', 'yes')
+                : $query->where(fn($q) => $q->whereNull('proposals.responded')->orWhere('proposals.responded', '!=', 'yes'));
         }
 
         // Filter by result_gc
@@ -155,7 +152,6 @@ class ProposalController extends Controller
             'job_number',
             'status',
             'responded',
-            'gc_received_date',
             'first_follow_up_date',
             'second_follow_up_date',
             'third_follow_up_date',
@@ -226,7 +222,6 @@ class ProposalController extends Controller
             'status' => 'required|in:' . implode(',', array_keys(Proposal::STATUSES)),
             'submission_date' => 'nullable|date',
             'responded' => 'nullable|in:yes,no',
-            'gc_received_date' => 'nullable|date',
             'first_follow_up_date' => 'nullable|date',
             'first_follow_up_respond' => 'nullable|in:yes,no',
             'first_follow_up_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
@@ -311,7 +306,6 @@ class ProposalController extends Controller
             'status' => 'nullable|in:' . implode(',', array_keys(Proposal::STATUSES)),
             'submission_date' => 'nullable|date',
             'responded' => 'nullable|in:yes,no',
-            'gc_received_date' => 'nullable|date',
             'first_follow_up_date' => 'nullable|date',
             'first_follow_up_respond' => 'nullable|in:yes,no',
             'first_follow_up_attachment' => 'nullable|file|mimes:eml,msg,pdf,png,jpg,jpeg|max:10240',
