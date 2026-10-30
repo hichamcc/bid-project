@@ -61,6 +61,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 Route::middleware(['auth', 'role:admin,bid_coordinator'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('proposals', AdminProposalController::class);
+    Route::get('proposals/{proposal}/notes', [\App\Http\Controllers\Admin\ProposalNoteController::class, 'index'])->name('proposals.notes.index');
+    Route::post('proposals/{proposal}/notes', [\App\Http\Controllers\Admin\ProposalNoteController::class, 'store'])->name('proposals.notes.store');
+    Route::delete('proposals/{proposal}/notes/{note}', [\App\Http\Controllers\Admin\ProposalNoteController::class, 'destroy'])->name('proposals.notes.destroy');
 });
 
 Route::middleware(['auth', 'role:admin,bid_coordinator,head_estimator'])->prefix('admin')->name('admin.')->group(function () {

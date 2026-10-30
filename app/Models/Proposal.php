@@ -5,16 +5,27 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Proposal extends Model
 {
     use HasFactory;
 
+    public const STATUSES = [
+        'open'     => 'Open',
+        'closed'   => 'Closed',
+        'inactive' => 'Inactive',
+        'on_hold'  => 'On Hold',
+    ];
+
     protected $fillable = [
         'project_id',
         'job_number',
+        'status',
         'submission_date',
         'responded',
+        'gc_received_date',
         'first_follow_up_date',
         'first_follow_up_respond',
         'first_follow_up_attachment',
@@ -24,6 +35,9 @@ class Proposal extends Model
         'third_follow_up_date',
         'third_follow_up_respond',
         'third_follow_up_attachment',
+        'fourth_follow_up_date',
+        'fourth_follow_up_respond',
+        'fourth_follow_up_attachment',
         'price_original',
         'price_ve',
         'result_gc',
@@ -36,6 +50,8 @@ class Proposal extends Model
         'first_follow_up_date' => 'date',
         'second_follow_up_date' => 'date',
         'third_follow_up_date' => 'date',
+        'fourth_follow_up_date' => 'date',
+        'gc_received_date' => 'date',
         'price_original' => 'decimal:2',
         'price_ve' => 'decimal:2', 
         'gc_price' => 'decimal:2',
@@ -47,6 +63,30 @@ class Proposal extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Notes on this proposal, oldest first
+     */
+    public function notes(): HasMany
+    {
+        return $this->hasMany(ProposalNote::class)->orderBy('created_at');
+    }
+
+    /**
+     * Most recent note (for the list view)
+     */
+    public function latestNote(): HasOne
+    {
+        return $this->hasOne(ProposalNote::class)->latestOfMany();
+    }
+
+    /**
+     * Get formatted status label
+     */
+    public function getStatusLabel(): string
+    {
+        return self::STATUSES[$this->status] ?? '-';
     }
 
     /**

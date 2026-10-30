@@ -1,122 +1,95 @@
 @extends('components.layouts.app')
 
 @section('content')
-<div class="py-12">
-    <div class="max-w-10xl mx-auto sm:px-6 lg:px-8">
+<div class="py-6">
+    {{-- Minimal side gutters so the wide table shows as many columns as possible. --}}
+    <div class="max-w-10xl mx-auto" style="padding-left: 0.5rem; padding-right: 0.5rem;">
         <!-- Header -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
             <div class="p-6 bg-white border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-semibold text-gray-900">Proposals Management</h2>
-                    <a href="{{ route('admin.proposals.create') }}" 
-                       class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    <button type="button" onclick="pnForm.openCreate()"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         Add New Proposal
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
 
         <!-- Flash Messages -->
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                {{ session('error') }}
+            </div>
+        @endif
         @if(session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
                 {{ session('success') }}
             </div>
         @endif
 
-        <!-- Filters -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-            <div class="p-6">
-                <form method="GET" action="{{ route('admin.proposals.index') }}" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
-                            <input type="text"
-                                   id="search"
-                                   name="search"
-                                   value="{{ request('search') }}"
-                                   placeholder="Search by project name, GC, or job number..."
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        </div>
+        @php
+            $filterParams = ['search', 'job_type', 'submission_date', 'status', 'project', 'gc', 'other_gc', 'estimator_id',
+                             'gc_received', 'first_follow_up', 'second_follow_up', 'third_follow_up', 'fourth_follow_up',
+                             'result_gc', 'result_art', 'notes', 'responded'];
+            $followUps = ['first' => 'Follow-Up 1', 'second' => 'Follow-Up 2', 'third' => 'Follow-Up 3', 'fourth' => 'Follow-Up 4'];
+        @endphp
 
-                        <div>
-                            <label for="responded" class="block text-sm font-medium text-gray-700 mb-1">Responded</label>
-                            <select id="responded"
-                                    name="responded"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">All Status</option>
-                                <option value="yes" {{ request('responded') == 'yes' ? 'selected' : '' }}>Responded</option>
-                                <option value="no" {{ request('responded') == 'no' ? 'selected' : '' }}>Not Responded</option>
-                            </select>
-                        </div>
+        {{-- Spreadsheet-style table: one line per proposal, a filter under each column header.
+             Scoped CSS because the compiled Tailwind bundle may not include every utility needed. --}}
+        <style>
+            .proposal-table th, .proposal-table td { white-space: nowrap; padding-left: 0.5rem; padding-right: 0.5rem; }
+            .proposal-table tbody { font-size: 0.75rem; line-height: 1rem; }
+            .proposal-table tbody td { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+            .proposal-table .col-filter input,
+            .proposal-table .col-filter select { width: 100%; min-width: 6rem; font-size: 0.75rem; padding: 0.25rem 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem; background: #fff; font-weight: normal; text-transform: none; letter-spacing: normal; }
+            .proposal-table .col-filter select { padding-right: 1.75rem; }
+            .proposal-table .cell-truncate { display: block; overflow: hidden; text-overflow: ellipsis; }
+            /* Project / GC show their full text and may wrap onto extra lines. */
+            .proposal-table td.cell-wrap { white-space: normal; max-width: 22rem; word-break: break-word; }
+            /* Actions column stays pinned to the right while the table scrolls sideways. */
+            /* Project sticks to the left edge once scrolled to it; Actions stays pinned right. */
+            .proposal-table .col-project,
+            .proposal-table .col-actions { position: sticky; z-index: 1; background: #fff; }
+            .proposal-table .col-project { left: 0; box-shadow: 4px 0 6px -4px rgba(0, 0, 0, 0.15); }
+            .proposal-table .col-actions { right: 0; box-shadow: -4px 0 6px -4px rgba(0, 0, 0, 0.15); }
+            .proposal-table thead tr:first-child .col-project,
+            .proposal-table thead tr:first-child .col-actions { background: #f9fafb; }
+            .proposal-table thead tr.col-filter .col-project,
+            .proposal-table thead tr.col-filter .col-actions { background: #f3f4f6; }
+            .proposal-table tbody tr:hover .col-project,
+            .proposal-table tbody tr:hover .col-actions { background: #f9fafb; }
+        </style>
 
-                        <div>
-                            <label for="estimator_id" class="block text-sm font-medium text-gray-700 mb-1">Estimator</label>
-                            <select id="estimator_id"
-                                    name="estimator_id"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">All Estimators</option>
-                                @foreach($estimators as $estimator)
-                                    <option value="{{ $estimator->id }}" {{ request('estimator_id') == $estimator->id ? 'selected' : '' }}>
-                                        {{ $estimator->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div>
-                            <label for="job_type" class="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
-                            <select id="job_type"
-                                    name="job_type"
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">All Types</option>
-                                <option value="MULTIUNIT" {{ request('job_type') == 'MULTIUNIT' ? 'selected' : '' }}>MU</option>
-                                <option value="NON MU" {{ request('job_type') == 'NON MU' ? 'selected' : '' }}>NON MU</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label for="result_gc" class="block text-sm font-medium text-gray-700 mb-1">Result GC</label>
-                            <select id="result_gc" 
-                                    name="result_gc" 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">All GC Results</option>
-                                <option value="pending" {{ request('result_gc') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="win" {{ request('result_gc') == 'win' ? 'selected' : '' }}>Win</option>
-                                <option value="loss" {{ request('result_gc') == 'loss' ? 'selected' : '' }}>Loss</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label for="result_art" class="block text-sm font-medium text-gray-700 mb-1">Result ART</label>
-                            <select id="result_art" 
-                                    name="result_art" 
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">All ART Results</option>
-                                <option value="pending" {{ request('result_art') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="win" {{ request('result_art') == 'win' ? 'selected' : '' }}>Win</option>
-                                <option value="loss" {{ request('result_art') == 'loss' ? 'selected' : '' }}>Loss</option>
-                            </select>
-                        </div>
-
-                        <div class="flex items-end space-x-2">
-                            <button type="submit" 
-                                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Apply Filters
-                            </button>
-                            <a href="{{ route('admin.proposals.index') }}" 
-                               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
-                                Clear
-                            </a>
-                        </div>
-                    </div>
-                </form>
+        <!-- Filters (column filters in the table header submit this same form) -->
+        <form id="proposalFilters" method="GET" action="{{ route('admin.proposals.index') }}"
+              class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 p-4 flex flex-wrap gap-3 items-end">
+            @if(request('sort_by'))
+                <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
+                <input type="hidden" name="sort_direction" value="{{ request('sort_direction', 'desc') }}">
+            @endif
+            <div class="flex-1" style="min-width: 16rem;">
+                <label for="search" class="block text-xs font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" id="search" name="search" value="{{ request('search') }}"
+                       placeholder="Search by project name, GC, or job number..."
+                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
-        </div>
+            <div class="flex gap-2">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">
+                    Apply Filters
+                </button>
+                @if(request()->hasAny($filterParams))
+                    <a href="{{ route('admin.proposals.index') }}"
+                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-sm">
+                        Clear
+                    </a>
+                @endif
+            </div>
+        </form>
 
         <!-- Results Summary -->
-        @if(request()->hasAny(['search', 'responded', 'result_gc', 'result_art', 'estimator_id', 'job_type']))
+        @if(request()->hasAny($filterParams))
             <div class="bg-blue-50 border border-blue-200 px-4 py-3 rounded mb-6">
                 <p class="text-blue-800">
                     Showing {{ $proposals->total() }} filtered result(s)
@@ -130,283 +103,193 @@
         <!-- Proposals Table -->
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
+                <table class="proposal-table min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Project
+                        <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'submission_date', 'label' => 'Submitted Date'])</th>
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'status', 'label' => 'Status'])</th>
+                            <th class="col-project px-3 py-3">Project</th>
+                            <th class="px-3 py-3">Type</th>
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'gc', 'label' => 'GC'])</th>
+                            <th class="px-3 py-3">Other GCs</th>
+                            <th class="px-3 py-3">Estimator</th>
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'price_original', 'label' => 'ARTELYE Price'])</th>
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'price_ve', 'label' => 'ARTELYE VE Price'])</th>
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'gc_price', 'label' => 'GC Price'])</th>
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'gc_received_date', 'label' => 'GC Received Proposal'])</th>
+                            @foreach($followUps as $nth => $label)
+                                <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => "{$nth}_follow_up_date", 'label' => $label])</th>
+                            @endforeach
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'result_gc', 'label' => 'GC Result'])</th>
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'result_art', 'label' => 'ART Result'])</th>
+                            <th class="px-3 py-3">Notes</th>
+                            <th class="col-actions px-3 py-3 text-right">Actions</th>
+                        </tr>
+                        {{-- Column filters: text inputs submit on Enter, selects/dates on change. --}}
+                        <tr class="col-filter bg-gray-100">
+                            <th class="px-3 py-2">
+                                <input type="date" name="submission_date" form="proposalFilters" value="{{ request('submission_date') }}" onchange="this.form.submit()">
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'gc', 'sort_direction' => request('sort_by') == 'gc' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
-                                   class="group inline-flex items-center hover:text-gray-700">
-                                    GCs
-                                    @if(request('sort_by') == 'gc')
-                                        @if(request('sort_direction', 'desc') == 'asc')
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
-                                            </svg>
-                                        @else
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
-                                            </svg>
-                                        @endif
-                                    @endif
-                                </a>
+                            <th class="px-3 py-2">
+                                <select name="status" form="proposalFilters" onchange="this.form.submit()">
+                                    <option value="">All</option>
+                                    <option value="none" {{ request('status') === 'none' ? 'selected' : '' }}>Not set</option>
+                                    @foreach(\App\Models\Proposal::STATUSES as $statusValue => $statusLabel)
+                                        <option value="{{ $statusValue }}" {{ request('status') === $statusValue ? 'selected' : '' }}>{{ $statusLabel }}</option>
+                                    @endforeach
+                                </select>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'submission_date', 'sort_direction' => request('sort_by') == 'submission_date' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
-                                   class="group inline-flex items-center hover:text-gray-700">
-                                    Submission Date
-                                    @if(request('sort_by') == 'submission_date')
-                                        @if(request('sort_direction', 'desc') == 'asc')
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
-                                            </svg>
-                                        @else
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
-                                            </svg>
-                                        @endif
-                                    @endif
-                                </a>
+                            <th class="col-project px-3 py-2">
+                                <input type="text" name="project" form="proposalFilters" value="{{ request('project') }}" placeholder="filter">
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Follow-ups
+                            <th class="px-3 py-2">
+                                <select name="job_type" form="proposalFilters" onchange="this.form.submit()">
+                                    <option value="">All</option>
+                                    <option value="MULTIUNIT" {{ request('job_type') == 'MULTIUNIT' ? 'selected' : '' }}>MU</option>
+                                    <option value="NON MU" {{ request('job_type') == 'NON MU' ? 'selected' : '' }}>NON MU</option>
+                                </select>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'price_original', 'sort_direction' => request('sort_by') == 'price_original' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
-                                   class="group inline-flex items-center hover:text-gray-700">
-                                    ARTELYE Price
-                                    @if(request('sort_by') == 'price_original')
-                                        @if(request('sort_direction', 'desc') == 'asc')
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
-                                            </svg>
-                                        @else
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
-                                            </svg>
-                                        @endif
-                                    @endif
-                                </a>
+                            <th class="px-3 py-2">
+                                <select name="gc" form="proposalFilters" onchange="this.form.submit()">
+                                    <option value="">All</option>
+                                    @foreach($gcOptions as $gcOption)
+                                        <option value="{{ $gcOption }}" {{ request('gc') === $gcOption ? 'selected' : '' }}>{{ $gcOption }}</option>
+                                    @endforeach
+                                </select>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'price_ve', 'sort_direction' => request('sort_by') == 'price_ve' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
-                                   class="group inline-flex items-center hover:text-gray-700">
-                                    ARTELYE VE Price
-                                    @if(request('sort_by') == 'price_ve')
-                                        @if(request('sort_direction', 'desc') == 'asc')
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
-                                            </svg>
-                                        @else
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
-                                            </svg>
-                                        @endif
-                                    @endif
-                                </a>
+                            <th class="px-3 py-2">
+                                <select name="other_gc" form="proposalFilters" onchange="this.form.submit()">
+                                    <option value="">All</option>
+                                    @foreach($otherGcOptions as $gcOption)
+                                        <option value="{{ $gcOption }}" {{ request('other_gc') === $gcOption ? 'selected' : '' }}>{{ $gcOption }}</option>
+                                    @endforeach
+                                </select>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'gc_price', 'sort_direction' => request('sort_by') == 'gc_price' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
-                                   class="group inline-flex items-center hover:text-gray-700">
-                                    GC Price
-                                    @if(request('sort_by') == 'gc_price')
-                                        @if(request('sort_direction', 'desc') == 'asc')
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
-                                            </svg>
-                                        @else
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
-                                            </svg>
-                                        @endif
-                                    @endif
-                                </a>
+                            <th class="px-3 py-2">
+                                <select name="estimator_id" form="proposalFilters" onchange="this.form.submit()">
+                                    <option value="">All</option>
+                                    @foreach($estimators as $estimator)
+                                        <option value="{{ $estimator->id }}" {{ request('estimator_id') == $estimator->id ? 'selected' : '' }}>{{ $estimator->name }}</option>
+                                    @endforeach
+                                </select>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'result_gc', 'sort_direction' => request('sort_by') == 'result_gc' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
-                                   class="group inline-flex items-center hover:text-gray-700">
-                                    Result GC
-                                    @if(request('sort_by') == 'result_gc')
-                                        @if(request('sort_direction', 'desc') == 'asc')
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
-                                            </svg>
-                                        @else
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
-                                            </svg>
-                                        @endif
-                                    @endif
-                                </a>
+                            <th class="px-3 py-2"></th>
+                            <th class="px-3 py-2"></th>
+                            <th class="px-3 py-2"></th>
+                            <th class="px-3 py-2">
+                                <select name="gc_received" form="proposalFilters" onchange="this.form.submit()">
+                                    <option value="">All</option>
+                                    <option value="yes" {{ request('gc_received') === 'yes' ? 'selected' : '' }}>Received</option>
+                                    <option value="no" {{ request('gc_received') === 'no' ? 'selected' : '' }}>Not received</option>
+                                </select>
                             </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                <a href="{{ request()->fullUrlWithQuery(['sort_by' => 'result_art', 'sort_direction' => request('sort_by') == 'result_art' && request('sort_direction', 'desc') == 'asc' ? 'desc' : 'asc']) }}" 
-                                   class="group inline-flex items-center hover:text-gray-700">
-                                    Result ART
-                                    @if(request('sort_by') == 'result_art')
-                                        @if(request('sort_direction', 'desc') == 'asc')
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z"/>
-                                            </svg>
-                                        @else
-                                            <svg class="ml-2 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                                                <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z"/>
-                                            </svg>
-                                        @endif
-                                    @endif
-                                </a>
+                            @foreach($followUps as $nth => $label)
+                                <th class="px-3 py-2">
+                                    <select name="{{ $nth }}_follow_up" form="proposalFilters" onchange="this.form.submit()">
+                                        <option value="">All</option>
+                                        <option value="yes" {{ request("{$nth}_follow_up") === 'yes' ? 'selected' : '' }}>Responded</option>
+                                        <option value="no" {{ request("{$nth}_follow_up") === 'no' ? 'selected' : '' }}>No response</option>
+                                        <option value="none" {{ request("{$nth}_follow_up") === 'none' ? 'selected' : '' }}>Not sent</option>
+                                    </select>
+                                </th>
+                            @endforeach
+                            @foreach(['result_gc', 'result_art'] as $resultField)
+                                <th class="px-3 py-2">
+                                    <select name="{{ $resultField }}" form="proposalFilters" onchange="this.form.submit()">
+                                        <option value="">All</option>
+                                        <option value="pending" {{ request($resultField) === 'pending' ? 'selected' : '' }}>Pending</option>
+                                        <option value="win" {{ request($resultField) === 'win' ? 'selected' : '' }}>Win</option>
+                                        <option value="loss" {{ request($resultField) === 'loss' ? 'selected' : '' }}>Loss</option>
+                                    </select>
+                                </th>
+                            @endforeach
+                            <th class="px-3 py-2">
+                                <input type="text" name="notes" form="proposalFilters" value="{{ request('notes') }}" placeholder="filter">
                             </th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
+                            <th class="col-actions px-3 py-2"></th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-white divide-y divide-gray-200 text-gray-900">
                         @forelse($proposals as $proposal)
+                            @php
+                                $project = $proposal->project;
+                                $otherGcNames = $project->other_gc ? array_keys($project->other_gc) : [];
+                            @endphp
                             <tr class="hover:bg-gray-50">
-                                <td class="px-6 py-4 ">
-                                    <div class="text-sm font-medium text-gray-900">
-                                        {{ $proposal->project->name }}
-                                    </div>
-                                    @if($proposal->job_number)
-                                        <div class="text-xs text-gray-500">
-                                            Job #{{ $proposal->job_number }}
-                                        </div>
-                                    @endif
-                                    @if($proposal->project->type)
-                                        <div class="mt-1">
-                                            @if($proposal->project->type === 'MULTIUNIT')
-                                                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800">MU</span>
-                                            @else
-                                                <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">NON MU</span>
-                                            @endif
-                                        </div>
-                                    @endif
+                                <td class="px-3 py-2">
+                                    {{ $proposal->submission_date?->format('M d, Y') ?? '-' }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-900">
-                                    <div class="space-y-1">
-                                        @if($proposal->project->gc)
-                                            <div><span class="font-medium text-gray-700">Primary:</span> {{ $proposal->project->gc }}</div>
-                                        @endif
-                                        @if($proposal->project->other_gc && count($proposal->project->other_gc) > 0)
-                                            <div><span class="font-medium text-gray-700">Others:</span> 
-                                                @php
-                                                    $otherGcNames = array_keys($proposal->project->other_gc);
-                                                    $displayNames = array_slice($otherGcNames, 0, 2);
-                                                @endphp
-                                                {{ implode(', ', $displayNames) }}@if(count($otherGcNames) > 2)<span class="text-gray-500"> +{{ count($otherGcNames) - 2 }} more</span>@endif
-                                            </div>
-                                        @endif
-                                        @if(!$proposal->project->gc && (!$proposal->project->other_gc || count($proposal->project->other_gc) == 0))
-                                            <span class="text-gray-400 text-xs">No GCs specified</span>
-                                        @endif
-                                    </div>
+                                <td class="px-3 py-2">
+                                    @include('admin.proposals.partials.status-badge', ['status' => $proposal->status])
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    @if($proposal->submission_date)
-                                        <span class="px-2 py-1 text-xs rounded {{ $proposal->responded == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                            {{ $proposal->submission_date->format('M d, Y') }}
-                                        </span>
+                                <td class="col-project cell-wrap px-3 py-2 font-medium" style="min-width: 14rem;"
+                                    title="{{ $proposal->job_number ? 'Job #' . $proposal->job_number : '' }}">
+                                    {{ $project->name }}
+                                </td>
+                                <td class="px-3 py-2">
+                                    @if($project->type === 'MULTIUNIT')
+                                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800">MU</span>
+                                    @elseif($project->type)
+                                        <span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">NON MU</span>
                                     @else
                                         <span class="text-gray-400">-</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-900">
-                                    <div class="space-y-1">
-                                        @if($proposal->first_follow_up_date)
-                                            <div class="flex items-center space-x-2">
-                                                <span class="text-xs text-gray-500">1st:</span>
-                                                <span class="px-2 py-1 text-xs rounded {{ $proposal->first_follow_up_respond == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                                    {{ $proposal->first_follow_up_date->format('M d') }}
-                                                </span>
-                                                @if($proposal->first_follow_up_attachment)
-                                                    <a href="{{ Storage::url($proposal->first_follow_up_attachment) }}" target="_blank" class="text-blue-600 hover:text-blue-800" title="View attachment">
-                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        @endif
-                                        @if($proposal->second_follow_up_date)
-                                            <div class="flex items-center space-x-2">
-                                                <span class="text-xs text-gray-500">2nd:</span>
-                                                <span class="px-2 py-1 text-xs rounded {{ $proposal->second_follow_up_respond == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                                    {{ $proposal->second_follow_up_date->format('M d') }}
-                                                </span>
-                                                @if($proposal->second_follow_up_attachment)
-                                                    <a href="{{ Storage::url($proposal->second_follow_up_attachment) }}" target="_blank" class="text-blue-600 hover:text-blue-800" title="View attachment">
-                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        @endif
-                                        @if($proposal->third_follow_up_date)
-                                            <div class="flex items-center space-x-2">
-                                                <span class="text-xs text-gray-500">3rd:</span>
-                                                <span class="px-2 py-1 text-xs rounded {{ $proposal->third_follow_up_respond == 'yes' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                                    {{ $proposal->third_follow_up_date->format('M d') }}
-                                                </span>
-                                                @if($proposal->third_follow_up_attachment)
-                                                    <a href="{{ Storage::url($proposal->third_follow_up_attachment) }}" target="_blank" class="text-blue-600 hover:text-blue-800" title="View attachment">
-                                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                                                        </svg>
-                                                    </a>
-                                                @endif
-                                            </div>
-                                        @endif
-                                        @if(!$proposal->first_follow_up_date && !$proposal->second_follow_up_date && !$proposal->third_follow_up_date)
-                                            <span class="text-gray-400 text-xs">No follow-ups</span>
-                                        @endif
-                                    </div>
+                                <td class="cell-wrap px-3 py-2" style="min-width: 10rem;">
+                                    {{ $project->gc ?: '-' }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-3 py-2">
+                                    <span class="cell-truncate" style="max-width: 12rem;" title="{{ implode(', ', $otherGcNames) }}">
+                                        {{ $otherGcNames ? implode(', ', $otherGcNames) : '-' }}
+                                    </span>
+                                </td>
+                                <td class="px-3 py-2">
+                                    {{ $project->assignedTo?->name ?? '-' }}
+                                </td>
+                                <td class="px-3 py-2">
                                     {{ $proposal->price_original ? '$' . number_format($proposal->price_original, 2) : '-' }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-3 py-2">
                                     {{ $proposal->price_ve ? '$' . number_format($proposal->price_ve, 2) : '-' }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <td class="px-3 py-2">
                                     {{ $proposal->gc_price ? '$' . number_format($proposal->gc_price, 2) : '-' }}
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($proposal->result_gc === 'win')
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            Win
+                                <td class="px-3 py-2">
+                                    @if($proposal->gc_received_date)
+                                        <span class="px-2 py-0.5 text-xs rounded bg-green-100 text-green-800">
+                                            {{ $proposal->gc_received_date->format('M d, Y') }}
                                         </span>
-                                    @elseif($proposal->result_gc === 'loss')
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                            Loss
-                                        </span>
+                                    @elseif($proposal->submission_date)
+                                        <span class="px-2 py-0.5 text-xs rounded bg-red-100 text-red-800">Awaiting</span>
                                     @else
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                            Pending
-                                        </span>
+                                        <span class="text-gray-400">-</span>
                                     @endif
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @if($proposal->result_art === 'win')
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                            Win
-                                        </span>
-                                    @elseif($proposal->result_art === 'loss')
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                            Loss
-                                        </span>
-                                    @else
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                            Pending
-                                        </span>
-                                    @endif
+                                @foreach($followUps as $nth => $label)
+                                    <td class="px-3 py-2">
+                                        @include('admin.proposals.partials.follow-up-cell', [
+                                            'date' => $proposal->{"{$nth}_follow_up_date"},
+                                            'respond' => $proposal->{"{$nth}_follow_up_respond"},
+                                            'attachment' => $proposal->{"{$nth}_follow_up_attachment"},
+                                        ])
+                                    </td>
+                                @endforeach
+                                <td class="px-3 py-2">
+                                    @include('admin.proposals.partials.result-badge', ['result' => $proposal->result_gc])
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td class="px-3 py-2">
+                                    @include('admin.proposals.partials.result-badge', ['result' => $proposal->result_art])
+                                </td>
+                                <td class="px-3 py-2">
+                                    <button type="button" class="text-left hover:text-blue-700" data-notes-cell="{{ $proposal->id }}"
+                                            onclick="pnNotes.open({{ $proposal->id }}, @js($proposal->project->name))">
+                                        @include('admin.proposals.partials.notes-cell', ['proposal' => $proposal])
+                                    </button>
+                                </td>
+                                <td class="col-actions px-3 py-2 text-right font-medium">
                                     <div class="flex justify-end space-x-1">
-                                        <a href="{{ route('admin.proposals.show', $proposal) }}" 
+                                        <a href="{{ route('admin.proposals.show', $proposal) }}"
                                            class="inline-flex items-center justify-center w-8 h-8 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-full transition-colors"
                                            title="View">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -414,20 +297,21 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                             </svg>
                                         </a>
-                                        <a href="{{ route('admin.proposals.edit', $proposal) }}" 
+                                        <a href="{{ route('admin.proposals.edit', $proposal) }}"
+                                           onclick="event.preventDefault(); pnForm.openEdit(this.href)"
                                            class="inline-flex items-center justify-center w-8 h-8 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded-full transition-colors"
                                            title="Edit">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                             </svg>
                                         </a>
-                                        <form method="POST" 
-                                              action="{{ route('admin.proposals.destroy', $proposal) }}" 
+                                        <form method="POST"
+                                              action="{{ route('admin.proposals.destroy', $proposal) }}"
                                               class="inline"
                                               onsubmit="return confirm('Are you sure you want to delete this proposal?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" 
+                                            <button type="submit"
                                                     class="inline-flex items-center justify-center w-8 h-8 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-full transition-colors"
                                                     title="Delete">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -440,7 +324,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="px-6 py-4 text-center text-gray-500">
+                                <td colspan="20" class="px-6 py-4 text-center text-gray-500">
                                     No proposals found.
                                 </td>
                             </tr>
@@ -458,4 +342,148 @@
         </div>
     </div>
 </div>
+<!-- Notes popup -->
+<div id="pnNotesModal" class="fixed inset-0 z-50 hidden" onclick="if (event.target === this) pnNotes.close()">
+    <div class="absolute inset-0 bg-black opacity-50" style="pointer-events: none;"></div>
+    <div class="relative bg-white rounded-lg shadow-xl mx-auto mt-24 w-full max-w-lg">
+        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+            <h3 class="text-base font-semibold text-gray-900 truncate">Notes — <span id="pnNotesTitle"></span></h3>
+            <button type="button" onclick="pnNotes.close()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <div id="pnNotesBody" class="p-5"></div>
+    </div>
+</div>
+
+<script>
+    // Plain-JS notes popup for the proposals list (same approach as srNotes on Scope Review).
+    window.pnNotes = {
+        modal() { return document.getElementById('pnNotesModal'); },
+        body() { return document.getElementById('pnNotesBody'); },
+        async request(url, method, payload) {
+            const res = await fetch(url, {
+                method,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/html',
+                },
+                body: payload ? JSON.stringify(payload) : null,
+            });
+            if (!res.ok) throw new Error('bad status ' + res.status);
+            this.body().innerHTML = await res.text();
+            this.syncCell();
+        },
+        // Copy the refreshed notes cell from the thread response into the table row.
+        syncCell() {
+            const widget = this.body().querySelector('.pn-notes');
+            const tpl = widget && widget.querySelector('template[data-notes-cell]');
+            const cell = widget && document.querySelector('[data-notes-cell="' + widget.dataset.proposalId + '"]');
+            if (tpl && cell) cell.innerHTML = tpl.innerHTML;
+        },
+        async open(proposalId, title) {
+            document.getElementById('pnNotesTitle').textContent = title;
+            this.body().innerHTML = '<p class="text-sm text-gray-400">Loading...</p>';
+            this.modal().classList.remove('hidden');
+            try {
+                await this.request('{{ url('admin/proposals') }}/' + proposalId + '/notes', 'GET', null);
+                const ta = this.body().querySelector('[data-note-new]');
+                if (ta) ta.focus();
+            } catch (e) {
+                this.body().innerHTML = '<p class="text-sm text-red-600">Could not load notes.</p>';
+            }
+        },
+        close() { this.modal().classList.add('hidden'); },
+        async add(el) {
+            const widget = el.closest('.pn-notes');
+            const body = (widget.querySelector('[data-note-new]').value || '').trim();
+            if (!body) return;
+            try { await this.request(widget.dataset.storeUrl, 'POST', { body }); }
+            catch (e) { alert('Could not save the note. Please try again.'); }
+        },
+        async destroy(el, id) {
+            if (!confirm('Delete this note?')) return;
+            const widget = el.closest('.pn-notes');
+            try { await this.request(widget.dataset.baseUrl + '/' + id, 'DELETE', null); }
+            catch (e) { alert('Could not delete the note. Please try again.'); }
+        },
+    };
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pnNotes.close(); });
+</script>
+
+<!-- Create / Edit proposal popup. Holds one form at a time (both forms use the same
+     element ids), fetched from the create / edit route each time it opens.
+     Forms post normally so attachments upload; a failed submit redirects back here and
+     the server re-renders that form inside the popup with the entered values and errors. -->
+@php
+    $reopenModal = old('_modal');
+    $reopenProposal = $reopenModal === 'edit' ? \App\Models\Proposal::find(old('_proposal_id')) : null;
+@endphp
+<div id="pnFormModal" class="fixed inset-0 z-50 {{ $reopenModal ? '' : 'hidden' }} overflow-y-auto" onclick="if (event.target === this) pnForm.close()">
+    <div class="fixed inset-0 bg-black opacity-50" style="pointer-events: none;"></div>
+    <div class="relative bg-white rounded-lg shadow-xl mx-auto my-8 w-full max-w-4xl">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 id="pnFormTitle" class="text-lg font-semibold text-gray-900">{{ $reopenProposal ? 'Edit Proposal' : 'Add New Proposal' }}</h3>
+            <div class="flex items-center gap-4">
+                <a id="pnFormFullPage" href="{{ $reopenProposal ? route('admin.proposals.edit', $reopenProposal) : route('admin.proposals.create') }}"
+                   class="text-sm text-blue-600 hover:text-blue-800">Open full page</a>
+                <button type="button" onclick="pnForm.close()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+        </div>
+        <div id="pnFormBody" class="p-6">
+            @if($reopenModal && session('error'))
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+                    {{ session('error') }}
+                </div>
+            @endif
+            @if($reopenModal === 'create')
+                @include('admin.proposals.partials.create-modal-form')
+            @elseif($reopenProposal)
+                @include('admin.proposals.partials.edit-modal-form', ['proposal' => $reopenProposal])
+            @endif
+        </div>
+    </div>
+</div>
+
+@include('admin.proposals.partials.proposal-form-script')
+
+<script>
+    window.pnForm = {
+        modal() { return document.getElementById('pnFormModal'); },
+        body() { return document.getElementById('pnFormBody'); },
+        show(title, fullPageUrl) {
+            document.getElementById('pnFormTitle').textContent = title;
+            document.getElementById('pnFormFullPage').href = fullPageUrl;
+            this.modal().classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        },
+        openCreate() {
+            this.load('Add New Proposal', '{{ route('admin.proposals.create') }}');
+        },
+        openEdit(editUrl) {
+            this.load('Edit Proposal', editUrl);
+        },
+        async load(title, url) {
+            this.body().innerHTML = '<p class="text-sm text-gray-400">Loading...</p>';
+            this.show(title, url);
+            try {
+                const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
+                if (!res.ok) throw new Error('bad status ' + res.status);
+                this.body().innerHTML = await res.text();
+                initProposalForm();
+            } catch (e) {
+                this.body().innerHTML = '<p class="text-sm text-red-600">Could not load the form.</p>';
+            }
+        },
+        close() {
+            this.modal().classList.add('hidden');
+            this.body().innerHTML = '';
+            document.body.style.overflow = '';
+        },
+    };
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pnForm.modal().classList.contains('hidden')) pnForm.close(); });
+    @if($reopenModal)
+        document.body.style.overflow = 'hidden';
+    @endif
+</script>
 @endsection
