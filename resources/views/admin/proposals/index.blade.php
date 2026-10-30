@@ -71,41 +71,27 @@
             .proposal-table tbody tr:hover .col-actions { background: #f9fafb; }
         </style>
 
-        <!-- Filters (column filters in the table header submit this same form) -->
-        <form id="proposalFilters" method="GET" action="{{ route('admin.proposals.index') }}"
-              class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 p-4 flex flex-wrap gap-3 items-end">
+        {{-- Filter form: has no visible fields of its own; the column filters in the table header
+             attach to it via form="proposalFilters". The off-screen submit button lets Enter in a
+             text filter submit (implicit submission needs a submit button when there are several inputs). --}}
+        <form id="proposalFilters" method="GET" action="{{ route('admin.proposals.index') }}">
             @if(request('sort_by'))
                 <input type="hidden" name="sort_by" value="{{ request('sort_by') }}">
                 <input type="hidden" name="sort_direction" value="{{ request('sort_direction', 'desc') }}">
             @endif
-            <div class="flex-1" style="min-width: 16rem;">
-                <label for="search" class="block text-xs font-medium text-gray-700 mb-1">Search</label>
-                <input type="text" id="search" name="search" value="{{ request('search') }}"
-                       placeholder="Search by project name, GC, or job number..."
-                       class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div class="flex gap-2">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm">
-                    Apply Filters
-                </button>
-                @if(request()->hasAny($filterParams))
-                    <a href="{{ route('admin.proposals.index') }}"
-                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded text-sm">
-                        Clear
-                    </a>
-                @endif
-            </div>
+            <button type="submit" tabindex="-1" aria-hidden="true" style="position: absolute; left: -9999px;">Filter</button>
         </form>
 
         <!-- Results Summary -->
         @if(request()->hasAny($filterParams))
-            <div class="bg-blue-50 border border-blue-200 px-4 py-3 rounded mb-6">
+            <div class="bg-blue-50 border border-blue-200 px-4 py-3 rounded mb-6 flex items-center justify-between gap-4">
                 <p class="text-blue-800">
                     Showing {{ $proposals->total() }} filtered result(s)
-                    @if(request('search'))
-                        for search: "<strong>{{ request('search') }}</strong>"
-                    @endif
                 </p>
+                <a href="{{ route('admin.proposals.index') }}"
+                   class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1.5 px-4 rounded text-sm">
+                    Clear filters
+                </a>
             </div>
         @endif
 
