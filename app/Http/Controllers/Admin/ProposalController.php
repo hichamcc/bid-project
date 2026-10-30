@@ -362,24 +362,38 @@ class ProposalController extends Controller
     }
 
     /**
-     * Set the status of several proposals at once (bulk action on the list)
+     * Bulk edit from the list: set Status / GC Result / ART Result on the selected proposals.
+     * A field left on "Keep current" (empty) is not changed.
      */
-    public function bulkStatus(Request $request)
+    public function bulkUpdate(Request $request)
     {
         $validated = $request->validate([
-            'ids'    => 'required|array|min:1',
-            'ids.*'  => 'integer|exists:proposals,id',
+            'ids'        => 'required|array|min:1',
+            'ids.*'      => 'integer|exists:proposals,id',
             // "none" clears the status back to "Not set"
-            'status' => 'required|in:none,' . implode(',', array_keys(Proposal::STATUSES)),
+            'status'     => 'nullable|in:none,' . implode(',', array_keys(Proposal::STATUSES)),
+            'result_gc'  => 'nullable|in:pending,win,loss',
+            'result_art' => 'nullable|in:pending,win,loss',
         ]);
 
-        $status = $validated['status'] === 'none' ? null : $validated['status'];
-        $count = Proposal::whereIn('id', $validated['ids'])->update(['status' => $status]);
+        $changes = [];
+        if (!empty($validated['status'])) {
+            $changes['status'] = $validated['status'] === 'none' ? null : $validated['status'];
+        }
+        foreach (['result_gc', 'result_art'] as $field) {
+            if (!empty($validated[$field])) {
+                $changes[$field] = $validated[$field];
+            }
+        }
 
-        $label = $status ? Proposal::STATUSES[$status] : 'Not set';
+        if (empty($changes)) {
+            return redirect()->back()->with('error', 'Nothing to update — choose at least one field to change.');
+        }
+
+        $count = Proposal::whereIn('id', $validated['ids'])->update($changes);
 
         return redirect()->back()
-            ->with('success', $count . ' proposal' . ($count === 1 ? '' : 's') . ' set to ' . $label . '.');
+            ->with('success', $count . ' proposal' . ($count === 1 ? '' : 's') . ' updated.');
     }
 
     /**

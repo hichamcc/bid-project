@@ -113,6 +113,7 @@
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
              x-data="{
                 selected: [],
+                bulkEditOpen: false,
                 toggleAll(event) {
                     this.selected = event.target.checked
                         ? Array.from(document.querySelectorAll('[data-row-checkbox]')).map(cb => cb.value)
@@ -124,13 +125,8 @@
                 },
              }">
             <!-- Bulk action toolbar -->
-            <form x-show="selected.length > 0" x-cloak method="POST" action="{{ route('admin.proposals.bulk-status') }}"
-                  onsubmit="return confirm('Change the status of the selected proposals?')"
-                  class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-blue-50 border-b border-blue-200">
-                @csrf
-                <template x-for="id in selected" :key="id">
-                    <input type="hidden" name="ids[]" :value="id">
-                </template>
+            <div x-show="selected.length > 0" x-cloak
+                 class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-blue-50 border-b border-blue-200">
                 <span class="text-sm font-medium text-blue-800">
                     <span x-text="selected.length"></span> selected
                 </span>
@@ -138,20 +134,66 @@
                     <button type="button" @click="selected = []" class="text-sm text-gray-600 hover:text-gray-900">
                         Clear
                     </button>
-                    <label for="bulk_status" class="text-sm text-gray-700">Set status to</label>
-                    <select id="bulk_status" name="status" required
-                            class="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white">
-                        <option value="">Choose...</option>
-                        @foreach(\App\Models\Proposal::STATUSES as $statusValue => $statusLabel)
-                            <option value="{{ $statusValue }}">{{ $statusLabel }}</option>
-                        @endforeach
-                        <option value="none">Not set</option>
-                    </select>
-                    <button type="submit" class="px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
-                        Apply
+                    <button type="button" @click="bulkEditOpen = true"
+                            class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Edit
                     </button>
                 </div>
-            </form>
+            </div>
+
+            <!-- Bulk edit popup: only fields changed from "Keep current" are applied -->
+            <div x-show="bulkEditOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto"
+                 @keydown.escape.window="bulkEditOpen = false">
+                <div class="fixed inset-0 bg-black opacity-50" @click="bulkEditOpen = false"></div>
+                <form method="POST" action="{{ route('admin.proposals.bulk-update') }}"
+                      class="relative bg-white rounded-lg shadow-xl mx-auto mt-24 w-full max-w-md">
+                    @csrf
+                    <template x-for="id in selected" :key="id">
+                        <input type="hidden" name="ids[]" :value="id">
+                    </template>
+                    <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200">
+                        <h3 class="text-base font-semibold text-gray-900">
+                            Edit <span x-text="selected.length"></span> proposal<span x-show="selected.length !== 1">s</span>
+                        </h3>
+                        <button type="button" @click="bulkEditOpen = false" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        <div>
+                            <label for="bulk_status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                            <select id="bulk_status" name="status" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white">
+                                <option value="">— Keep current —</option>
+                                @foreach(\App\Models\Proposal::STATUSES as $statusValue => $statusLabel)
+                                    <option value="{{ $statusValue }}">{{ $statusLabel }}</option>
+                                @endforeach
+                                <option value="none">Not set</option>
+                            </select>
+                        </div>
+                        @foreach(['result_gc' => 'GC Result', 'result_art' => 'ART Result'] as $resultField => $resultLabel)
+                            <div>
+                                <label for="bulk_{{ $resultField }}" class="block text-sm font-medium text-gray-700 mb-1">{{ $resultLabel }}</label>
+                                <select id="bulk_{{ $resultField }}" name="{{ $resultField }}" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md bg-white">
+                                    <option value="">— Keep current —</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="win">Win</option>
+                                    <option value="loss">Loss</option>
+                                </select>
+                            </div>
+                        @endforeach
+                    </div>
+                    <div class="flex justify-end gap-3 px-5 py-3 border-t border-gray-200">
+                        <button type="button" @click="bulkEditOpen = false"
+                                class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium">
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-4 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
+                            Apply to selected
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             <div class="overflow-x-auto">
                 <table class="proposal-table min-w-full divide-y divide-gray-200">
