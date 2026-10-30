@@ -275,18 +275,38 @@
             </div>
 
             <!-- Filters -->
+            {{-- Single-row filter bar: every field shares the width equally and shrinks
+                 instead of wrapping. Scoped CSS because min-w-0 / flex-nowrap etc. aren't
+                 guaranteed to be in the compiled Tailwind bundle. --}}
+            <style>
+                .filter-row { display: flex; flex-wrap: nowrap; gap: 0.5rem; align-items: flex-end; }
+                .filter-row > div { flex: 1 1 0; min-width: 0; }
+                .filter-row > .filter-wide { flex-grow: 1.6; }
+                .filter-row > .filter-date { flex: 0 0 7.5rem; }
+                .filter-row > .filter-actions { flex: 0 0 auto; display: flex; gap: 0.375rem; }
+                .filter-row label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .filter-row input, .filter-row select { width: 100%; font-size: 0.75rem; padding: 0.375rem 0.5rem; }
+                .filter-row select { padding-right: 1.75rem; text-overflow: ellipsis; }
+                .filter-row input[type="date"] { padding-right: 0.25rem; }
+                .filter-row .filter-actions > * { font-size: 0.75rem; padding: 0.375rem 0.75rem; }
+                /* Too narrow for one row: fall back to wrapping. */
+                @media (max-width: 1023px) {
+                    .filter-row { flex-wrap: wrap; }
+                    .filter-row > div, .filter-row > .filter-date { flex: 1 1 9rem; }
+                }
+            </style>
             <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                <form method="GET" action="{{ route('scope-review.index') }}" class="flex flex-wrap gap-3 items-end">
+                <form method="GET" action="{{ route('scope-review.index') }}" class="filter-row">
                     {{-- Filters ordered to match the table columns:
                          Project # · Project Name · Source · Platform · Location · Estimator · Type · Decision,
                          followed by extra filters with no column (Reason to Ignore, Entry/Due date). --}}
-                    <div class="min-w-32">
+                    <div>
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Project #</label>
                         <input type="text" name="project_number" value="{{ request('project_number') }}"
                                placeholder="Search number..."
                                class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
-                    <div class="flex-1 min-w-40">
+                    <div class="filter-wide">
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Project Name</label>
                         <input type="text" name="project_name" value="{{ request('project_name') }}"
                                placeholder="Search name..."
@@ -322,7 +342,7 @@
                             @endif
                         </select>
                     </div>
-                    <div class="flex-1 min-w-36">
+                    <div>
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Location</label>
                         <input type="text" name="location" value="{{ request('location') }}"
                                placeholder="Search location..."
@@ -373,17 +393,17 @@
                             @endif
                         </select>
                     </div>
-                    <div>
+                    <div class="filter-date">
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Entry Date</label>
                         <input type="date" name="entry_date" value="{{ request('entry_date') }}"
                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
-                    <div>
+                    <div class="filter-date">
                         <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Due Date</label>
                         <input type="date" name="due_date" value="{{ request('due_date') }}"
                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
                     </div>
-                    <div class="flex gap-2">
+                    <div class="filter-actions">
                         <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
                             Filter
                         </button>
