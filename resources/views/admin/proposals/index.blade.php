@@ -126,14 +126,7 @@
                         {{-- Column filters: text inputs submit on Enter, selects/dates on change. --}}
                         <tr class="col-filter bg-gray-100">
                             <th class="px-3 py-2">
-                                <div style="display: flex; gap: 0.25rem;">
-                                    <input type="date" name="submission_date" form="proposalFilters" value="{{ request('submission_date') }}" onchange="this.form.submit()">
-                                    <select name="responded" form="proposalFilters" onchange="this.form.submit()" title="GC confirmed receipt" style="min-width: 5.5rem;">
-                                        <option value="">All</option>
-                                        <option value="yes" {{ request('responded') === 'yes' ? 'selected' : '' }}>Confirmed</option>
-                                        <option value="no" {{ request('responded') === 'no' ? 'selected' : '' }}>Not confirmed</option>
-                                    </select>
-                                </div>
+                                <input type="date" name="submission_date" form="proposalFilters" value="{{ request('submission_date') }}" onchange="this.form.submit()">
                             </th>
                             <th class="px-3 py-2">
                                 <select name="status" form="proposalFilters" onchange="this.form.submit()">
