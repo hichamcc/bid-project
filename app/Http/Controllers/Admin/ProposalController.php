@@ -362,6 +362,27 @@ class ProposalController extends Controller
     }
 
     /**
+     * Set the status of several proposals at once (bulk action on the list)
+     */
+    public function bulkStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'ids'    => 'required|array|min:1',
+            'ids.*'  => 'integer|exists:proposals,id',
+            // "none" clears the status back to "Not set"
+            'status' => 'required|in:none,' . implode(',', array_keys(Proposal::STATUSES)),
+        ]);
+
+        $status = $validated['status'] === 'none' ? null : $validated['status'];
+        $count = Proposal::whereIn('id', $validated['ids'])->update(['status' => $status]);
+
+        $label = $status ? Proposal::STATUSES[$status] : 'Not set';
+
+        return redirect()->back()
+            ->with('success', $count . ' proposal' . ($count === 1 ? '' : 's') . ' set to ' . $label . '.');
+    }
+
+    /**
      * Remove the specified proposal
      */
     public function destroy(Proposal $proposal)

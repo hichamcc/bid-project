@@ -46,6 +46,15 @@
             .proposal-table .col-filter select { width: 100%; min-width: 6rem; font-size: 0.75rem; padding: 0.25rem 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem; background: #fff; font-weight: normal; text-transform: none; letter-spacing: normal; }
             .proposal-table .col-filter select { padding-right: 1.75rem; }
             .proposal-table .cell-truncate { display: block; overflow: hidden; text-overflow: ellipsis; }
+            /* Responded filter: small segmented control next to the submitted-date filter. */
+            .proposal-table .responded-toggle { display: inline-flex; border: 1px solid #d1d5db; border-radius: 0.25rem; overflow: hidden; background: #fff; flex-shrink: 0; }
+            .proposal-table .responded-toggle button { display: inline-flex; align-items: center; justify-content: center; height: 1.6rem; min-width: 1.6rem; padding: 0 0.35rem; font-size: 0.7rem; font-weight: 500; color: #4b5563; text-transform: none; letter-spacing: normal; }
+            .proposal-table .responded-toggle button + button { border-left: 1px solid #d1d5db; }
+            .proposal-table .responded-toggle button:hover { background: #f3f4f6; }
+            .proposal-table .responded-toggle button.is-active { background: #dbeafe; color: #1e40af; }
+            .proposal-table .responded-toggle .dot { width: 0.6rem; height: 0.6rem; border-radius: 9999px; }
+            .proposal-table .responded-toggle .dot-green { background: #22c55e; }
+            .proposal-table .responded-toggle .dot-red { background: #ef4444; }
             /* Project / GC show their full text and may wrap onto extra lines. */
             .proposal-table td.cell-wrap { white-space: normal; max-width: 22rem; word-break: break-word; }
             /* Actions column stays pinned to the right while the table scrolls sideways. */
@@ -101,11 +110,58 @@
         @endif
 
         <!-- Proposals Table -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg"
+             x-data="{
+                selected: [],
+                toggleAll(event) {
+                    this.selected = event.target.checked
+                        ? Array.from(document.querySelectorAll('[data-row-checkbox]')).map(cb => cb.value)
+                        : [];
+                },
+                get allSelected() {
+                    const boxes = document.querySelectorAll('[data-row-checkbox]');
+                    return boxes.length > 0 && this.selected.length === boxes.length;
+                },
+             }">
+            <!-- Bulk action toolbar -->
+            <form x-show="selected.length > 0" x-cloak method="POST" action="{{ route('admin.proposals.bulk-status') }}"
+                  onsubmit="return confirm('Change the status of the selected proposals?')"
+                  class="flex flex-wrap items-center justify-between gap-4 px-4 py-3 bg-blue-50 border-b border-blue-200">
+                @csrf
+                <template x-for="id in selected" :key="id">
+                    <input type="hidden" name="ids[]" :value="id">
+                </template>
+                <span class="text-sm font-medium text-blue-800">
+                    <span x-text="selected.length"></span> selected
+                </span>
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="selected = []" class="text-sm text-gray-600 hover:text-gray-900">
+                        Clear
+                    </button>
+                    <label for="bulk_status" class="text-sm text-gray-700">Set status to</label>
+                    <select id="bulk_status" name="status" required
+                            class="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white">
+                        <option value="">Choose...</option>
+                        @foreach(\App\Models\Proposal::STATUSES as $statusValue => $statusLabel)
+                            <option value="{{ $statusValue }}">{{ $statusLabel }}</option>
+                        @endforeach
+                        <option value="none">Not set</option>
+                    </select>
+                    <button type="submit" class="px-4 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium">
+                        Apply
+                    </button>
+                </div>
+            </form>
+
             <div class="overflow-x-auto">
                 <table class="proposal-table min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th class="px-3 py-3" style="width: 2rem;">
+                                <input type="checkbox" title="Select all on this page"
+                                       :checked="allSelected" @change="toggleAll($event)"
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            </th>
                             <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'submission_date', 'label' => 'Submitted Date'])</th>
                             <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'status', 'label' => 'Status'])</th>
                             <th class="col-project px-3 py-3">Project</th>
@@ -125,8 +181,27 @@
                         </tr>
                         {{-- Column filters: text inputs submit on Enter, selects/dates on change. --}}
                         <tr class="col-filter bg-gray-100">
+                            <th class="px-3 py-2"></th>
                             <th class="px-3 py-2">
-                                <input type="date" name="submission_date" form="proposalFilters" value="{{ request('submission_date') }}" onchange="this.form.submit()">
+                                <div style="display: flex; gap: 0.25rem; align-items: center;">
+                                    <input type="date" name="submission_date" form="proposalFilters" value="{{ request('submission_date') }}" onchange="this.form.submit()">
+                                    {{-- Compact responded filter matching the date colour: All / green = responded / red = not responded.
+                                         The hidden input keeps the current value when the form is submitted by another filter. --}}
+                                    <input type="hidden" name="responded" form="proposalFilters" value="{{ request('responded') }}">
+                                    <div class="responded-toggle">
+                                        @foreach(['' => ['All', 'All'], 'yes' => ['', 'Responded'], 'no' => ['', 'Not responded']] as $respondedValue => [$respondedText, $respondedTitle])
+                                            <button type="submit" form="proposalFilters" name="responded" value="{{ $respondedValue }}"
+                                                    title="{{ $respondedTitle }}"
+                                                    class="{{ (string) request('responded') === $respondedValue ? 'is-active' : '' }}">
+                                                @if($respondedValue === '')
+                                                    {{ $respondedText }}
+                                                @else
+                                                    <span class="dot {{ $respondedValue === 'yes' ? 'dot-green' : 'dot-red' }}"></span>
+                                                @endif
+                                            </button>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </th>
                             <th class="px-3 py-2">
                                 <select name="status" form="proposalFilters" onchange="this.form.submit()">
@@ -198,7 +273,11 @@
                                 $project = $proposal->project;
                                 $otherGcNames = $project->other_gc ? array_keys($project->other_gc) : [];
                             @endphp
-                            <tr class="hover:bg-gray-50">
+                            <tr class="hover:bg-gray-50" :class="selected.includes('{{ $proposal->id }}') ? 'bg-blue-50' : ''">
+                                <td class="px-3 py-2">
+                                    <input type="checkbox" data-row-checkbox value="{{ $proposal->id }}" x-model="selected"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                </td>
                                 <td class="px-3 py-2">
                                     {{-- Green = GC confirmed they received the proposal, red = not confirmed yet. --}}
                                     @if($proposal->submission_date)
@@ -301,7 +380,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="18" class="px-6 py-4 text-center text-gray-500">
+                                <td colspan="19" class="px-6 py-4 text-center text-gray-500">
                                     No proposals found.
                                 </td>
                             </tr>
