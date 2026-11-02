@@ -55,6 +55,23 @@ class Proposal extends Model
         'gc_price' => 'decimal:2',
     ];
 
+    protected static function booted()
+    {
+        // Read the uploaded follow-up emails into gc_emails (GC page > Emails tab).
+        // A failure here must never block saving the proposal.
+        static::saved(function (Proposal $proposal) {
+            $fields = array_map(fn ($prefix) => "{$prefix}_follow_up_attachment", GcEmail::FOLLOW_UPS);
+
+            if ($proposal->wasRecentlyCreated || $proposal->wasChanged($fields)) {
+                try {
+                    GcEmail::syncProposal($proposal);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+        });
+    }
+
     /**
      * Get the project that owns the proposal
      */
@@ -69,6 +86,14 @@ class Proposal extends Model
     public function notes(): HasMany
     {
         return $this->hasMany(ProposalNote::class)->orderBy('created_at');
+    }
+
+    /**
+     * Emails read from the follow-up attachments
+     */
+    public function emails(): HasMany
+    {
+        return $this->hasMany(GcEmail::class);
     }
 
     /**

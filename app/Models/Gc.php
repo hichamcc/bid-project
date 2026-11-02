@@ -75,6 +75,14 @@ public function projects()
 }
 
 /**
+ * People at this GC (Contacts tab)
+ */
+public function contacts(): HasMany
+{
+    return $this->hasMany(GcContact::class, 'gc_id')->orderBy('first_name')->orderBy('last_name');
+}
+
+/**
  * Get projects where this GC is the primary GC
  */
 public function primaryProjects(): HasMany

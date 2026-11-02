@@ -1,348 +1,191 @@
 @extends('components.layouts.app')
 
 @section('content')
-<div class="py-12">
-    <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-            <div class="p-6 bg-white border-b border-gray-200">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-semibold text-gray-900">GC Details</h2>
-                    <div class="flex space-x-2">
-                        <a href="{{ route('admin.gcs.edit', $gc) }}" 
-                           class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            Edit GC
-                        </a>
-                        <a href="{{ route('admin.gcs.index') }}" 
-                           class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                            Back to GCs
-                        </a>
-                    </div>
-                </div>
+@php
+    $tabs = [
+        'overview'  => ['Overview', null],
+        'proposals' => ['Proposals', $proposals->count()],
+        'projects'  => ['Projects', $projects->count()],
+        'emails'    => ['Emails', $emails->count()],
+        'contacts'  => ['Contacts', $contacts->count()],
+    ];
+    $activeTab = array_key_exists(request('tab'), $tabs) ? request('tab') : 'overview';
+    // Contact form failed validation → reopen it on the Contacts tab
+    if (old('_contact_form')) {
+        $activeTab = 'contacts';
+    }
+    $hasRange = request()->filled('from') || request()->filled('to');
+@endphp
+
+{{-- Scoped CSS: the compiled Tailwind bundle may not include every utility used here. --}}
+<style>
+    [x-cloak] { display: none !important; }
+    .gc-page { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .gc-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid #e5e7eb; overflow-x: auto; }
+    .gc-tab { padding: 0.6rem 1rem; font-size: 0.875rem; font-weight: 500; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+    .gc-tab:hover { color: #111827; }
+    .gc-tab.active { color: #2563eb; border-bottom-color: #2563eb; }
+    .gc-tab .count { margin-left: 0.35rem; padding: 0 0.45rem; border-radius: 9999px; background: #f3f4f6; font-size: 0.75rem; color: #4b5563; }
+    .gc-tab.active .count { background: #dbeafe; color: #1d4ed8; }
+    .gc-table { width: 100%; border-collapse: collapse; }
+    .gc-table th, .gc-table td { white-space: nowrap; padding: 0.4rem 0.5rem; text-align: left; vertical-align: top; }
+    .gc-table thead th { background: #f9fafb; font-size: 0.7rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.03em; }
+    .gc-table thead tr.filters th { padding-top: 0; text-transform: none; }
+    .gc-table tbody td { font-size: 0.8rem; color: #111827; border-top: 1px solid #f3f4f6; }
+    .gc-table tbody tr:hover td { background: #f9fafb; }
+    .gc-table .wrap { white-space: normal; min-width: 12rem; max-width: 22rem; }
+    .gc-table .preview { white-space: normal; min-width: 18rem; max-width: 28rem; color: #4b5563; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
+    .gc-table .preview.open { -webkit-line-clamp: unset; }
+    .gc-filter { width: 100%; min-width: 5rem; padding: 0.2rem 0.35rem; font-size: 0.75rem; font-weight: 400; border: 1px solid #d1d5db; border-radius: 0.25rem; background: #fff; color: #111827; }
+    .gc-stat-table td, .gc-stat-table th { padding: 0.4rem 0.75rem; text-align: right; font-size: 0.85rem; }
+    .gc-stat-table th:first-child, .gc-stat-table td:first-child { text-align: left; }
+    .gc-stat-table thead th { font-size: 0.7rem; text-transform: uppercase; color: #6b7280; font-weight: 600; border-bottom: 1px solid #e5e7eb; }
+    .gc-stat-table tbody tr + tr td { border-top: 1px solid #f3f4f6; }
+    .gc-stat-table tr.total td { font-weight: 600; border-top: 1px solid #e5e7eb; }
+    .gc-stat-link { color: inherit; text-decoration: none; border-bottom: 1px dashed transparent; }
+    .gc-stat-link:hover { color: #2563eb; border-bottom-color: #2563eb; cursor: pointer; }
+</style>
+
+<div class="py-6 gc-page"
+     x-data="{ tab: @js($activeTab) }"
+     x-init="$watch('tab', t => { const u = new URL(location.href); u.searchParams.set('tab', t); history.replaceState(null, '', u); })">
+
+    {{-- Header --}}
+    <div class="bg-white shadow-sm sm:rounded-lg mb-4 p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center">
+            <div class="h-12 w-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                {{ $gc->initials() }}
             </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- GC Information -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">GC Information</h3>
-                    
-                    <div class="space-y-4">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 h-16 w-16">
-                                <div class="h-16 w-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
-                                    {{ $gc->initials() }}
-                                </div>
-                            </div>
-                            <div class="ml-4">
-                                <h4 class="text-xl font-semibold text-gray-900">{{ $gc->name }}</h4>
-                                @if($gc->company)
-                                    <p class="text-gray-600">{{ $gc->company }}</p>
-                                @endif
-                                <div class="mt-1">
-                                    @if($gc->is_active)
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                                            Active
-                                        </span>
-                                    @else
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
-                                            Inactive
-                                        </span>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        @if($gc->email || $gc->phone)
-                            <div class="border-t pt-4">
-                                <h5 class="text-sm font-medium text-gray-700 mb-2">Contact Information</h5>
-                                
-                                @if($gc->email)
-                                    <div class="flex items-center mb-2">
-                                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                        </svg>
-                                        <a href="mailto:{{ $gc->email }}" class="text-blue-600 hover:text-blue-800">
-                                            {{ $gc->email }}
-                                        </a>
-                                    </div>
-                                @endif
-
-                                @if($gc->phone)
-                                    <div class="flex items-center">
-                                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                                        </svg>
-                                        <a href="tel:{{ $gc->phone }}" class="text-blue-600 hover:text-blue-800">
-                                            {{ $gc->formatted_phone }}
-                                        </a>
-                                    </div>
-                                @endif
-                            </div>
-                        @endif
-
-                        @if($gc->address)
-                            <div class="border-t pt-4">
-                                <h5 class="text-sm font-medium text-gray-700 mb-2">Address</h5>
-                                <div class="text-gray-900 whitespace-pre-line">{{ $gc->address }}</div>
-                            </div>
-                        @endif
-
-                        @if($gc->notes)
-                            <div class="border-t pt-4">
-                                <h5 class="text-sm font-medium text-gray-700 mb-2">Notes</h5>
-                                <div class="text-gray-900 whitespace-pre-line">{{ $gc->notes }}</div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            <!-- Project Statistics -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Project Statistics</h3>
-                    
-                    <div class="space-y-4">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-2xl font-bold text-blue-900">{{ $totalProjects }}</div>
-                                    <div class="text-sm text-blue-700">Total Projects</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-green-50 p-4 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-2xl font-bold text-green-900">{{ $activeProjects }}</div>
-                                    <div class="text-sm text-green-700">Active Projects</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-2xl font-bold text-gray-900">{{ $completedProjects }}</div>
-                                    <div class="text-sm text-gray-700">Completed Projects</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-indigo-50 p-4 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-2xl font-bold text-indigo-900">{{ $muProjects }}</div>
-                                    <div class="text-sm text-indigo-700">MU Projects</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-purple-50 p-4 rounded-lg">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                                    </svg>
-                                </div>
-                                <div class="ml-4">
-                                    <div class="text-2xl font-bold text-purple-900">{{ $nonMuProjects }}</div>
-                                    <div class="text-sm text-purple-700">NON-MU Projects</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    @if($totalProjects > 0)
-                        <div class="mt-6">
-                            <a href="{{ route('admin.projects.index', ['gc' => $gc->name, 'due_filter' => 'all']) }}"
-                               class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 inline-block text-center">
-                                View All Projects
-                            </a>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Projects -->
-        @if(isset($gc->recentProjects) && $gc->recentProjects->count() > 0)
-            <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">Recent Projects</h3>
-                        @if($totalProjects > 10)
-                            <a href="{{ route('admin.projects.index', ['gc' => $gc->name, 'due_filter' => 'all']) }}"
-                               class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                View all {{ $totalProjects }} projects →
-                            </a>
-                        @endif
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($gc->recentProjects as $project)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ $project->name }}</div>
-                                            @if($project->description)
-                                                <div class="text-sm text-gray-500">{{ Str::limit($project->description, 50) }}</div>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @if($project->gc === $gc->name)
-                                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                                    Primary
-                                                </span>
-                                            @elseif(in_array($gc->name, $project->other_gc ?? []))
-                                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                                                    Other
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @if($project->statusRecord)
-                                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-{{ $project->getStatusColor() }}-100 text-{{ $project->getStatusColor() }}-800">
-                                                    {{ $project->status }}
-                                                </span>
-                                            @else
-                                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                                                    No Status
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @if($project->assignedTo)
-                                                <div class="text-sm text-gray-900">{{ $project->assignedTo->name }}</div>
-                                            @else
-                                                <span class="text-gray-400">Unassigned</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            @if($project->due_date)
-                                                {{ $project->due_date->format('M d, Y') }}
-                                            @else
-                                                <span class="text-gray-400">No due date</span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('admin.projects.show', $project) }}" 
-                                               class="text-blue-600 hover:text-blue-900">View</a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        @elseif($totalProjects === 0)
-            <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-center">
-                    <div class="text-gray-400 mb-4">
-                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">No Projects</h3>
-                    <p class="text-gray-500 mb-4">This GC doesn't have any projects assigned yet.</p>
-                    <a href="{{ route('admin.projects.create', ['gc' => $gc->name]) }}" 
-                       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150">
-                        Create First Project
-                    </a>
-                </div>
-            </div>
-        @endif
-
-        <!-- System Information -->
-        <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">System Information</h3>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                    <div>
-                        <p><strong>Created:</strong> {{ $gc->created_at->format('M d, Y \a\t g:i A') }}</p>
-                        <p><strong>Last Updated:</strong> {{ $gc->updated_at->format('M d, Y \a\t g:i A') }}</p>
-                    </div>
-                    <div>
-                        <p><strong>GC ID:</strong> #{{ $gc->id }}</p>
-                        <p><strong>Status:</strong> {{ $gc->is_active ? 'Active' : 'Inactive' }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
-            <div class="p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Actions</h3>
-                <div class="flex flex-wrap gap-4">
-                    <a href="{{ route('admin.gcs.edit', $gc) }}" 
-                       class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        Edit GC
-                    </a>
-                    
-                    @if($totalProjects === 0)
-                        <form method="POST" 
-                              action="{{ route('admin.gcs.destroy', $gc) }}" 
-                              class="inline"
-                              onsubmit="return confirm('Are you sure you want to delete this GC? This action cannot be undone.')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" 
-                                    class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
-                                Delete GC
-                            </button>
-                        </form>
+            <div class="ml-3">
+                <h2 class="text-xl font-semibold text-gray-900">{{ $gc->name }}</h2>
+                <div class="flex items-center gap-2 text-sm text-gray-600">
+                    @if($gc->company)<span>{{ $gc->company }}</span>@endif
+                    @if($gc->is_active)
+                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-800">Active</span>
                     @else
-                        <span class="text-gray-500 text-sm flex items-center">
-                            Cannot delete - this GC is being used by {{ $totalProjects }} project(s)
-                        </span>
+                        <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
                     @endif
-
-                
-
-                    <a href="{{ route('admin.projects.create', ['gc' => $gc->name]) }}" 
-                       class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
-                        Create New Project
-                    </a>
                 </div>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('admin.gcs.edit', $gc) }}" class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-semibold py-2 px-3 rounded">Edit GC</a>
+            <a href="{{ route('admin.projects.create', ['gc' => $gc->name]) }}" class="bg-purple-500 hover:bg-purple-700 text-white text-sm font-semibold py-2 px-3 rounded">New Project</a>
+            <a href="{{ route('admin.gcs.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white text-sm font-semibold py-2 px-3 rounded">Back to GCs</a>
+        </div>
+    </div>
+
+    @if(session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{{ session('error') }}</div>
+    @endif
+    @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">{{ session('success') }}</div>
+    @endif
+
+    {{-- Date range: applies to every tab (and the stats) --}}
+    <form method="GET" action="{{ route('admin.gcs.show', $gc) }}"
+          class="bg-white shadow-sm sm:rounded-lg mb-4 px-4 py-3 flex flex-wrap items-end gap-3">
+        <input type="hidden" name="tab" :value="tab">
+        <div>
+            <label for="from" class="block text-xs font-medium text-gray-600 mb-1">From</label>
+            <input type="date" id="from" name="from" value="{{ request('from') }}" class="border border-gray-300 rounded-md px-2 py-1 text-sm">
+        </div>
+        <div>
+            <label for="to" class="block text-xs font-medium text-gray-600 mb-1">To</label>
+            <input type="date" id="to" name="to" value="{{ request('to') }}" class="border border-gray-300 rounded-md px-2 py-1 text-sm">
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-3 py-1.5 rounded-md">Apply</button>
+        @if($hasRange)
+            <a :href="'{{ route('admin.gcs.show', $gc) }}?tab=' + tab" class="text-sm text-gray-600 hover:text-gray-900 underline py-1.5">Clear dates</a>
+        @endif
+        <p class="text-xs text-gray-500 py-1.5">Proposals &amp; stats by submitted date · Emails by sent date · Projects by due date</p>
+    </form>
+
+    {{-- Tabs --}}
+    <div class="bg-white shadow-sm sm:rounded-lg">
+        <nav class="gc-tabs px-2">
+            @foreach($tabs as $key => [$label, $count])
+                <button type="button" class="gc-tab" :class="{ 'active': tab === '{{ $key }}' }" @click="tab = '{{ $key }}'">
+                    {{ $label }}@if(!is_null($count))<span class="count">{{ $count }}</span>@endif
+                </button>
+            @endforeach
+        </nav>
+
+        <div class="p-4">
+            <div x-show="tab === 'overview'" @if($activeTab !== 'overview') x-cloak @endif>
+                @include('admin.gcs.partials.tab-overview')
+            </div>
+            <div x-show="tab === 'proposals'" @if($activeTab !== 'proposals') x-cloak @endif>
+                @include('admin.gcs.partials.tab-proposals')
+            </div>
+            <div x-show="tab === 'projects'" @if($activeTab !== 'projects') x-cloak @endif>
+                @include('admin.gcs.partials.tab-projects')
+            </div>
+            <div x-show="tab === 'emails'" @if($activeTab !== 'emails') x-cloak @endif>
+                @include('admin.gcs.partials.tab-emails')
+            </div>
+            <div x-show="tab === 'contacts'" @if($activeTab !== 'contacts') x-cloak @endif>
+                @include('admin.gcs.partials.tab-contacts')
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    /*
+     * Per-column filters for the tab tables. In a table's header, an input/select with
+     * data-filter-col="N" filters on column N: inputs match "contains", selects match the
+     * whole value. A cell's data-value (if set) is matched instead of its text.
+     */
+    window.gcTableFilter = {
+        apply(table) {
+            const filters = [...table.querySelectorAll('[data-filter-col]')]
+                .map(el => ({ col: +el.dataset.filterCol, exact: el.tagName === 'SELECT', value: el.value.trim().toLowerCase() }))
+                .filter(f => f.value !== '');
+            let shown = 0;
+            table.querySelectorAll('tbody tr[data-row]').forEach(tr => {
+                const ok = filters.every(f => {
+                    const td = tr.children[f.col];
+                    const v = ((td && (td.dataset.value ?? td.textContent)) || '').trim().toLowerCase().replace(/\s+/g, ' ');
+                    return f.exact ? v === f.value : v.includes(f.value);
+                });
+                tr.style.display = ok ? '' : 'none';
+                if (ok) shown++;
+            });
+            const scope = table.closest('[data-filter-scope]');
+            const total = table.querySelectorAll('tbody tr[data-row]').length;
+            const count = scope.querySelector('[data-filter-count]');
+            if (count) count.textContent = filters.length ? `Showing ${shown} of ${total}` : `${total} total`;
+            const empty = table.querySelector('tr[data-empty-filtered]');
+            if (empty) empty.style.display = (total && !shown) ? '' : 'none';
+            const clear = scope.querySelector('[data-filter-clear]');
+            if (clear) clear.style.display = filters.length ? '' : 'none';
+        },
+        clear(scope) {
+            scope.querySelectorAll('[data-filter-col]').forEach(el => el.value = '');
+            scope.querySelectorAll('table').forEach(t => this.apply(t));
+        },
+        // Used by the Overview stats: open a tab with some filters preset.
+        set(tab, values) {
+            const scope = document.querySelector(`[data-filter-scope="${tab}"]`);
+            if (!scope) return;
+            scope.querySelectorAll('[data-filter-col]').forEach(el => el.value = '');
+            Object.entries(values).forEach(([name, v]) => {
+                const el = scope.querySelector(`[data-filter-name="${name}"]`);
+                if (el) el.value = v;
+            });
+            scope.querySelectorAll('table').forEach(t => this.apply(t));
+        },
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[data-filter-scope] table').forEach(table => {
+            table.querySelectorAll('[data-filter-col]').forEach(el =>
+                el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => gcTableFilter.apply(table)));
+            gcTableFilter.apply(table);
+        });
+        document.querySelectorAll('[data-filter-clear]').forEach(btn =>
+            btn.addEventListener('click', () => gcTableFilter.clear(btn.closest('[data-filter-scope]'))));
+    });
+</script>
 @endsection

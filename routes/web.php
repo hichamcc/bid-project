@@ -130,6 +130,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin/reference')->name('admin.ref
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('gcs', GcController::class);
+    Route::post('gcs/{gc}/contacts', [\App\Http\Controllers\Admin\GcContactController::class, 'store'])->name('gcs.contacts.store');
+    Route::put('gcs/{gc}/contacts/{contact}', [\App\Http\Controllers\Admin\GcContactController::class, 'update'])->name('gcs.contacts.update');
+    Route::delete('gcs/{gc}/contacts/{contact}', [\App\Http\Controllers\Admin\GcContactController::class, 'destroy'])->name('gcs.contacts.destroy');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

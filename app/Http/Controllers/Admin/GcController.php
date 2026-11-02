@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Gc as GC;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Models\GcEmail;
 use App\Models\Project;
+use App\Models\Proposal;
 
 class GCController extends Controller
 {
@@ -99,14 +101,48 @@ class GCController extends Controller
     /**
      * Display the specified GC
      */
-    public function show(GC $gc)
+    public function show(Request $request, GC $gc)
     {
-        // Get recent projects for this GC (latest 10, primary GC only)
-        $recentProjects = $gc->primaryProjects()
-                             ->latest()
-                             ->limit(10)
-                             ->get();
-    
+        // Date range from the top filter bar: proposals by submitted date,
+        // emails by sent date, projects by due date.
+        $from = $request->date('from');
+        $to = $request->date('to');
+        $inRange = fn ($date) => (!$from || ($date && $date->gte($from->copy()->startOfDay())))
+            && (!$to || ($date && $date->lte($to->copy()->endOfDay())));
+
+        $proposals = Proposal::query()
+            ->select('proposals.*')
+            ->join('projects', 'projects.id', '=', 'proposals.project_id')
+            ->where('projects.gc', $gc->name)
+            ->when($from, fn ($q) => $q->whereDate('proposals.submission_date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('proposals.submission_date', '<=', $to))
+            ->with('project')
+            ->withCount('emails')
+            ->orderByDesc('proposals.submission_date')
+            ->get();
+
+        $stats = [
+            'art' => $this->resultStats($proposals, 'result_art'),
+            'gc'  => $this->resultStats($proposals, 'result_gc'),
+        ];
+
+        $projects = Project::query()
+            ->where(fn ($q) => $q->where('gc', $gc->name)->orWhere('other_gc', 'LIKE', '%"' . $gc->name . '"%'))
+            ->when($from, fn ($q) => $q->whereDate('due_date', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('due_date', '<=', $to))
+            ->with(['assignedTo', 'statusRecord', 'proposals'])
+            ->orderByDesc('due_date')
+            ->get();
+
+        $emails = GcEmail::forGc($gc)
+            ->with('proposal.project')
+            ->get()
+            ->filter(fn ($email) => $inRange($email->display_date))
+            ->sortByDesc(fn ($email) => $email->display_date?->timestamp ?? 0)
+            ->values();
+
+        $contacts = $gc->contacts;
+
         $uniqueKey = "REGEXP_REPLACE(name, '^[^0-9]*([0-9]+).*$', '\\\\1')";
 
         $totalProjects = Project::where('gc', $gc->name)
@@ -133,17 +169,45 @@ class GCController extends Controller
                                 ->selectRaw("COUNT(DISTINCT {$uniqueKey}) as total")
                                 ->value('total');
 
-        // Add recent projects to the GC object for the view
-        $gc->recentProjects = $recentProjects;
-
         return view('admin.gcs.show', compact(
             'gc',
             'totalProjects',
             'activeProjects',
             'completedProjects',
             'muProjects',
-            'nonMuProjects'
+            'nonMuProjects',
+            'proposals',
+            'stats',
+            'projects',
+            'emails',
+            'contacts'
         ));
+    }
+
+    /**
+     * Sent / won / lost / pending counts for MU, NON MU and total.
+     * Pending = no result yet or "pending" (same rule as the GC list).
+     */
+    private function resultStats($proposals, string $field): array
+    {
+        $groups = [
+            'MU'     => $proposals->filter(fn ($p) => optional($p->project)->type === 'MULTIUNIT'),
+            'NON MU' => $proposals->filter(fn ($p) => optional($p->project)->type !== 'MULTIUNIT'),
+            'Total'  => $proposals,
+        ];
+
+        return collect($groups)->map(function ($group) use ($field) {
+            $won = $group->where($field, 'win')->count();
+            $lost = $group->where($field, 'loss')->count();
+
+            return [
+                'sent'     => $group->count(),
+                'won'      => $won,
+                'lost'     => $lost,
+                'pending'  => $group->count() - $won - $lost,
+                'win_rate' => ($won + $lost) > 0 ? round($won / ($won + $lost) * 100) : null,
+            ];
+        })->all();
     }
 
     /**
