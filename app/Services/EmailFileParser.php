@@ -68,7 +68,7 @@ class EmailFileParser
 
         $body = $message->getTextContent();
         if ($body === null || trim($body) === '') {
-            $body = strip_tags((string) $message->getHtmlContent());
+            $body = self::htmlToText((string) $message->getHtmlContent());
         }
 
         $attachments = [];
@@ -98,16 +98,25 @@ class EmailFileParser
             throw new \RuntimeException('hfig/mapi is not installed');
         }
 
-        $ole = (new \Hfig\MAPI\OLE\Pear\DocumentFactory())->createFromFile($file);
-        $message = (new \Hfig\MAPI\MapiMessageFactory())->parseMessage($ole);
+        // Same as Pear\DocumentFactory::createFromFile(), but PEAR's OLE reports a bad file
+        // by returning an error object instead of throwing, so check it here.
+        $ole = new \OLE();
+        $result = $ole->read($file);
+        if ($result instanceof \PEAR_Error || empty($ole->root)) {
+            throw new \RuntimeException('Not a valid Outlook .msg file' . ($result instanceof \PEAR_Error ? ': ' . $result->getMessage() : ''));
+        }
+        $message = (new \Hfig\MAPI\MapiMessageFactory())->parseMessage(new \Hfig\MAPI\OLE\Pear\DocumentElement($ole, $ole->root));
 
-        $prop = function (string $name) use ($message) {
+        // Each piece is read on its own: hfig/mapi throws on some messages (e.g. no
+        // plain-text body), and one missing part shouldn't lose the rest.
+        $try = function (callable $read, $default = null) {
             try {
-                return $message->properties[$name] ?? null;
+                return $read();
             } catch (Throwable $e) {
-                return null;
+                return $default;
             }
         };
+        $prop = fn (string $name) => $try(fn () => $message->properties[$name] ?? null);
 
         // Outlook keeps the original internet headers on received mail; use them as a
         // fallback for anything the MAPI properties don't give us.
@@ -123,13 +132,12 @@ class EmailFileParser
 
         $toNames = [];
         $toEmails = [];
-        foreach ($message->getRecipients() as $recipient) {
-            $type = method_exists($recipient, 'getType') ? strtolower((string) $recipient->getType()) : 'to';
-            if ($type !== 'to') {
+        foreach ($try(fn () => $message->getRecipients(), []) as $recipient) {
+            if (strtolower((string) $try(fn () => $recipient->getType(), 'to')) !== 'to') {
                 continue;
             }
-            $email = method_exists($recipient, 'getEmail') ? self::smtpAddress($recipient->getEmail()) : null;
-            $name = method_exists($recipient, 'getName') ? $recipient->getName() : null;
+            $email = self::smtpAddress($try(fn () => $recipient->getEmail()));
+            $name = $try(fn () => $recipient->getName());
             $toNames[] = $name ?: $email;
             $toEmails[] = $email;
         }
@@ -144,21 +152,22 @@ class EmailFileParser
             ?? self::toDate($prop('message_delivery_time'))
             ?? self::toDate($headers['Date'] ?? null);
 
-        $body = $message->getBody();
-        if ($body === null || trim((string) $body) === '') {
-            $body = method_exists($message, 'getBodyHTML') ? strip_tags((string) $message->getBodyHTML()) : '';
+        // Plain-text body, else the HTML body (getBodyHTML also pulls HTML out of RTF bodies)
+        $body = $prop('body');
+        if (!is_string($body) || trim($body) === '') {
+            $body = self::htmlToText((string) $try(fn () => $message->getBodyHTML(), ''));
         }
 
         $attachments = [];
-        foreach ($message->getAttachments() as $attachment) {
-            if ($name = $attachment->getFilename()) {
+        foreach ($try(fn () => $message->getAttachments(), []) as $attachment) {
+            if ($name = $try(fn () => $attachment->getFilename())) {
                 $attachments[] = $name;
             }
         }
 
         return [
             'sent_at'      => $sentAt,
-            'from_name'    => $prop('sender_name') ?: null,
+            'from_name'    => self::clip($prop('sender_name'), 255),
             'from_email'   => $fromEmail,
             'to_name'      => self::joinList($toNames),
             'to_email'     => self::joinList($toEmails),
@@ -193,8 +202,9 @@ class EmailFileParser
             if ($value instanceof \DateTimeInterface) {
                 return Carbon::instance($value);
             }
-            if (is_int($value) || (is_string($value) && ctype_digit($value))) {
-                return Carbon::createFromTimestamp((int) $value);
+            // hfig/mapi gives times as a unix timestamp float (0 when unset)
+            if (is_int($value) || is_float($value) || (is_string($value) && ctype_digit($value))) {
+                return (int) $value > 0 ? Carbon::createFromTimestamp((int) $value) : null;
             }
             if (is_string($value) && trim($value) !== '') {
                 return Carbon::parse($value);
@@ -205,24 +215,44 @@ class EmailFileParser
         return null;
     }
 
+    /**
+     * HTML email body → plain text (drops <style>/<script>/<head> so CSS doesn't end up in the preview).
+     */
+    private static function htmlToText(string $html): string
+    {
+        $html = preg_replace('#<(style|script|head)\b[^>]*>.*?</\1>#is', ' ', self::utf8($html)) ?? $html;
+        $html = preg_replace('#<(br|/p|/div|/tr)\b[^>]*>#i', "\n", $html) ?? $html;
+
+        return strip_tags($html);
+    }
+
     private static function preview($body): ?string
     {
-        $text = trim(preg_replace('/\s+/u', ' ', html_entity_decode((string) $body, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        $text = html_entity_decode(self::utf8((string) $body), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = trim(preg_replace('/\s+/u', ' ', $text) ?? '');
 
         return $text === '' ? null : Str::limit($text, self::PREVIEW_LENGTH);
     }
 
     private static function joinList(array $values): ?string
     {
-        $values = array_values(array_filter(array_map('trim', array_map('strval', $values))));
+        $values = array_values(array_filter(array_map(fn ($v) => trim(self::utf8((string) $v)), $values)));
 
         return $values ? implode(', ', $values) : null;
     }
 
     private static function clip($value, int $length): ?string
     {
-        $value = is_string($value) ? trim($value) : null;
+        $value = is_string($value) ? trim(self::utf8($value)) : null;
 
         return $value ? Str::limit($value, $length - 3) : null;
+    }
+
+    /**
+     * Older Outlook files can hold non-UTF-8 text, which MySQL would reject.
+     */
+    private static function utf8(string $value): string
+    {
+        return mb_check_encoding($value, 'UTF-8') ? $value : mb_convert_encoding($value, 'UTF-8', 'Windows-1252');
     }
 }
