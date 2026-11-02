@@ -2,6 +2,8 @@
 <form method="POST" action="{{ route('admin.proposals.store') }}" enctype="multipart/form-data">
     @csrf
     <input type="hidden" name="_modal" value="create">
+    {{-- Where to go after a successful save: 'grid' or the list (empty). Set by the page's JS. --}}
+    <input type="hidden" name="_return" value="{{ old('_return') }}">
 
     @include('admin.proposals.partials.create-fields')
 

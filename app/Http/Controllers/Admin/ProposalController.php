@@ -267,7 +267,7 @@ class ProposalController extends Controller
 
         Proposal::create($validated);
 
-        return redirect()->route('admin.proposals.index')
+        return $this->redirectToList($request)
             ->with('success', 'Proposal created successfully.');
     }
 
@@ -357,7 +357,7 @@ class ProposalController extends Controller
 
         $proposal->update($validated);
 
-        return redirect()->route('admin.proposals.index')
+        return $this->redirectToList($request)
             ->with('success', 'Proposal updated successfully.');
     }
 
@@ -399,11 +399,92 @@ class ProposalController extends Controller
     /**
      * Remove the specified proposal
      */
-    public function destroy(Proposal $proposal)
+    public function destroy(Request $request, Proposal $proposal)
     {
         $proposal->delete();
 
-        return redirect()->route('admin.proposals.index')
+        return $this->redirectToList($request)
             ->with('success', 'Proposal deleted successfully.');
+    }
+
+    /**
+     * AG Grid version of the list (trial page). Rows are loaded from gridData() and
+     * filtered/sorted in the browser.
+     */
+    public function grid()
+    {
+        $projects = Project::orderBy('name')->get();
+
+        return view('admin.proposals.grid', compact('projects'));
+    }
+
+    /**
+     * Rows for the AG Grid page. Pass ids[] to fetch only those rows (used to refresh a
+     * row after its notes change).
+     */
+    public function gridData(Request $request)
+    {
+        $query = Proposal::with(['project', 'latestNote.user'])->withCount('notes')->latest();
+
+        if ($request->filled('ids')) {
+            $query->whereIn('id', (array) $request->input('ids'));
+        }
+
+        return response()->json($query->get()->map(fn (Proposal $proposal) => $this->gridRow($proposal))->values());
+    }
+
+    private function gridRow(Proposal $proposal): array
+    {
+        $project = $proposal->project;
+        $followUps = [];
+        foreach (['first', 'second', 'third', 'fourth'] as $nth) {
+            $followUps[$nth] = [
+                'date'       => $proposal->{"{$nth}_follow_up_date"}?->toDateString(),
+                'respond'    => $proposal->{"{$nth}_follow_up_respond"},
+                'attachment' => $proposal->{"{$nth}_follow_up_attachment"}
+                    ? Storage::url($proposal->{"{$nth}_follow_up_attachment"})
+                    : null,
+            ];
+        }
+
+        return [
+            'id'              => $proposal->id,
+            'submission_date' => $proposal->submission_date?->toDateString(),
+            'responded'       => $proposal->responded,
+            'status'          => $proposal->status,
+            'project_name'    => $project?->name,
+            'job_number'      => $proposal->job_number,
+            'type'            => $project?->type,
+            'gc'              => $project?->gc,
+            'other_gcs'       => $project ? array_keys($project->other_gc) : [],
+            'price_original'  => $proposal->price_original !== null ? (float) $proposal->price_original : null,
+            'price_ve'        => $proposal->price_ve !== null ? (float) $proposal->price_ve : null,
+            'gc_price'        => $proposal->gc_price !== null ? (float) $proposal->gc_price : null,
+            'follow_ups'      => $followUps,
+            'result_gc'       => $proposal->result_gc,
+            'result_art'      => $proposal->result_art,
+            'latest_note'     => $proposal->latestNote ? [
+                'author' => $proposal->latestNote->user?->name ?? 'Deleted user',
+                'at'     => $proposal->latestNote->created_at->format('M d g:i A'),
+                'body'   => $proposal->latestNote->body,
+            ] : null,
+            'notes_count'     => $proposal->notes_count,
+            'urls'            => [
+                'show'    => route('admin.proposals.show', $proposal),
+                'edit'    => route('admin.proposals.edit', $proposal),
+                'destroy' => route('admin.proposals.destroy', $proposal),
+            ],
+        ];
+    }
+
+    /**
+     * After create/update/delete, go back to the page the action came from:
+     * the AG Grid page when the form sent _return=grid, otherwise the normal list.
+     */
+    private function redirectToList(Request $request)
+    {
+        return $request->input('_return') === 'grid'
+            ? redirect()->route('admin.proposals.grid')
+            : redirect()->route('admin.proposals.index');
     }
 }

@@ -60,6 +60,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 });
 
 Route::middleware(['auth', 'role:admin,bid_coordinator'])->prefix('admin')->name('admin.')->group(function () {
+    // AG Grid trial page — registered before the resource so "grid" isn't taken as a {proposal} id.
+    Route::get('proposals/grid', [AdminProposalController::class, 'grid'])->name('proposals.grid');
+    Route::get('proposals/grid/data', [AdminProposalController::class, 'gridData'])->name('proposals.grid.data');
     Route::resource('proposals', AdminProposalController::class);
     Route::post('proposals/bulk-update', [AdminProposalController::class, 'bulkUpdate'])->name('proposals.bulk-update');
     Route::get('proposals/{proposal}/notes', [\App\Http\Controllers\Admin\ProposalNoteController::class, 'index'])->name('proposals.notes.index');

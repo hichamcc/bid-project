@@ -3,6 +3,8 @@
     @csrf
     @method('PUT')
     <input type="hidden" name="_modal" value="edit">
+    {{-- Where to go after a successful save: 'grid' or the list (empty). Set by the page's JS. --}}
+    <input type="hidden" name="_return" value="{{ old('_return') }}">
     <input type="hidden" name="_proposal_id" value="{{ $proposal->id }}">
 
     @include('admin.proposals.partials.edit-fields')

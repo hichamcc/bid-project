@@ -8,7 +8,10 @@
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
             <div class="p-6 bg-white border-b border-gray-200">
                 <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-semibold text-gray-900">Proposals Management</h2>
+                    <div>
+                        <h2 class="text-2xl font-semibold text-gray-900">Proposals Management</h2>
+                        <a href="{{ route('admin.proposals.grid') }}" class="text-xs text-blue-600 hover:text-blue-800">Try the new grid view</a>
+                    </div>
                     <button type="button" onclick="pnForm.openCreate()"
                             class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         Add New Proposal
@@ -426,148 +429,7 @@
         </div>
     </div>
 </div>
-<!-- Notes popup -->
-<div id="pnNotesModal" class="fixed inset-0 z-50 hidden" onclick="if (event.target === this) pnNotes.close()">
-    <div class="absolute inset-0 bg-black opacity-50" style="pointer-events: none;"></div>
-    <div class="relative bg-white rounded-lg shadow-xl mx-auto mt-24 w-full max-w-lg">
-        <div class="flex items-center justify-between px-5 py-3 border-b border-gray-200">
-            <h3 class="text-base font-semibold text-gray-900 truncate">Notes — <span id="pnNotesTitle"></span></h3>
-            <button type="button" onclick="pnNotes.close()" class="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
-        </div>
-        <div id="pnNotesBody" class="p-5"></div>
-    </div>
-</div>
+@include('admin.proposals.partials.notes-modal')
 
-<script>
-    // Plain-JS notes popup for the proposals list (same approach as srNotes on Scope Review).
-    window.pnNotes = {
-        modal() { return document.getElementById('pnNotesModal'); },
-        body() { return document.getElementById('pnNotesBody'); },
-        async request(url, method, payload) {
-            const res = await fetch(url, {
-                method,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json',
-                    'Accept': 'text/html',
-                },
-                body: payload ? JSON.stringify(payload) : null,
-            });
-            if (!res.ok) throw new Error('bad status ' + res.status);
-            this.body().innerHTML = await res.text();
-            this.syncCell();
-        },
-        // Copy the refreshed notes cell from the thread response into the table row.
-        syncCell() {
-            const widget = this.body().querySelector('.pn-notes');
-            const tpl = widget && widget.querySelector('template[data-notes-cell]');
-            const cell = widget && document.querySelector('[data-notes-cell="' + widget.dataset.proposalId + '"]');
-            if (tpl && cell) cell.innerHTML = tpl.innerHTML;
-        },
-        async open(proposalId, title) {
-            document.getElementById('pnNotesTitle').textContent = title;
-            this.body().innerHTML = '<p class="text-sm text-gray-400">Loading...</p>';
-            this.modal().classList.remove('hidden');
-            try {
-                await this.request('{{ url('admin/proposals') }}/' + proposalId + '/notes', 'GET', null);
-                const ta = this.body().querySelector('[data-note-new]');
-                if (ta) ta.focus();
-            } catch (e) {
-                this.body().innerHTML = '<p class="text-sm text-red-600">Could not load notes.</p>';
-            }
-        },
-        close() { this.modal().classList.add('hidden'); },
-        async add(el) {
-            const widget = el.closest('.pn-notes');
-            const body = (widget.querySelector('[data-note-new]').value || '').trim();
-            if (!body) return;
-            try { await this.request(widget.dataset.storeUrl, 'POST', { body }); }
-            catch (e) { alert('Could not save the note. Please try again.'); }
-        },
-        async destroy(el, id) {
-            if (!confirm('Delete this note?')) return;
-            const widget = el.closest('.pn-notes');
-            try { await this.request(widget.dataset.baseUrl + '/' + id, 'DELETE', null); }
-            catch (e) { alert('Could not delete the note. Please try again.'); }
-        },
-    };
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') pnNotes.close(); });
-</script>
-
-<!-- Create / Edit proposal popup. Holds one form at a time (both forms use the same
-     element ids), fetched from the create / edit route each time it opens.
-     Forms post normally so attachments upload; a failed submit redirects back here and
-     the server re-renders that form inside the popup with the entered values and errors. -->
-@php
-    $reopenModal = old('_modal');
-    $reopenProposal = $reopenModal === 'edit' ? \App\Models\Proposal::find(old('_proposal_id')) : null;
-@endphp
-<div id="pnFormModal" class="fixed inset-0 z-50 {{ $reopenModal ? '' : 'hidden' }} overflow-y-auto" onclick="if (event.target === this) pnForm.close()">
-    <div class="fixed inset-0 bg-black opacity-50" style="pointer-events: none;"></div>
-    <div class="relative bg-white rounded-lg shadow-xl mx-auto my-8 w-full max-w-4xl">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h3 id="pnFormTitle" class="text-lg font-semibold text-gray-900">{{ $reopenProposal ? 'Edit Proposal' : 'Add New Proposal' }}</h3>
-            <div class="flex items-center gap-4">
-                <a id="pnFormFullPage" href="{{ $reopenProposal ? route('admin.proposals.edit', $reopenProposal) : route('admin.proposals.create') }}"
-                   class="text-sm text-blue-600 hover:text-blue-800">Open full page</a>
-                <button type="button" onclick="pnForm.close()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
-            </div>
-        </div>
-        <div id="pnFormBody" class="p-6">
-            @if($reopenModal && session('error'))
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-                    {{ session('error') }}
-                </div>
-            @endif
-            @if($reopenModal === 'create')
-                @include('admin.proposals.partials.create-modal-form')
-            @elseif($reopenProposal)
-                @include('admin.proposals.partials.edit-modal-form', ['proposal' => $reopenProposal])
-            @endif
-        </div>
-    </div>
-</div>
-
-@include('admin.proposals.partials.proposal-form-script')
-
-<script>
-    window.pnForm = {
-        modal() { return document.getElementById('pnFormModal'); },
-        body() { return document.getElementById('pnFormBody'); },
-        show(title, fullPageUrl) {
-            document.getElementById('pnFormTitle').textContent = title;
-            document.getElementById('pnFormFullPage').href = fullPageUrl;
-            this.modal().classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        },
-        openCreate() {
-            this.load('Add New Proposal', '{{ route('admin.proposals.create') }}');
-        },
-        openEdit(editUrl) {
-            this.load('Edit Proposal', editUrl);
-        },
-        async load(title, url) {
-            this.body().innerHTML = '<p class="text-sm text-gray-400">Loading...</p>';
-            this.show(title, url);
-            try {
-                const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } });
-                if (!res.ok) throw new Error('bad status ' + res.status);
-                this.body().innerHTML = await res.text();
-                initProposalForm();
-            } catch (e) {
-                this.body().innerHTML = '<p class="text-sm text-red-600">Could not load the form.</p>';
-            }
-        },
-        close() {
-            this.modal().classList.add('hidden');
-            this.body().innerHTML = '';
-            document.body.style.overflow = '';
-        },
-    };
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pnForm.modal().classList.contains('hidden')) pnForm.close(); });
-    @if($reopenModal)
-        document.body.style.overflow = 'hidden';
-    @endif
-</script>
+@include('admin.proposals.partials.form-modal')
 @endsection
