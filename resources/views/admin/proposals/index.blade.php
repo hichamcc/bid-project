@@ -359,6 +359,7 @@
                                             'date' => $proposal->{"{$nth}_follow_up_date"},
                                             'respond' => $proposal->{"{$nth}_follow_up_respond"},
                                             'attachment' => $proposal->{"{$nth}_follow_up_attachment"},
+                                            'previewUrl' => route('admin.proposals.follow-up-preview', [$proposal, $loop->iteration]),
                                         ])
                                     </td>
                                 @endforeach
@@ -432,4 +433,6 @@
 @include('admin.proposals.partials.notes-modal')
 
 @include('admin.proposals.partials.form-modal')
+
+@include('admin.proposals.partials.email-preview-modal')
 @endsection

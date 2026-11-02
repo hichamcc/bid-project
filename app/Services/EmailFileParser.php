@@ -18,10 +18,26 @@ class EmailFileParser
 {
     private const PREVIEW_LENGTH = 500;
 
+    /** Inline images bigger than this aren't embedded in the preview */
+    private const MAX_INLINE_IMAGE = 3 * 1024 * 1024;
+
+    /** Keys only used by the full preview (not stored in gc_emails) */
+    private const FULL_ONLY = ['cc', 'body_html', 'body_text', 'inline_images'];
+
     /**
-     * Parse a file stored on the public disk (as saved by the proposal form).
+     * Parse a file stored on the public disk (as saved by the proposal form) into the
+     * gc_emails columns.
      */
     public static function parseStoredFile(string $path): array
+    {
+        return array_diff_key(self::readStoredFile($path), array_flip(self::FULL_ONLY));
+    }
+
+    /**
+     * Everything needed to show the email: the gc_emails fields plus cc, the full
+     * body (body_html with inline images embedded, or body_text).
+     */
+    public static function readStoredFile(string $path): array
     {
         $type = strtolower(pathinfo($path, PATHINFO_EXTENSION));
         $data = ['file_type' => $type, 'parse_error' => null];
@@ -43,7 +59,28 @@ class EmailFileParser
             return $data + ['parse_error' => Str::limit($e->getMessage(), 250)];
         }
 
+        // Point cid: references (logos, pasted screenshots) at the embedded images
+        if (!empty($parsed['body_html']) && !empty($parsed['inline_images'])) {
+            $parsed['body_html'] = preg_replace_callback('/cid:([^"\'\s>)]+)/i', function ($m) use ($parsed) {
+                return $parsed['inline_images'][strtolower(trim(urldecode($m[1]), '<>'))] ?? $m[0];
+            }, $parsed['body_html']) ?? $parsed['body_html'];
+        }
+        unset($parsed['inline_images']);
+
         return array_merge($data, $parsed);
+    }
+
+    /**
+     * Collects an inline image as a data: URI keyed by its content id.
+     */
+    private static function addInlineImage(array &$images, ?string $contentId, ?string $mime, ?string $data): void
+    {
+        $contentId = strtolower(trim((string) $contentId, " <>"));
+        if ($contentId === '' || !$data || strlen($data) > self::MAX_INLINE_IMAGE || !str_starts_with((string) $mime, 'image/')) {
+            return;
+        }
+
+        $images[$contentId] = 'data:' . $mime . ';base64,' . base64_encode($data);
     }
 
     private static function parseEml(string $file): array
@@ -66,15 +103,26 @@ class EmailFileParser
             $toEmails[] = $address->getEmail();
         }
 
-        $body = $message->getTextContent();
-        if ($body === null || trim($body) === '') {
-            $body = self::htmlToText((string) $message->getHtmlContent());
+        $cc = [];
+        $ccHeader = $message->getHeader('Cc');
+        foreach ($ccHeader && method_exists($ccHeader, 'getAddresses') ? $ccHeader->getAddresses() : [] as $address) {
+            $cc[] = $address->getName() ? $address->getName() . ' <' . $address->getEmail() . '>' : $address->getEmail();
         }
 
+        $text = $message->getTextContent();
+        $html = $message->getHtmlContent();
+        $body = ($text === null || trim($text) === '') ? self::htmlToText((string) $html) : $text;
+
         $attachments = [];
+        $inline = [];
         foreach ($message->getAllAttachmentParts() as $part) {
             if ($name = $part->getFilename()) {
                 $attachments[] = $name;
+            }
+            try {
+                $stream = $part->getContentId() ? $part->getBinaryContentStream() : null;
+                self::addInlineImage($inline, $part->getContentId(), $part->getContentType(), $stream ? $stream->getContents() : null);
+            } catch (Throwable $e) {
             }
         }
 
@@ -89,6 +137,10 @@ class EmailFileParser
             'subject'      => self::clip($message->getHeaderValue('Subject'), 500),
             'body_preview' => self::preview($body),
             'attachments'  => $attachments ?: null,
+            'cc'           => self::joinList($cc),
+            'body_html'    => $html ? self::utf8($html) : null,
+            'body_text'    => $text ? self::utf8($text) : null,
+            'inline_images' => $inline,
         ];
     }
 
@@ -132,12 +184,17 @@ class EmailFileParser
 
         $toNames = [];
         $toEmails = [];
+        $cc = [];
         foreach ($try(fn () => $message->getRecipients(), []) as $recipient) {
-            if (strtolower((string) $try(fn () => $recipient->getType(), 'to')) !== 'to') {
-                continue;
-            }
+            $type = strtolower((string) $try(fn () => $recipient->getType(), 'to'));
             $email = self::smtpAddress($try(fn () => $recipient->getEmail()));
             $name = $try(fn () => $recipient->getName());
+            if ($type === 'cc') {
+                $cc[] = $name && $email ? "{$name} <{$email}>" : ($email ?: $name);
+            }
+            if ($type !== 'to') {
+                continue;
+            }
             $toNames[] = $name ?: $email;
             $toEmails[] = $email;
         }
@@ -153,15 +210,22 @@ class EmailFileParser
             ?? self::toDate($headers['Date'] ?? null);
 
         // Plain-text body, else the HTML body (getBodyHTML also pulls HTML out of RTF bodies)
-        $body = $prop('body');
-        if (!is_string($body) || trim($body) === '') {
-            $body = self::htmlToText((string) $try(fn () => $message->getBodyHTML(), ''));
-        }
+        $text = $prop('body');
+        $text = is_string($text) && trim($text) !== '' ? $text : null;
+        $html = $try(fn () => $message->getBodyHTML());
+        $html = is_string($html) && trim($html) !== '' ? $html : null;
+        $body = $text ?? self::htmlToText((string) $html);
 
         $attachments = [];
+        $inline = [];
         foreach ($try(fn () => $message->getAttachments(), []) as $attachment) {
             if ($name = $try(fn () => $attachment->getFilename())) {
                 $attachments[] = $name;
+            }
+            $contentId = $try(fn () => $attachment->getContentId());
+            if ($contentId) {
+                $data = $try(fn () => $attachment->getData());
+                self::addInlineImage($inline, $contentId, $try(fn () => $attachment->getMimeType()), is_string($data) ? $data : null);
             }
         }
 
@@ -174,6 +238,10 @@ class EmailFileParser
             'subject'      => self::clip($prop('subject') ?? ($headers['Subject'] ?? null), 500),
             'body_preview' => self::preview($body),
             'attachments'  => $attachments ?: null,
+            'cc'           => self::joinList($cc),
+            'body_html'    => $html ? self::utf8($html) : null,
+            'body_text'    => $text ? self::utf8($text) : null,
+            'inline_images' => $inline,
         ];
     }
 

@@ -151,7 +151,7 @@
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('first_follow_up_attachment') border-red-500 @enderror">
                                 @if($proposal->first_follow_up_attachment)
                                     <div class="mt-2">
-                                        <a href="{{ Storage::url($proposal->first_follow_up_attachment) }}" 
+                                        <a href="{{ Storage::url($proposal->first_follow_up_attachment) }}" data-email-preview="{{ route('admin.proposals.follow-up-preview', [$proposal, 1]) }}" 
                                            target="_blank" 
                                            class="text-blue-600 hover:text-blue-800 text-sm">
                                             Current: 1st Follow-up Email
@@ -206,7 +206,7 @@
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('second_follow_up_attachment') border-red-500 @enderror">
                                 @if($proposal->second_follow_up_attachment)
                                     <div class="mt-2">
-                                        <a href="{{ Storage::url($proposal->second_follow_up_attachment) }}" 
+                                        <a href="{{ Storage::url($proposal->second_follow_up_attachment) }}" data-email-preview="{{ route('admin.proposals.follow-up-preview', [$proposal, 2]) }}" 
                                            target="_blank" 
                                            class="text-blue-600 hover:text-blue-800 text-sm">
                                             Current: 2nd Follow-up Email
@@ -261,7 +261,7 @@
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('third_follow_up_attachment') border-red-500 @enderror">
                                 @if($proposal->third_follow_up_attachment)
                                     <div class="mt-2">
-                                        <a href="{{ Storage::url($proposal->third_follow_up_attachment) }}" 
+                                        <a href="{{ Storage::url($proposal->third_follow_up_attachment) }}" data-email-preview="{{ route('admin.proposals.follow-up-preview', [$proposal, 3]) }}" 
                                            target="_blank" 
                                            class="text-blue-600 hover:text-blue-800 text-sm">
                                             Current: 3rd Follow-up Email
@@ -316,7 +316,7 @@
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 @error('fourth_follow_up_attachment') border-red-500 @enderror">
                                 @if($proposal->fourth_follow_up_attachment)
                                     <div class="mt-2">
-                                        <a href="{{ Storage::url($proposal->fourth_follow_up_attachment) }}" 
+                                        <a href="{{ Storage::url($proposal->fourth_follow_up_attachment) }}" data-email-preview="{{ route('admin.proposals.follow-up-preview', [$proposal, 4]) }}" 
                                            target="_blank" 
                                            class="text-blue-600 hover:text-blue-800 text-sm">
                                             Current: 4th Follow-up Email

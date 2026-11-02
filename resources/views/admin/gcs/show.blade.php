@@ -188,4 +188,6 @@
             btn.addEventListener('click', () => gcTableFilter.clear(btn.closest('[data-filter-scope]'))));
     });
 </script>
+
+@include('admin.proposals.partials.email-preview-modal')
 @endsection

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\GcEmail;
 use App\Models\Proposal;
 use App\Models\Project;
+use App\Services\EmailFileParser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -397,6 +399,28 @@ class ProposalController extends Controller
     }
 
     /**
+     * Popup preview of a follow-up attachment: .eml / .msg are shown as an email,
+     * pdf / images inline. Returns the popup body (HTML).
+     */
+    public function previewFollowUp(Proposal $proposal, int $followUp)
+    {
+        $prefix = GcEmail::FOLLOW_UPS[$followUp] ?? abort(404);
+        $path = $proposal->{"{$prefix}_follow_up_attachment"} ?: abort(404);
+
+        $type = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $email = in_array($type, ['eml', 'msg'], true) ? EmailFileParser::readStoredFile($path) : null;
+
+        return view('admin.proposals.partials.email-preview', [
+            'proposal' => $proposal->loadMissing('project'),
+            'followUp' => $followUp,
+            'type'     => $type,
+            'fileUrl'  => Storage::url($path),
+            'fileName' => basename($path),
+            'email'    => $email,
+        ]);
+    }
+
+    /**
      * Remove the specified proposal
      */
     public function destroy(Request $request, Proposal $proposal)
@@ -437,13 +461,13 @@ class ProposalController extends Controller
     {
         $project = $proposal->project;
         $followUps = [];
-        foreach (['first', 'second', 'third', 'fourth'] as $nth) {
+        foreach (GcEmail::FOLLOW_UPS as $number => $nth) {
+            $hasAttachment = (bool) $proposal->{"{$nth}_follow_up_attachment"};
             $followUps[$nth] = [
                 'date'       => $proposal->{"{$nth}_follow_up_date"}?->toDateString(),
                 'respond'    => $proposal->{"{$nth}_follow_up_respond"},
-                'attachment' => $proposal->{"{$nth}_follow_up_attachment"}
-                    ? Storage::url($proposal->{"{$nth}_follow_up_attachment"})
-                    : null,
+                'attachment' => $hasAttachment ? Storage::url($proposal->{"{$nth}_follow_up_attachment"}) : null,
+                'preview'    => $hasAttachment ? route('admin.proposals.follow-up-preview', [$proposal, $number]) : null,
             ];
         }
 

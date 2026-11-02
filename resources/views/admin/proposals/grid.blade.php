@@ -154,6 +154,7 @@
 @include('admin.proposals.partials.notes-modal')
 
 @include('admin.proposals.partials.form-modal')
+@include('admin.proposals.partials.email-preview-modal')
 
 <script>
     window.pnReturnTo = 'grid';
@@ -309,7 +310,7 @@
                     const fu = p.data.follow_ups[nth];
                     if (!fu.date) return '<span class="pg-muted">-</span>';
                     let html = '<span class="pg-chip ' + (fu.respond === 'yes' ? 'pg-green' : 'pg-red') + '">' + esc(fmtDate(fu.date)) + '</span>';
-                    if (fu.attachment) html += ' <a href="' + esc(fu.attachment) + '" target="_blank" title="View attachment" style="color:#2563eb">&#8681;</a>';
+                    if (fu.attachment) html += ' <a href="' + esc(fu.attachment) + '" data-email-preview="' + esc(fu.preview) + '" target="_blank" title="View attachment" style="color:#2563eb">&#8681;</a>';
                     return html;
                 },
             })),

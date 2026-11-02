@@ -68,6 +68,8 @@ Route::middleware(['auth', 'role:admin,bid_coordinator'])->prefix('admin')->name
     Route::get('proposals/{proposal}/notes', [\App\Http\Controllers\Admin\ProposalNoteController::class, 'index'])->name('proposals.notes.index');
     Route::post('proposals/{proposal}/notes', [\App\Http\Controllers\Admin\ProposalNoteController::class, 'store'])->name('proposals.notes.store');
     Route::delete('proposals/{proposal}/notes/{note}', [\App\Http\Controllers\Admin\ProposalNoteController::class, 'destroy'])->name('proposals.notes.destroy');
+    Route::get('proposals/{proposal}/follow-ups/{followUp}/preview', [AdminProposalController::class, 'previewFollowUp'])
+        ->whereNumber('followUp')->name('proposals.follow-up-preview');
 });
 
 Route::middleware(['auth', 'role:admin,bid_coordinator,head_estimator'])->prefix('admin')->name('admin.')->group(function () {

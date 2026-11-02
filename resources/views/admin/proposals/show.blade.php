@@ -256,7 +256,7 @@
                             @if($proposal->first_follow_up_attachment)
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600">Email Attachment</label>
-                                    <a href="{{ Storage::url($proposal->first_follow_up_attachment) }}" 
+                                    <a href="{{ Storage::url($proposal->first_follow_up_attachment) }}" data-email-preview="{{ route('admin.proposals.follow-up-preview', [$proposal, 1]) }}" 
                                        target="_blank" 
                                        class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100 hover:text-blue-800 transition-colors">
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -296,7 +296,7 @@
                             @if($proposal->second_follow_up_attachment)
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600">Email Attachment</label>
-                                    <a href="{{ Storage::url($proposal->second_follow_up_attachment) }}" 
+                                    <a href="{{ Storage::url($proposal->second_follow_up_attachment) }}" data-email-preview="{{ route('admin.proposals.follow-up-preview', [$proposal, 2]) }}" 
                                        target="_blank" 
                                        class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100 hover:text-blue-800 transition-colors">
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -336,7 +336,7 @@
                             @if($proposal->third_follow_up_attachment)
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600">Email Attachment</label>
-                                    <a href="{{ Storage::url($proposal->third_follow_up_attachment) }}" 
+                                    <a href="{{ Storage::url($proposal->third_follow_up_attachment) }}" data-email-preview="{{ route('admin.proposals.follow-up-preview', [$proposal, 3]) }}" 
                                        target="_blank" 
                                        class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100 hover:text-blue-800 transition-colors">
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -376,7 +376,7 @@
                             @if($proposal->fourth_follow_up_attachment)
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600">Email Attachment</label>
-                                    <a href="{{ Storage::url($proposal->fourth_follow_up_attachment) }}" 
+                                    <a href="{{ Storage::url($proposal->fourth_follow_up_attachment) }}" data-email-preview="{{ route('admin.proposals.follow-up-preview', [$proposal, 4]) }}" 
                                        target="_blank" 
                                        class="inline-flex items-center px-3 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full hover:bg-blue-100 hover:text-blue-800 transition-colors">
                                         <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
@@ -442,4 +442,5 @@
         </div>
     </div>
 </div>
+@include('admin.proposals.partials.email-preview-modal')
 @endsection
