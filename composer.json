@@ -12,12 +12,14 @@
     "require": {
         "php": "^8.2",
         "codeat3/blade-phosphor-icons": "^2.3",
+        "hfig/mapi": "^1.4",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "maatwebsite/excel": "^3.1",
         "maennchen/zipstream-php": "3.1.2",
         "mailersend/laravel-driver": "^3.0",
-        "resend/resend-laravel": "^1.3"
+        "resend/resend-laravel": "^1.3",
+        "zbateson/mail-mime-parser": "^4.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
