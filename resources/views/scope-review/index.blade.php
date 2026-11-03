@@ -362,6 +362,7 @@
                     .sr-table .sticky-col-2 { box-shadow: 6px 0 6px -4px rgba(0,0,0,0.12); }
                 @endif
                 /* Column filter row (same idea as the proposals list) */
+                .sr-table thead tr:first-child th { white-space: nowrap; }
                 .sr-table tr.sr-col-filter th { padding: 0.375rem 0.5rem; background: #f3f4f6; font-weight: normal; text-transform: none; letter-spacing: normal; }
                 .dark .sr-table tr.sr-col-filter th { background: #374151; }
                 .sr-table tr.sr-col-filter input,
