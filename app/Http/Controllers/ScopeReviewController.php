@@ -28,6 +28,9 @@ class ScopeReviewController extends Controller
         if ($request->filled('reason_to_ignore')) {
             $query->where('reason_to_ignore', $request->reason_to_ignore);
         }
+        if ($request->filled('bid_stage')) {
+            $query->where('bid_stage', $request->bid_stage);
+        }
         if ($request->filled('project_type')) {
             $query->where('project_type', $request->project_type);
         }

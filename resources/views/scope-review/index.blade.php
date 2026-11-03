@@ -275,147 +275,31 @@
             </div>
 
             <!-- Filters -->
-            {{-- Single-row filter bar: every field shares the width equally and shrinks
-                 instead of wrapping. Scoped CSS because min-w-0 / flex-nowrap etc. aren't
-                 guaranteed to be in the compiled Tailwind bundle. --}}
-            <style>
-                .filter-row { display: flex; flex-wrap: nowrap; gap: 0.5rem; align-items: flex-end; }
-                .filter-row > div { flex: 1 1 0; min-width: 0; }
-                .filter-row > .filter-wide { flex-grow: 1.6; }
-                .filter-row > .filter-date { flex: 0 0 7.5rem; }
-                .filter-row > .filter-actions { flex: 0 0 auto; display: flex; gap: 0.375rem; }
-                .filter-row label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                .filter-row input, .filter-row select { width: 100%; font-size: 0.75rem; padding: 0.375rem 0.5rem; }
-                .filter-row select { padding-right: 1.75rem; text-overflow: ellipsis; }
-                .filter-row input[type="date"] { padding-right: 0.25rem; }
-                .filter-row .filter-actions > * { font-size: 0.75rem; padding: 0.375rem 0.75rem; }
-                /* Too narrow for one row: fall back to wrapping. */
-                @media (max-width: 1023px) {
-                    .filter-row { flex-wrap: wrap; }
-                    .filter-row > div, .filter-row > .filter-date { flex: 1 1 9rem; }
-                }
-            </style>
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                <form method="GET" action="{{ route('scope-review.index') }}" class="filter-row">
-                    {{-- Filters ordered to match the table columns:
-                         Project # · Project Name · Source · Platform · Location · Estimator · Type · Decision,
-                         followed by extra filters with no column (Reason to Ignore, Entry/Due date). --}}
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Project #</label>
-                        <input type="text" name="project_number" value="{{ request('project_number') }}"
-                               placeholder="Search number..."
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    </div>
-                    <div class="filter-wide">
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Project Name</label>
-                        <input type="text" name="project_name" value="{{ request('project_name') }}"
-                               placeholder="Search name..."
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Source</label>
-                        @php $sourceFilterOptions = \App\Models\Source::active()->ordered()->pluck('name')->all(); @endphp
-                        <select name="source"
-                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                            <option value="">All</option>
-                            @foreach($sourceFilterOptions as $sourceOption)
-                                <option value="{{ $sourceOption }}" {{ request('source') === $sourceOption ? 'selected' : '' }}>{{ $sourceOption }}</option>
-                            @endforeach
-                            {{-- Keep a currently-applied filter value even if that source is now inactive. --}}
-                            @if(request('source') && !in_array(request('source'), $sourceFilterOptions, true))
-                                <option value="{{ request('source') }}" selected>{{ request('source') }}</option>
-                            @endif
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Platform</label>
-                        @php $platformFilterOptions = \App\Models\Platform::active()->ordered()->pluck('name')->all(); @endphp
-                        <select name="platform"
-                                class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                            <option value="">All</option>
-                            @foreach($platformFilterOptions as $platformOption)
-                                <option value="{{ $platformOption }}" {{ request('platform') === $platformOption ? 'selected' : '' }}>{{ $platformOption }}</option>
-                            @endforeach
-                            {{-- Keep a currently-applied filter value even if that platform is now inactive. --}}
-                            @if(request('platform') && !in_array(request('platform'), $platformFilterOptions, true))
-                                <option value="{{ request('platform') }}" selected>{{ request('platform') }}</option>
-                            @endif
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Location</label>
-                        <input type="text" name="location" value="{{ request('location') }}"
-                               placeholder="Search location..."
-                               class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Estimator</label>
-                        <select name="assigned_estimator_id" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                            <option value="">All</option>
-                            @foreach($estimators as $estimator)
-                                <option value="{{ $estimator->id }}" {{ request('assigned_estimator_id') == $estimator->id ? 'selected' : '' }}>
-                                    {{ $estimator->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Project Type</label>
-                        <select name="project_type" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                            <option value="">All</option>
-                            <option value="MU" {{ request('project_type') === 'MU' ? 'selected' : '' }}>MU</option>
-                            <option value="NON_MU" {{ request('project_type') === 'NON_MU' ? 'selected' : '' }}>NON MU</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Decision</label>
-                        <select name="decision" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                            <option value="">All</option>
-                            <option value="__pending__" {{ request('decision') === '__pending__' ? 'selected' : '' }}>Not Yet Reviewed</option>
-                            <option value="pending" {{ request('decision') === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="approved" {{ request('decision') === 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rfi_requested" {{ request('decision') === 'rfi_requested' ? 'selected' : '' }}>RFI Requested</option>
-                            <option value="not_in_scope" {{ request('decision') === 'not_in_scope' ? 'selected' : '' }}>Not In Scope</option>
-                            <option value="skipped" {{ request('decision') === 'skipped' ? 'selected' : '' }}>Skipped</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Reason to Ignore</label>
-                        @php $reasonFilterOptions = \App\Models\ReasonToIgnore::active()->ordered()->pluck('name')->all(); @endphp
-                        <select name="reason_to_ignore" class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                            <option value="">All</option>
-                            @foreach($reasonFilterOptions as $reasonOption)
-                                <option value="{{ $reasonOption }}" {{ request('reason_to_ignore') === $reasonOption ? 'selected' : '' }}>{{ $reasonOption }}</option>
-                            @endforeach
-                            {{-- Keep a currently-applied filter value even if that reason is now inactive. --}}
-                            @if(request('reason_to_ignore') && !in_array(request('reason_to_ignore'), $reasonFilterOptions, true))
-                                <option value="{{ request('reason_to_ignore') }}" selected>{{ request('reason_to_ignore') }}</option>
-                            @endif
-                        </select>
-                    </div>
-                    <div class="filter-date">
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Entry Date</label>
-                        <input type="date" name="entry_date" value="{{ request('entry_date') }}"
-                               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    </div>
-                    <div class="filter-date">
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Due Date</label>
-                        <input type="date" name="due_date" value="{{ request('due_date') }}"
-                               class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
-                    </div>
-                    <div class="filter-actions">
-                        <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md">
-                            Filter
-                        </button>
-                        @if(request()->hasAny(['project_name', 'project_number', 'location', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine', 'reason_to_ignore', 'entry_date', 'due_date', 'uploaded_in_oh', 'not_uploaded']))
-                            <a href="{{ route('scope-review.index') }}"
-                               class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md">
-                                Clear
-                            </a>
-                        @endif
-                    </div>
-                </form>
-            </div>
+            {{-- Filter form: no visible fields of its own; the column filters in the table header attach
+                 to it via form="srFilters" (same layout as the proposals list). Nothing applies until
+                 "Filter" is clicked (or Enter in a text filter, via the off-screen submit button).
+                 Keeps the current sort and the toggles/cards that have no field of their own. --}}
+            <form id="srFilters" method="GET" action="{{ route('scope-review.index') }}">
+                @foreach(['sort', 'direction', 'mine', 'ready_for_assignment', 'unassigned', 'year', 'uploaded_in_oh', 'not_uploaded'] as $keptParam)
+                    @if(request()->filled($keptParam))
+                        <input type="hidden" name="{{ $keptParam }}" value="{{ request($keptParam) }}">
+                    @endif
+                @endforeach
+                <button type="submit" tabindex="-1" aria-hidden="true" style="position: absolute; left: -9999px;">Filter</button>
+            </form>
+            <script>
+                // Filters are only applied by the "Filter" button; this just tracks unapplied changes.
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.querySelectorAll('[form="srFilters"]:not(button)').forEach(el => {
+                        el.addEventListener(el.tagName === 'SELECT' || el.type === 'date' ? 'change' : 'input', () => {
+                            document.querySelectorAll('[data-sr-filter-apply]').forEach(b => b.classList.add('is-dirty'));
+                        });
+                    });
+                });
+            </script>
+            @php
+                $srFilterParams = ['project_name', 'project_number', 'location', 'source', 'platform', 'project_type', 'decision', 'assigned_estimator_id', 'ready_for_assignment', 'unassigned', 'mine', 'reason_to_ignore', 'entry_date', 'due_date', 'uploaded_in_oh', 'not_uploaded', 'bid_stage'];
+            @endphp
 
             <!-- List -->
             @php
@@ -477,6 +361,23 @@
                     .sr-table .sticky-col-2 { left: 110px;  width: 240px; min-width: 240px; }
                     .sr-table .sticky-col-2 { box-shadow: 6px 0 6px -4px rgba(0,0,0,0.12); }
                 @endif
+                /* Column filter row (same idea as the proposals list) */
+                .sr-table tr.sr-col-filter th { padding: 0.375rem 0.5rem; background: #f3f4f6; font-weight: normal; text-transform: none; letter-spacing: normal; }
+                .dark .sr-table tr.sr-col-filter th { background: #374151; }
+                .sr-table tr.sr-col-filter input,
+                .sr-table tr.sr-col-filter select { width: 100%; min-width: 6rem; font-size: 0.75rem; padding: 0.25rem 0.5rem; border: 1px solid #d1d5db; border-radius: 0.25rem; background: #fff; color: #111827; }
+                .sr-table tr.sr-col-filter select { padding-right: 1.75rem; }
+                .sr-table tr.sr-col-filter input[type="date"] { min-width: 7.5rem; padding-right: 0.25rem; }
+                .dark .sr-table tr.sr-col-filter input,
+                .dark .sr-table tr.sr-col-filter select { background: #1f2937; border-color: #4b5563; color: #f3f4f6; }
+                /* Filter / Clear stay visible at the right edge while the table scrolls sideways */
+                .sr-table tr.sr-col-filter th.sr-filter-actions { position: sticky; right: 0; z-index: 2; box-shadow: -4px 0 6px -4px rgba(0,0,0,0.15); white-space: nowrap; text-align: right; }
+                .sr-table .sr-filter-btn { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.6rem; font-size: 0.75rem; font-weight: 500; border-radius: 0.25rem; border: 1px solid transparent; }
+                .sr-table .sr-filter-apply { color: #1d4ed8; background: #eff6ff; border-color: #bfdbfe; }
+                .sr-table .sr-filter-apply:hover { background: #dbeafe; }
+                .sr-table .sr-filter-apply.is-dirty { color: #fff; background: #2563eb; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); }
+                .sr-table .sr-filter-clear { color: #374151; background: #e5e7eb; }
+                .sr-table .sr-filter-clear:hover { background: #d1d5db; }
             </style>
             <div class="overflow-x-auto">
                 <table class="sr-table min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -551,6 +452,92 @@
                                 </th>
                             @endforeach
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                        </tr>
+                        {{-- Column filters: nothing applies until "Filter" is clicked (or Enter in a text filter). --}}
+                        @php
+                            $sourceFilterOptions = \App\Models\Source::active()->ordered()->pluck('name')->all();
+                            $platformFilterOptions = \App\Models\Platform::active()->ordered()->pluck('name')->all();
+                            $reasonFilterOptions = \App\Models\ReasonToIgnore::active()->ordered()->pluck('name')->all();
+                            $bidStageFilterOptions = \App\Models\BidStage::active()->ordered()->pluck('name')->all();
+                            // Keep a currently-applied value in its list even if that option is now inactive.
+                            $withCurrent = fn (array $options, string $param) =>
+                                (request($param) && !in_array(request($param), $options, true)) ? array_merge($options, [request($param)]) : $options;
+                        @endphp
+                        <tr class="sr-col-filter">
+                            @if($isAdminView)
+                                <th class="sticky-col sticky-col-0"></th>
+                            @endif
+                            <th><input type="date" name="entry_date" form="srFilters" value="{{ request('entry_date') }}" title="Entry date"></th>
+                            <th class="sticky-col sticky-col-1"><input type="text" name="project_number" form="srFilters" value="{{ request('project_number') }}" placeholder="filter"></th>
+                            <th class="sticky-col sticky-col-2"><input type="text" name="project_name" form="srFilters" value="{{ request('project_name') }}" placeholder="filter"></th>
+                            <th>
+                                <select name="source" form="srFilters">
+                                    <option value="">All</option>
+                                    @foreach($withCurrent($sourceFilterOptions, 'source') as $option)
+                                        <option value="{{ $option }}" {{ request('source') === $option ? 'selected' : '' }}>{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            </th>
+                            <th>
+                                <select name="platform" form="srFilters">
+                                    <option value="">All</option>
+                                    @foreach($withCurrent($platformFilterOptions, 'platform') as $option)
+                                        <option value="{{ $option }}" {{ request('platform') === $option ? 'selected' : '' }}>{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            </th>
+                            <th><input type="text" name="location" form="srFilters" value="{{ request('location') }}" placeholder="filter"></th>
+                            <th><input type="date" name="due_date" form="srFilters" value="{{ request('due_date') }}" title="Due date"></th>
+                            <th>
+                                <select name="assigned_estimator_id" form="srFilters">
+                                    <option value="">All</option>
+                                    @foreach($estimators as $estimator)
+                                        <option value="{{ $estimator->id }}" {{ request('assigned_estimator_id') == $estimator->id ? 'selected' : '' }}>{{ $estimator->name }}</option>
+                                    @endforeach
+                                </select>
+                            </th>
+                            <th>
+                                <select name="project_type" form="srFilters">
+                                    <option value="">All</option>
+                                    <option value="MU" {{ request('project_type') === 'MU' ? 'selected' : '' }}>MU</option>
+                                    <option value="NON_MU" {{ request('project_type') === 'NON_MU' ? 'selected' : '' }}>NON MU</option>
+                                </select>
+                            </th>
+                            <th>
+                                <select name="decision" form="srFilters">
+                                    <option value="">All</option>
+                                    @foreach(['__pending__' => 'Not Yet Reviewed', 'pending' => 'Pending', 'approved' => 'Approved', 'rfi_requested' => 'RFI Requested', 'not_in_scope' => 'Not In Scope', 'skipped' => 'Skipped'] as $value => $label)
+                                        <option value="{{ $value }}" {{ request('decision') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </th>
+                            <th>
+                                <select name="reason_to_ignore" form="srFilters">
+                                    <option value="">All</option>
+                                    @foreach($withCurrent($reasonFilterOptions, 'reason_to_ignore') as $option)
+                                        <option value="{{ $option }}" {{ request('reason_to_ignore') === $option ? 'selected' : '' }}>{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            </th>
+                            <th>
+                                <select name="bid_stage" form="srFilters">
+                                    <option value="">All</option>
+                                    @foreach($withCurrent($bidStageFilterOptions, 'bid_stage') as $option)
+                                        <option value="{{ $option }}" {{ request('bid_stage') === $option ? 'selected' : '' }}>{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            </th>
+                            <th class="sr-filter-actions">
+                                <button type="submit" form="srFilters" class="sr-filter-btn sr-filter-apply" data-sr-filter-apply title="Apply filters">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 0.875rem; height: 0.875rem;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                                    </svg>
+                                    Filter
+                                </button>
+                                @if(request()->hasAny($srFilterParams))
+                                    <a href="{{ route('scope-review.index') }}" class="sr-filter-btn sr-filter-clear" title="Clear all filters">Clear</a>
+                                @endif
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">

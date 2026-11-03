@@ -58,6 +58,10 @@
             .proposal-table .responded-toggle .dot { width: 0.6rem; height: 0.6rem; border-radius: 9999px; }
             .proposal-table .responded-toggle .dot-green { background: #22c55e; }
             .proposal-table .responded-toggle .dot-red { background: #ef4444; }
+            /* "Filter" button in the Actions column's filter cell; highlighted while there are unapplied changes. */
+            .proposal-table .filter-apply { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.6rem; font-size: 0.75rem; font-weight: 500; text-transform: none; letter-spacing: normal; color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 0.25rem; }
+            .proposal-table .filter-apply:hover { background: #dbeafe; }
+            .proposal-table .filter-apply.is-dirty { color: #fff; background: #2563eb; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); }
             /* Project / GC show their full text and may wrap onto extra lines. */
             .proposal-table td.cell-wrap { white-space: normal; max-width: 22rem; word-break: break-word; }
             /* Actions column stays pinned to the right while the table scrolls sideways. */
@@ -84,6 +88,24 @@
             @endif
             <button type="submit" tabindex="-1" aria-hidden="true" style="position: absolute; left: -9999px;">Filter</button>
         </form>
+        <script>
+            // Filters are only applied by the "Filter" button; this just tracks unapplied changes.
+            window.pnFilters = {
+                markDirty() {
+                    document.querySelectorAll('[data-filter-apply]').forEach(b => b.classList.add('is-dirty'));
+                },
+                setResponded(button) {
+                    document.querySelector('[data-responded-input]').value = button.dataset.responded;
+                    button.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('is-active', b === button));
+                    this.markDirty();
+                },
+            };
+            document.addEventListener('DOMContentLoaded', () => {
+                document.querySelectorAll('[form="proposalFilters"]:not([type="hidden"]):not(button)').forEach(el => {
+                    el.addEventListener(el.tagName === 'SELECT' || el.type === 'date' ? 'change' : 'input', () => pnFilters.markDirty());
+                });
+            });
+        </script>
 
         <!-- Results Summary -->
         @if(request()->hasAny($filterParams))
@@ -210,18 +232,18 @@
                             <th class="px-3 py-3">Notes</th>
                             <th class="col-actions px-3 py-3 text-right">Actions</th>
                         </tr>
-                        {{-- Column filters: text inputs submit on Enter, selects/dates on change. --}}
+                        {{-- Column filters: nothing applies until "Filter" is clicked (or Enter in a text filter). --}}
                         <tr class="col-filter bg-gray-100">
                             <th class="px-3 py-2"></th>
                             <th class="px-3 py-2">
                                 <div style="display: flex; gap: 0.25rem; align-items: center;">
-                                    <input type="date" name="submission_date" form="proposalFilters" value="{{ request('submission_date') }}" onchange="this.form.submit()">
+                                    <input type="date" name="submission_date" form="proposalFilters" value="{{ request('submission_date') }}">
                                     {{-- Compact responded filter matching the date colour: All / green = responded / red = not responded.
-                                         The hidden input keeps the current value when the form is submitted by another filter. --}}
-                                    <input type="hidden" name="responded" form="proposalFilters" value="{{ request('responded') }}">
+                                         The buttons only set the hidden input; it's sent with the other filters. --}}
+                                    <input type="hidden" name="responded" form="proposalFilters" value="{{ request('responded') }}" data-responded-input>
                                     <div class="responded-toggle">
                                         @foreach(['' => ['All', 'All'], 'yes' => ['', 'Responded'], 'no' => ['', 'Not responded']] as $respondedValue => [$respondedText, $respondedTitle])
-                                            <button type="submit" form="proposalFilters" name="responded" value="{{ $respondedValue }}"
+                                            <button type="button" data-responded="{{ $respondedValue }}" onclick="pnFilters.setResponded(this)"
                                                     title="{{ $respondedTitle }}"
                                                     class="{{ (string) request('responded') === $respondedValue ? 'is-active' : '' }}">
                                                 @if($respondedValue === '')
@@ -235,7 +257,7 @@
                                 </div>
                             </th>
                             <th class="px-3 py-2">
-                                <select name="status" form="proposalFilters" onchange="this.form.submit()">
+                                <select name="status" form="proposalFilters">
                                     <option value="">All</option>
                                     <option value="none" {{ request('status') === 'none' ? 'selected' : '' }}>Not set</option>
                                     @foreach(\App\Models\Proposal::STATUSES as $statusValue => $statusLabel)
@@ -247,14 +269,14 @@
                                 <input type="text" name="project" form="proposalFilters" value="{{ request('project') }}" placeholder="filter">
                             </th>
                             <th class="px-3 py-2">
-                                <select name="job_type" form="proposalFilters" onchange="this.form.submit()">
+                                <select name="job_type" form="proposalFilters">
                                     <option value="">All</option>
                                     <option value="MULTIUNIT" {{ request('job_type') == 'MULTIUNIT' ? 'selected' : '' }}>MU</option>
                                     <option value="NON MU" {{ request('job_type') == 'NON MU' ? 'selected' : '' }}>NON MU</option>
                                 </select>
                             </th>
                             <th class="px-3 py-2">
-                                <select name="gc" form="proposalFilters" onchange="this.form.submit()">
+                                <select name="gc" form="proposalFilters">
                                     <option value="">All</option>
                                     @foreach($gcOptions as $gcOption)
                                         <option value="{{ $gcOption }}" {{ request('gc') === $gcOption ? 'selected' : '' }}>{{ $gcOption }}</option>
@@ -262,7 +284,7 @@
                                 </select>
                             </th>
                             <th class="px-3 py-2">
-                                <select name="other_gc" form="proposalFilters" onchange="this.form.submit()">
+                                <select name="other_gc" form="proposalFilters">
                                     <option value="">All</option>
                                     @foreach($otherGcOptions as $gcOption)
                                         <option value="{{ $gcOption }}" {{ request('other_gc') === $gcOption ? 'selected' : '' }}>{{ $gcOption }}</option>
@@ -274,7 +296,7 @@
                             <th class="px-3 py-2"></th>
                             @foreach($followUps as $nth => $label)
                                 <th class="px-3 py-2">
-                                    <select name="{{ $nth }}_follow_up" form="proposalFilters" onchange="this.form.submit()">
+                                    <select name="{{ $nth }}_follow_up" form="proposalFilters">
                                         <option value="">All</option>
                                         <option value="yes" {{ request("{$nth}_follow_up") === 'yes' ? 'selected' : '' }}>Responded</option>
                                         <option value="no" {{ request("{$nth}_follow_up") === 'no' ? 'selected' : '' }}>No response</option>
@@ -284,7 +306,7 @@
                             @endforeach
                             @foreach(['result_gc', 'result_art'] as $resultField)
                                 <th class="px-3 py-2">
-                                    <select name="{{ $resultField }}" form="proposalFilters" onchange="this.form.submit()">
+                                    <select name="{{ $resultField }}" form="proposalFilters">
                                         <option value="">All</option>
                                         <option value="pending" {{ request($resultField) === 'pending' ? 'selected' : '' }}>Pending</option>
                                         <option value="win" {{ request($resultField) === 'win' ? 'selected' : '' }}>Win</option>
@@ -295,7 +317,14 @@
                             <th class="px-3 py-2">
                                 <input type="text" name="notes" form="proposalFilters" value="{{ request('notes') }}" placeholder="filter">
                             </th>
-                            <th class="col-actions px-3 py-2"></th>
+                            <th class="col-actions px-3 py-2 text-right">
+                                <button type="submit" form="proposalFilters" class="filter-apply" data-filter-apply title="Apply filters">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 0.875rem; height: 0.875rem;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                                    </svg>
+                                    Filter
+                                </button>
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200 text-gray-900">
