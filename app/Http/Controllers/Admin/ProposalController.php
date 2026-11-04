@@ -41,6 +41,10 @@ class ProposalController extends Controller
             $query->whereDate('proposals.submission_date', $request->submission_date);
         }
 
+        if ($request->filled('job_number')) {
+            $query->where('job_number', 'like', '%' . $request->job_number . '%');
+        }
+
         if ($request->filled('project')) {
             $query->where(function($q) use ($request) {
                 $q->whereHas('project', function($subQ) use ($request) {

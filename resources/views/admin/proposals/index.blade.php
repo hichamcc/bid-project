@@ -217,6 +217,7 @@
                             </th>
                             <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'submission_date', 'label' => 'Submitted Date'])</th>
                             <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'status', 'label' => 'Status'])</th>
+                            <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'job_number', 'label' => 'Project #'])</th>
                             <th class="col-project px-3 py-3">Project</th>
                             <th class="px-3 py-3">Type</th>
                             <th class="px-3 py-3">@include('admin.proposals.partials.sort-header', ['field' => 'gc', 'label' => 'GC'])</th>
@@ -264,6 +265,9 @@
                                         <option value="{{ $statusValue }}" {{ request('status') === $statusValue ? 'selected' : '' }}>{{ $statusLabel }}</option>
                                     @endforeach
                                 </select>
+                            </th>
+                            <th class="px-3 py-2">
+                                <input type="text" name="job_number" form="proposalFilters" value="{{ request('job_number') }}" placeholder="filter" style="width: 6rem;">
                             </th>
                             <th class="col-project px-3 py-2">
                                 <input type="text" name="project" form="proposalFilters" value="{{ request('project') }}" placeholder="filter">
@@ -351,6 +355,9 @@
                                 </td>
                                 <td class="px-3 py-2">
                                     @include('admin.proposals.partials.status-badge', ['status' => $proposal->status])
+                                </td>
+                                <td class="px-3 py-2 whitespace-nowrap font-medium text-gray-900">
+                                    {{ $proposal->job_number ?: '-' }}
                                 </td>
                                 <td class="col-project cell-wrap px-3 py-2 font-medium" style="min-width: 14rem;"
                                     title="{{ $proposal->job_number ? 'Job #' . $proposal->job_number : '' }}">
@@ -441,7 +448,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="19" class="px-6 py-4 text-center text-gray-500">
+                                <td colspan="20" class="px-6 py-4 text-center text-gray-500">
                                     No proposals found.
                                 </td>
                             </tr>
