@@ -325,7 +325,11 @@ class Project extends Model
             return collect();
         }
 
-        return GC::whereIn('name', $this->other_gc)->get();
+        // other_gc is stored as [name => ['due_date'=>..,'web_link'=>..]],
+        // so the GC names are the array keys.
+        $names = array_keys($this->other_gc);
+
+        return GC::whereIn('name', $names)->get();
     }
 
     /**

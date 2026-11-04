@@ -46,6 +46,22 @@
                                 General Contractor
                             </label>
                             <p class="mt-1 text-lg text-gray-900">{{ $project->gc }}</p>
+                            @if($project->primaryGC)
+                                <div class="mt-2 space-y-1">
+                                    @if($project->primaryGC->email)
+                                    <p class="text-sm text-gray-600">
+                                        <span class="font-medium text-gray-500">Email:</span>
+                                        <a href="mailto:{{ $project->primaryGC->email }}" class="text-blue-600 hover:text-blue-800">{{ $project->primaryGC->email }}</a>
+                                    </p>
+                                    @endif
+                                    @if($project->primaryGC->phone)
+                                    <p class="text-sm text-gray-600">
+                                        <span class="font-medium text-gray-500">Phone:</span>
+                                        <a href="tel:{{ $project->primaryGC->phone }}" class="text-blue-600 hover:text-blue-800">{{ $project->primaryGC->formatted_phone }}</a>
+                                    </p>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                         @endif
 
@@ -205,9 +221,24 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     @foreach($project->other_gc as $gcName => $gcData)
+                        @php($otherGcRecord = $project->otherGCs->firstWhere('name', $gcName))
                         <div class="bg-gray-50 p-4 rounded-lg border">
                             <h4 class="font-semibold text-gray-900 mb-3">{{ $gcName }}</h4>
                             <div class="space-y-2">
+                                @if($otherGcRecord && $otherGcRecord->email)
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-500">Email</label>
+                                    <a href="mailto:{{ $otherGcRecord->email }}" class="text-sm text-blue-600 hover:text-blue-800 break-all">{{ $otherGcRecord->email }}</a>
+                                </div>
+                                @endif
+
+                                @if($otherGcRecord && $otherGcRecord->phone)
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-500">Phone</label>
+                                    <a href="tel:{{ $otherGcRecord->phone }}" class="text-sm text-blue-600 hover:text-blue-800">{{ $otherGcRecord->formatted_phone }}</a>
+                                </div>
+                                @endif
+
                                 @if(isset($gcData['due_date']) && $gcData['due_date'])
                                 <div>
                                     <label class="block text-sm font-medium text-gray-500">Due Date</label>
@@ -229,7 +260,7 @@
                                 </div>
                                 @endif
                                 
-                                @if((!isset($gcData['due_date']) || !$gcData['due_date']) && (!isset($gcData['web_link']) || !$gcData['web_link']))
+                                @if((!isset($gcData['due_date']) || !$gcData['due_date']) && (!isset($gcData['web_link']) || !$gcData['web_link']) && (!$otherGcRecord || (!$otherGcRecord->email && !$otherGcRecord->phone)))
                                 <p class="text-sm text-gray-500">No additional details</p>
                                 @endif
                             </div>
