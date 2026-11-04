@@ -313,7 +313,7 @@ class Project extends Model
      */
     public function primaryGC(): BelongsTo
     {
-        return $this->belongsTo(GC::class, 'gc', 'name');
+        return $this->belongsTo(Gc::class, 'gc', 'name');
     }
 
     /**
@@ -329,7 +329,7 @@ class Project extends Model
         // so the GC names are the array keys.
         $names = array_keys($this->other_gc);
 
-        return GC::whereIn('name', $names)->get();
+        return Gc::whereIn('name', $names)->get();
     }
 
     /**
