@@ -452,6 +452,13 @@
                                                     {{ $status === 'submitted' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' }}">
                                                     {{ ucfirst($status) }}
                                                 </span>
+                                                @if($project && $status === 'submitted')
+                                                    <button type="button"
+                                                            onclick="projectReopen.open(@js(route('admin.projects.reopen', $project)), @js($project->name), @js($estimator->name))"
+                                                            class="text-xs text-amber-600 hover:text-amber-800 dark:text-amber-400 hover:underline">
+                                                        Reopen
+                                                    </button>
+                                                @endif
                                             </div>
                                         @empty
                                             <span class="text-gray-400 italic text-xs">None</span>
@@ -537,4 +544,5 @@ function closeDeleteModal() {
     document.getElementById('deleteModal').style.display = 'none';
 }
 </script>
+@include('admin.projects.partials.reopen-modal')
 @endsection

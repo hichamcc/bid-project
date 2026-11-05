@@ -13,7 +13,14 @@
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-semibold text-gray-900">Project Details</h2>
                     <div class="flex space-x-2">
-                        <a href="{{ route('admin.projects.edit', $project) }}" 
+                        @if($project->assignedTo && $project->status !== 'IN PROGRESS')
+                            <button type="button"
+                                    onclick="projectReopen.open(@js(route('admin.projects.reopen', $project)), @js($project->name), @js($project->assignedTo->name))"
+                                    class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded">
+                                Reopen
+                            </button>
+                        @endif
+                        <a href="{{ route('admin.projects.edit', $project) }}"
                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Edit Project
                         </a>
@@ -25,6 +32,13 @@
                 </div>
             </div>
         </div>
+
+        @if(session('success'))
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">{{ session('success') }}</div>
+        @endif
+        @if(session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">{{ session('error') }}</div>
+        @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Project Information -->
@@ -488,4 +502,5 @@
         </div>
     </div>
 </div>
+@include('admin.projects.partials.reopen-modal')
 @endsection

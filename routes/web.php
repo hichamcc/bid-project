@@ -57,6 +57,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('projects', ProjectController::class);
     Route::post('projects/{project}/remarks', [ProjectController::class, 'addRemark'])->name('projects.remarks.store');
+    Route::post('projects/{project}/reopen', [ProjectController::class, 'reopen'])->name('projects.reopen');
 });
 
 Route::middleware(['auth', 'role:admin,bid_coordinator'])->prefix('admin')->name('admin.')->group(function () {

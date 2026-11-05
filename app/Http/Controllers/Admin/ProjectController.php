@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\JobReopenedMail;
 use App\Models\Allocation;
 use App\Models\Project;
 use App\Models\Status;
 use App\Models\Type;
 use App\Models\User;
 use App\Models\Gc;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 
@@ -344,6 +347,72 @@ class ProjectController extends Controller
 
         return redirect()->route('admin.projects.show', $project)
             ->with('success', 'Remark added successfully.');
+    }
+
+    /**
+     * Reopen a project for the same estimator: back to IN PROGRESS with a new due date,
+     * their job set back to Open in Distribution (so it counts in their workload again),
+     * a remark logged and the estimator emailed.
+     */
+    public function reopen(Request $request, Project $project)
+    {
+        $validated = $request->validate([
+            'due_date' => 'required|date',
+            'reason'   => 'required|string|max:500',
+        ]);
+
+        $estimator = $project->assignedTo;
+        if (!$estimator) {
+            return back()->with('error', 'This project has no estimator assigned, so it cannot be reopened.');
+        }
+
+        $dueDate = Carbon::parse($validated['due_date']);
+
+        DB::transaction(function () use ($project, $estimator, $dueDate, $validated) {
+            $project->update([
+                'status'   => 'IN PROGRESS',
+                'due_date' => $dueDate,
+            ]);
+
+            $project->remarks()->create([
+                'user_id' => auth()->id(),
+                'remark'  => 'Reopened on ' . now()->format('m/d') . ' by ' . auth()->user()->name
+                           . ' — ' . $validated['reason']
+                           . ' (new due date ' . $dueDate->format('M d, Y') . ')',
+            ]);
+
+            $allocation = $project->allocation_id
+                ? Allocation::with('estimators')->find($project->allocation_id)
+                : null;
+
+            if ($allocation && $allocation->estimators->contains('id', $estimator->id)) {
+                $allocation->estimators()->updateExistingPivot($estimator->id, ['status' => 'open']);
+
+                // Move the job's dates so the workload page and the due/overdue reminders follow the
+                // new due date — unless another estimator is still working on the original dates.
+                $othersOpen = $allocation->estimators
+                    ->contains(fn($e) => $e->id !== $estimator->id && $e->pivot->status === 'open');
+
+                if (!$othersOpen) {
+                    $gapDays = (int) round(abs($allocation->assigned_date->diffInDays($allocation->due_date)));
+                    $allocation->update([
+                        'assigned_date' => $dueDate,
+                        'due_date'      => $dueDate->copy()->addDays($gapDays),
+                    ]);
+                }
+            }
+        });
+
+        $redirect = back()->with('success', "Project reopened for {$estimator->name}, due {$dueDate->format('M d, Y')}.");
+
+        try {
+            Mail::to($estimator->email)->send(new JobReopenedMail($project, $estimator, $validated['reason']));
+        } catch (\Throwable $e) {
+            report($e);
+            $redirect = $redirect->with('error', "The project was reopened, but the email to {$estimator->name} could not be sent.");
+        }
+
+        return $redirect;
     }
 
     /**
