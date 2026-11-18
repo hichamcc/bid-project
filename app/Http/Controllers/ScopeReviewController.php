@@ -577,11 +577,11 @@ class ScopeReviewController extends Controller
     }
 
     /**
-     * Next job number: {2-digit year}{sequence}, e.g. 26601, 26602...
-     * Prefers the highest existing number for the current year (increments
-     * its sequence portion). If none exist yet this year, continues from the
-     * highest numeric job number found anywhere (any year), so the sequence
-     * doesn't reset to an arbitrary made-up starting point.
+     * Next job number: {2-digit year}{sequence}. The year prefix never changes
+     * before December 31:
+     *   - continues from the highest number this year (26985 → 26986);
+     *   - after a 3-digit sequence runs out it moves to 4 digits (26999 → 261000);
+     *   - a new year starts its own 4-digit sequence (2027 → 270001).
      */
     private function nextProjectNumber(): string
     {
@@ -592,25 +592,25 @@ class ScopeReviewController extends Controller
             (int) $this->maxNumericJobNumber(ScopeReview::query(), 'project_number', $yearPrefix)
         );
 
-        if ($maxForYear > 0) {
-            return (string) ($maxForYear + 1);
+        if ($maxForYear === 0) {
+            return $yearPrefix . '0001';
         }
 
-        $maxOverall = max(
-            (int) $this->maxNumericJobNumber(Allocation::query(), 'job_number'),
-            (int) $this->maxNumericJobNumber(ScopeReview::query(), 'project_number')
-        );
+        // 3-digit sequence used up: 26999 would roll into 27000, so jump to 261000.
+        if ($maxForYear === (int) ($yearPrefix . '999')) {
+            return $yearPrefix . '1000';
+        }
 
-        return (string) ($maxOverall + 1);
+        return (string) ($maxForYear + 1);
     }
 
-    private function maxNumericJobNumber($query, string $column, ?string $prefix = null): ?string
+    /**
+     * Highest job number for a year: the 2-digit prefix followed by a 3- or
+     * 4-digit sequence (e.g. 26985 or 261000). Anything else is ignored.
+     */
+    private function maxNumericJobNumber($query, string $column, string $prefix): ?string
     {
-        if ($prefix !== null) {
-            $query->where($column, 'like', $prefix . '%');
-        }
-
-        return $query->whereRaw("{$column} REGEXP '^[0-9]+$'")
+        return $query->whereRaw("{$column} REGEXP ?", ['^' . $prefix . '[0-9]{3,4}$'])
             ->orderByRaw("CAST({$column} AS UNSIGNED) DESC")
             ->value($column);
     }
